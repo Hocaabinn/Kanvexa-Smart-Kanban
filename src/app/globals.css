@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 210 14% 17%;
+  
+  --primary: 210 14% 17%;
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 9%;
+  
+  --muted: 0 0% 96%;
+  --muted-foreground: 184 5% 55%;
+  
+  --accent: 239 84% 67%;
+  --accent-foreground: 0 0% 100%;
+  
+  --border: 0 0% 90%;
+  --ring: 239 84% 67%;
+  --radius: 0.5rem;
+  
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Inter', sans-serif;
+  
+  --shadow-dashboard: 0 25px 80px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+  /* Legacy variables for Kanban board demo styles */
+  --v: #6D28D9;
+  --v-mid: #7C3AED;
+  --v-light: #EDE9FE;
+  --v-dark: #4C1D95;
+  --surface: #FAFAF8;
+  --card: #FFFFFF;
+  --text-1: #0F0E0D;
+  --text-2: #6B6860;
+  --text-3: #A8A5A0;
+  --border-strong: #C9C5BF;
+  
+  --violet: #6D28D9;
+  --violet-deep: #4C1D95;
+  --violet-soft: #EEE8FC;
+  --amber: #EE9C1D;
+  --mint: #0F9E86;
+  --rose: #DB4C74;
+  --line: #E6E1D6;
+}
+
+@theme {
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Inter', sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-border: hsl(var(--border));
+  --color-ring: hsl(var(--ring));
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.rn-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.rn-card-pop {
+  animation: pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.rn-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 16px;
+  margin-left: 2px;
+  vertical-align: middle;
+  background: var(--violet);
+  animation: blink 1s step-end infinite;
+}
+
+/* Scrollbar styling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
