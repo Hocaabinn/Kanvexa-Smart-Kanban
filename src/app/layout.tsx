@@ -6,7 +6,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Rencanai — Satu kalimat, langsung jadi rencana kerja",
+  title: "Kanvexa — Satu kalimat, langsung jadi rencana kerja",
   description: "Kanban board kolaboratif dengan AI breakdown tugas otomatis.",
 };
 

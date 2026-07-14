@@ -31,7 +31,7 @@ export default function LoginPage() {
         display: "flex", flexDirection: "column", justifyContent: "space-between",
       }} className="hidden-mobile">
         <Link href="/" style={{ textDecoration: "none" }}>
-          <span style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Rencanai</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Kanvexa</span>
         </Link>
         <div>
           <div style={{
@@ -60,7 +60,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>© 2025 Rencanai</p>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>© 2026 Kanvexa</p>
       </div>
 
       {/* RIGHT PANEL */}
@@ -70,7 +70,7 @@ export default function LoginPage() {
       }}>
         <div style={{ width: "100%", maxWidth: 360 }}>
           <Link href="/" style={{ display: "inline-block", marginBottom: 40, textDecoration: "none" }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "var(--v)", letterSpacing: "-0.02em" }}>Rencanai</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: "var(--v)", letterSpacing: "-0.02em" }}>Kanvexa</span>
           </Link>
 
           <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text-1)", margin: "0 0 6px" }}>

@@ -171,7 +171,7 @@ export default function LandingPage() {
                   <span style={{ background: "#FEBC2E" }} />
                   <span style={{ background: "#28C840" }} />
                 </div>
-                <div className="rn-demo-url">rencanai.app/board/seminar-kampus</div>
+                <div className="rn-demo-url">kanvexa.app/board/seminar-kampus</div>
               </div>
 
               <div className="rn-demo-input-row">

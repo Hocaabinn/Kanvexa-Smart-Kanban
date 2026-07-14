@@ -118,7 +118,7 @@ $$;
 -- only admins can update/delete.
 drop policy if exists "boards_select" on boards;
 create policy "boards_select" on boards for select
-  using (public.is_board_member(id));
+  using (public.is_board_member(id) or auth.uid() = created_by);
 
 drop policy if exists "boards_insert" on boards;
 create policy "boards_insert" on boards for insert
