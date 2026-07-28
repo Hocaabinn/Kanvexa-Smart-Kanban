@@ -98,8 +98,8 @@ export async function createColumn(boardId: string, name: string) {
 }
 
 export async function createColumnWithCard(
-  boardId: string, 
-  columnName: string, 
+  boardId: string,
+  columnName: string,
   cardTitle: string,
   details?: { dueDate?: string; dueTime?: string; assignee?: string; notes?: string }
 ) {
@@ -149,6 +149,60 @@ export async function createColumnWithCard(
   revalidatePath(`/board/${boardId}`);
 }
 
+export async function createKanbanWorkflow(
+  boardId: string,
+  initialCardTitle?: string,
+  details?: { dueDate?: string; dueTime?: string; assignee?: string; notes?: string }
+) {
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("board_columns")
+    .select("position")
+    .eq("board_id", boardId)
+    .order("position", { ascending: false })
+    .limit(1);
+
+  let position = (existing?.[0]?.position ?? -1) + 1;
+
+  const colNames = ["To-dos", "In Progress", "In Review", "Done"];
+  let firstColId = "";
+
+  for (const cName of colNames) {
+    const { data: col } = await supabase
+      .from("board_columns")
+      .insert({ board_id: boardId, name: cName, position: position++ })
+      .select()
+      .single();
+
+    if (col && !firstColId) {
+      firstColId = col.id;
+    }
+  }
+
+  if (firstColId && initialCardTitle && initialCardTitle.trim()) {
+    let fullTitle = initialCardTitle.trim();
+    const metaParts = [];
+    if (details?.dueDate) metaParts.push(`📅 ${details.dueDate}`);
+    if (details?.dueTime) metaParts.push(`⏰ ${details.dueTime}`);
+    if (details?.assignee) metaParts.push(`👤 ${details.assignee}`);
+    if (details?.notes) metaParts.push(`📝 ${details.notes}`);
+
+    if (metaParts.length > 0) {
+      fullTitle += ` (${metaParts.join(" • ")})`;
+    }
+
+    await supabase.from("cards").insert({
+      board_id: boardId,
+      column_id: firstColId,
+      title: fullTitle,
+      position: 0,
+    });
+  }
+
+  revalidatePath(`/board/${boardId}`);
+}
+
 export async function deleteColumn(boardId: string, columnId: string) {
   const supabase = await createClient();
   // Cards inside are deleted automatically via ON DELETE CASCADE
@@ -159,7 +213,7 @@ export async function deleteColumn(boardId: string, columnId: string) {
 
 // ── AI Breakdown ───────────────────────────────────────────────────────────
 
-interface AICard   { title: string; }
+interface AICard { title: string; }
 interface AIColumn { name: string; cards: AICard[]; }
 
 // Inserts AI-generated columns and cards into an existing board.
@@ -199,10 +253,10 @@ export async function insertAIBreakdown(boardId: string, aiColumns: AIColumn[], 
     if (colErr || !col) continue;
 
     const cardRows = aiCol.cards.map((c, i) => ({
-      board_id:  boardId,
+      board_id: boardId,
       column_id: col.id,
-      title:     c.title,
-      position:  i,
+      title: c.title,
+      position: i,
     }));
 
     if (cardRows.length) await supabase.from("cards").insert(cardRows);

@@ -72,6 +72,7 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
       {/* KANBAN BOARD */}
       <BoardClient
         boardId={board.id}
+        userEmail={user?.email || ""}
         initialColumns={columns ?? []}
         initialCards={cards ?? []}
         isAdmin={isAdmin}

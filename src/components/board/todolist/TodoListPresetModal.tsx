@@ -2,16 +2,52 @@
 
 import { useState } from "react";
 import { Calendar, Clock, User, FileText } from "lucide-react";
-import { createColumnWithCard } from "@/app/board/[id]/actions";
+import { createColumnWithCard, createKanbanWorkflow } from "@/app/board/[id]/actions";
 
 interface Props {
     boardId: string;
+    userEmail?: string;
     presetType: string;
     onClose: () => void;
 }
 
-export default function TodoListPresetModal({ boardId, presetType, onClose }: Props) {
-    const defaultColTitle = presetType === "To-Do List" ? "To-dos" : presetType;
+function getModalTheme(type: string) {
+    const lower = type.toLowerCase().trim();
+    if (lower.includes("review") || lower.includes("peninjauan")) {
+        return {
+            main: "#2563eb",
+            bg: "#eff6ff",
+            border: "#bfdbfe",
+            shadow: "rgba(37, 99, 235, 0.25)",
+        };
+    }
+    if (lower.includes("proges") || lower.includes("progress") || lower.includes("pengerjaan") || lower.includes("dikerjakan")) {
+        return {
+            main: "#d97706",
+            bg: "#fffbeb",
+            border: "#fde68a",
+            shadow: "rgba(217, 119, 6, 0.25)",
+        };
+    }
+    if (lower.includes("done") || lower.includes("selesai") || lower.includes("complete")) {
+        return {
+            main: "#059669",
+            bg: "#ecfdf5",
+            border: "#a7f3d0",
+            shadow: "rgba(5, 150, 105, 0.25)",
+        };
+    }
+    return {
+        main: "#7c3aed",
+        bg: "#f5f3ff",
+        border: "#ddd6fe",
+        shadow: "rgba(109, 40, 217, 0.25)",
+    };
+}
+
+export default function TodoListPresetModal({ boardId, userEmail = "", presetType, onClose }: Props) {
+    const defaultColTitle = presetType.includes("To-Do List") ? "To-dos" : presetType;
+    const theme = getModalTheme(presetType);
 
     const [presetColTitle, setPresetColTitle] = useState(defaultColTitle);
     const [presetSubTitle, setPresetSubTitle] = useState("");
@@ -21,6 +57,14 @@ export default function TodoListPresetModal({ boardId, presetType, onClose }: Pr
     const [presetNotes, setPresetNotes] = useState("");
     const [saving, setSaving] = useState(false);
 
+    const registeredUsers = Array.from(new Set([
+        ...(userEmail ? [userEmail] : []),
+        "bintangwcproger@gmail.com",
+        "andi@kanvexa.com",
+        "budi@kanvexa.com",
+        "siti@kanvexa.com"
+    ]));
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const colName = presetColTitle.trim() || defaultColTitle;
@@ -28,17 +72,30 @@ export default function TodoListPresetModal({ boardId, presetType, onClose }: Pr
 
         setSaving(true);
         try {
-            await createColumnWithCard(
-                boardId,
-                colName,
-                cardTaskName,
-                {
-                    dueDate: presetDueDate,
-                    dueTime: presetDueTime,
-                    assignee: presetAssignee.trim(),
-                    notes: presetNotes.trim(),
-                }
-            );
+            if (presetType.includes("To-Do List") || presetType.includes("Kanban")) {
+                await createKanbanWorkflow(
+                    boardId,
+                    cardTaskName,
+                    {
+                        dueDate: presetDueDate,
+                        dueTime: presetDueTime,
+                        assignee: presetAssignee.trim(),
+                        notes: presetNotes.trim(),
+                    }
+                );
+            } else {
+                await createColumnWithCard(
+                    boardId,
+                    colName,
+                    cardTaskName,
+                    {
+                        dueDate: presetDueDate,
+                        dueTime: presetDueTime,
+                        assignee: presetAssignee.trim(),
+                        notes: presetNotes.trim(),
+                    }
+                );
+            }
             onClose();
         } catch (err: any) {
             alert("Gagal membuat kolom: " + err.message);
@@ -59,6 +116,7 @@ export default function TodoListPresetModal({ boardId, presetType, onClose }: Pr
             <div style={{
                 background: "#ffffff",
                 border: "1px solid #e2e8f0",
+                borderTop: `4px solid ${theme.main}`,
                 borderRadius: 20,
                 width: "100%",
                 maxWidth: 500,
@@ -75,7 +133,7 @@ export default function TodoListPresetModal({ boardId, presetType, onClose }: Pr
                     alignItems: "center",
                 }}>
                     <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ color: "var(--v)" }}>✦</span> Konfigurasi Kolom ({presetType})
+                        <span style={{ color: theme.main }}>✦</span> Konfigurasi Kolom ({presetType})
                     </h3>
                     <button
                         onClick={onClose}
@@ -99,10 +157,10 @@ export default function TodoListPresetModal({ boardId, presetType, onClose }: Pr
                             </label>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 10, padding: "8px 12px" }}>
                                 <div style={{
-                                    width: 18, height: 18, borderRadius: 4, border: "2px solid var(--v)",
-                                    display: "flex", alignItems: "center", justifyContent: "center", background: "#f5f3ff", flexShrink: 0
+                                    width: 18, height: 18, borderRadius: 4, border: `2px solid ${theme.main}`,
+                                    display: "flex", alignItems: "center", justifyContent: "center", background: theme.bg, flexShrink: 0
                                 }}>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--v)" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={theme.main} strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
                                 </div>
                                 <input
                                     required
@@ -158,19 +216,28 @@ export default function TodoListPresetModal({ boardId, presetType, onClose }: Pr
                         <div>
                             <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
                                 <User style={{ width: 13, height: 13, color: "#059669" }} />
-                                <span>Ditugaskan Kepada</span>
+                                <span>Ditugaskan Kepada (User Terdaftar)</span>
                             </label>
-                            <input
-                                type="text"
+                            <select
                                 value={presetAssignee}
                                 onChange={(e) => setPresetAssignee(e.target.value)}
-                                placeholder="misal: Andi, Budi"
                                 style={{
                                     width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
                                     border: "1px solid #cbd5e1", outline: "none",
-                                    background: "#f8fafc", color: "#0f172a",
+                                    background: "#f8fafc", color: "#0f172a", cursor: "pointer", fontWeight: 500
                                 }}
-                            />
+                            >
+                                <option value="">-- Pilih User Terdaftar --</option>
+                                {registeredUsers.map((uEmail) => {
+                                    const namePart = uEmail.split("@")[0];
+                                    const isMe = userEmail && uEmail.toLowerCase() === userEmail.toLowerCase();
+                                    return (
+                                        <option key={uEmail} value={namePart}>
+                                            👤 {namePart} ({uEmail}){isMe ? " - Saya" : ""}
+                                        </option>
+                                    );
+                                })}
+                            </select>
                         </div>
 
                         {/* 4. Catatan */}
@@ -220,9 +287,9 @@ export default function TodoListPresetModal({ boardId, presetType, onClose }: Pr
                             disabled={saving}
                             style={{
                                 padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700,
-                                background: "var(--v)", color: "#fff", border: "none",
+                                background: theme.main, color: "#fff", border: "none",
                                 cursor: saving ? "not-allowed" : "pointer",
-                                boxShadow: "0 4px 14px rgba(109,40,217,0.25)",
+                                boxShadow: `0 4px 14px ${theme.shadow}`,
                                 display: "flex", alignItems: "center", gap: 6,
                             }}
                         >

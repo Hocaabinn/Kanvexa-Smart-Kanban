@@ -7,17 +7,27 @@ import { createCard } from "@/app/board/[id]/actions";
 interface Props {
     boardId: string;
     columnId: string;
+    userEmail?: string;
     onDone: () => void;
     onCancel: () => void;
 }
 
-export default function AddTodoListCardForm({ boardId, columnId, onDone, onCancel }: Props) {
+export default function AddTodoListCardForm({ boardId, columnId, userEmail = "", onDone, onCancel }: Props) {
     const [taskName, setTaskName] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [dueTime, setDueTime] = useState("");
     const [assignee, setAssignee] = useState("");
     const [notes, setNotes] = useState("");
     const [saving, setSaving] = useState(false);
+
+    // List of registered members / users
+    const registeredUsers = Array.from(new Set([
+        ...(userEmail ? [userEmail] : []),
+        "bintangwcproger@gmail.com",
+        "andi@kanvexa.com",
+        "budi@kanvexa.com",
+        "siti@kanvexa.com"
+    ]));
 
     async function handleAddCard() {
         const trimmedTask = taskName.trim();
@@ -116,18 +126,28 @@ export default function AddTodoListCardForm({ boardId, columnId, onDone, onCance
             <div>
                 <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
                     <User style={{ width: 12, height: 12, color: "#059669" }} />
-                    <span>Ditugaskan Kepada</span>
+                    <span>Ditugaskan Kepada (User Terdaftar)</span>
                 </label>
-                <input
+                <select
                     value={assignee}
                     onChange={e => setAssignee(e.target.value)}
-                    placeholder="misal: Andi, Budi"
                     style={{
                         width: "100%", padding: "7px 10px", borderRadius: 8, fontSize: 12,
                         border: "1px solid #cbd5e1", outline: "none", color: "#0f172a",
-                        background: "#f8fafc",
+                        background: "#f8fafc", cursor: "pointer", fontWeight: 500
                     }}
-                />
+                >
+                    <option value="">-- Pilih User Terdaftar --</option>
+                    {registeredUsers.map((uEmail) => {
+                        const namePart = uEmail.split("@")[0];
+                        const isMe = userEmail && uEmail.toLowerCase() === userEmail.toLowerCase();
+                        return (
+                            <option key={uEmail} value={namePart}>
+                                👤 {namePart} ({uEmail}){isMe ? " - Saya" : ""}
+                            </option>
+                        );
+                    })}
+                </select>
             </div>
 
             {/* 4. Catatan / Instructions */}

@@ -13,6 +13,7 @@ interface Card { id: string; title: string; position: number; }
 interface Props {
     id: string;
     boardId: string;
+    userEmail?: string;
     name: string;
     accentColor: string;
     cards: Card[];
@@ -20,7 +21,7 @@ interface Props {
     canEdit: boolean;
 }
 
-export default function TodoListColumn({ id, boardId, name, accentColor, cards, isAdmin, canEdit }: Props) {
+export default function TodoListColumn({ id, boardId, userEmail = "", name, accentColor, cards, isAdmin, canEdit }: Props) {
     const [addingCard, setAddingCard] = useState(false);
     const [allCompleted, setAllCompleted] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -146,20 +147,52 @@ export default function TodoListColumn({ id, boardId, name, accentColor, cards, 
                 </div>
             </div>
 
-            {/* Single Large Card Container */}
+            {/* Physical Papan Board Container */}
             <div style={{
                 flex: 1,
-                background: isOver ? "#EDEBFF" : "var(--card)",
-                borderRadius: 16,
-                border: `1.5px solid ${isOver ? "#C4B5FD" : "var(--border-strong)"}`,
-                padding: "20px 16px 14px",
+                background: isOver
+                    ? "linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%)"
+                    : "linear-gradient(180deg, #ffffff 0%, #fafafa 60%, #f4f4f5 100%)",
+                borderRadius: 20,
+                borderLeft: `1.5px solid ${isOver ? "#8b5cf6" : "#cbd5e1"}`,
+                borderRight: `1.5px solid ${isOver ? "#8b5cf6" : "#cbd5e1"}`,
+                borderBottom: `1.5px solid ${isOver ? "#8b5cf6" : "#cbd5e1"}`,
+                borderTop: "5px solid var(--v, #7c3aed)",
+                padding: "24px 16px 14px",
                 display: "flex", flexDirection: "column",
                 position: "relative",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-                transition: "all 0.15s ease",
+                boxShadow: isOver
+                    ? "0 12px 30px rgba(124, 58, 237, 0.15), 0 4px 10px rgba(0,0,0,0.05)"
+                    : "0 8px 25px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 0 #ffffff",
+                transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
                 minHeight: 280,
                 overflow: "hidden",
             }}>
+                {/* Clipboard Metallic Top Bracket Detail */}
+                <div style={{
+                    position: "absolute",
+                    top: 0,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 72,
+                    height: 14,
+                    background: "linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%)",
+                    borderRadius: "0 0 6px 6px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 10,
+                }}>
+                    <div style={{
+                        width: 8, height: 4, borderRadius: 2,
+                        background: "#64748b", boxShadow: "inset 0 1px 1px rgba(0,0,0,0.4)"
+                    }} />
+                </div>
+
+                {/* Corner Screws / Rivets Accent on Board Container */}
+                <div style={{ position: "absolute", top: 10, left: 10, width: 5, height: 5, borderRadius: "50%", background: "radial-gradient(circle at 30% 30%, #e2e8f0, #94a3b8)", opacity: 0.5, pointerEvents: "none" }} />
+                <div style={{ position: "absolute", top: 10, right: 10, width: 5, height: 5, borderRadius: "50%", background: "radial-gradient(circle at 30% 30%, #e2e8f0, #94a3b8)", opacity: 0.5, pointerEvents: "none" }} />
                 {/* ALL DONE! Stamp Badge */}
                 {allCompleted && (
                     <div style={{
@@ -242,6 +275,7 @@ export default function TodoListColumn({ id, boardId, name, accentColor, cards, 
                             <AddTodoListCardForm
                                 boardId={boardId}
                                 columnId={id}
+                                userEmail={userEmail}
                                 onDone={() => setAddingCard(false)}
                                 onCancel={() => setAddingCard(false)}
                             />

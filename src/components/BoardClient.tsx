@@ -15,11 +15,14 @@ import {
   type DragOverEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
-import { 
-  CheckSquare, 
-  Calendar, 
-  MessageSquare, 
-  FileText 
+import {
+  CheckSquare,
+  Calendar,
+  MessageSquare,
+  FileText,
+  Clock,
+  Eye,
+  CheckCircle2
 } from "lucide-react";
 import KanbanColumn from "./KanbanColumn";
 import TodoListColumn from "./board/todolist/TodoListColumn";
@@ -28,22 +31,32 @@ import AIBreakdownModal from "./AIBreakdownModal";
 import { moveCard, createColumn, createColumnWithCard } from "@/app/board/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 
-interface Card   { id: string; column_id: string; title: string; position: number; }
+interface Card { id: string; column_id: string; title: string; position: number; }
 interface Column { id: string; name: string; position: number; }
 
 interface Props {
   boardId: string;
+  userEmail?: string;
   initialColumns: Column[];
   initialCards: Card[];
   isAdmin: boolean;
   canEdit: boolean;
 }
 
-const COL_COLORS = ["#6D28D9","#059669","#D97706","#DB2777","#2563EB","#DC2626","#0891B2","#7C3AED"];
+const COL_COLORS = ["#6D28D9", "#059669", "#D97706", "#DB2777", "#2563EB", "#DC2626", "#0891B2", "#7C3AED"];
 
-function colColor(index: number) { return COL_COLORS[index % COL_COLORS.length]; }
+function colColor(index: number, name?: string) {
+  if (name) {
+    const lower = name.toLowerCase().trim();
+    if (lower.includes("review") || lower.includes("peninjauan")) return "#2563eb"; // Biru
+    if (lower.includes("proges") || lower.includes("progress") || lower.includes("pengerjaan") || lower.includes("dikerjakan")) return "#d97706"; // Kuning/Amber
+    if (lower.includes("done") || lower.includes("selesai") || lower.includes("complete")) return "#059669"; // Hijau
+    if (lower.includes("todo") || lower.includes("to-do") || lower.includes("backlog")) return "#7c3aed"; // Ungu
+  }
+  return COL_COLORS[index % COL_COLORS.length];
+}
 
-export default function BoardClient({ boardId, initialColumns, initialCards, isAdmin, canEdit }: Props) {
+export default function BoardClient({ boardId, userEmail = "", initialColumns, initialCards, isAdmin, canEdit }: Props) {
   const router = useRouter();
 
   // Derived state from props to allow server-side updates / revalidations to reflect in client state
@@ -63,10 +76,10 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [originalColId, setOriginalColId] = useState<string | null>(null);
-  const [showAI, setShowAI]             = useState(false);
-  const [addingCol, setAddingCol]       = useState(false);
-  const [colName, setColName]           = useState("");
-  const [savingCol, setSavingCol]       = useState(false);
+  const [showAI, setShowAI] = useState(false);
+  const [addingCol, setAddingCol] = useState(false);
+  const [colName, setColName] = useState("");
+  const [savingCol, setSavingCol] = useState(false);
 
   // Preset Modal Config State
   const [selectedPresetModal, setSelectedPresetModal] = useState<string | null>(null);
@@ -118,7 +131,7 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
       // Calculate offset from center of screen and scale down for subtle parallax
       const x = (e.clientX - window.innerWidth / 2) * -0.035;
       const y = (e.clientY - window.innerHeight / 2) * -0.035;
-      
+
       document.documentElement.style.setProperty("--bg-pan-x", `${x}px`);
       document.documentElement.style.setProperty("--bg-pan-y", `${y}px`);
     };
@@ -134,8 +147,8 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const sortedCols  = [...columns].sort((a, b) => a.position - b.position);
-  const activeCard  = activeCardId ? cards.find(c => c.id === activeCardId) : null;
+  const sortedCols = [...columns].sort((a, b) => a.position - b.position);
+  const activeCard = activeCardId ? cards.find(c => c.id === activeCardId) : null;
   const activeIndex = activeCard ? columns.findIndex(col => col.id === activeCard.column_id) : -1;
 
   function cardsForCol(colId: string) {
@@ -164,7 +177,7 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
     if (!canEdit || !over || active.id === over.id) return;
 
     const fromColId = findColumnId(active.id as string);
-    const toColId   = findColumnId(over.id as string);
+    const toColId = findColumnId(over.id as string);
 
     if (!fromColId || !toColId || fromColId === toColId) return;
 
@@ -180,15 +193,15 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
     setOriginalColId(null);
     if (!canEdit || !over || active.id === over.id) return;
 
-    const cardId    = active.id as string;
+    const cardId = active.id as string;
     const fromColId = originalColId;
-    const toColId   = findColumnId(over.id as string);
+    const toColId = findColumnId(over.id as string);
     if (!fromColId || !toColId) return;
 
     // Build the new order for the target column
     const targetCards = cardsForCol(toColId).map(c => c.id);
-    const overIndex   = targetCards.indexOf(over.id as string);
-    const fromIndex   = targetCards.indexOf(cardId);
+    const overIndex = targetCards.indexOf(over.id as string);
+    const fromIndex = targetCards.indexOf(cardId);
 
     let reordered: string[];
     if (fromColId === toColId) {
@@ -276,6 +289,7 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
       {selectedPresetModal && (
         <TodoListPresetModal
           boardId={boardId}
+          userEmail={userEmail}
           presetType={selectedPresetModal}
           onClose={() => setSelectedPresetModal(null)}
         />
@@ -315,14 +329,16 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
           minHeight: 0,
         }}
           className="scrollbar-hide"
+          suppressHydrationWarning
         >
           {sortedCols.map((col, i) => (
             <TodoListColumn
               key={col.id}
               id={col.id}
               boardId={boardId}
+              userEmail={userEmail}
               name={col.name}
-              accentColor={colColor(i)}
+              accentColor={colColor(i, col.name)}
               cards={cardsForCol(col.id)}
               isAdmin={isAdmin}
               canEdit={canEdit}
@@ -345,10 +361,10 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
                   {/* Preset Column Chips */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
                     {[
-                      { name: "To-Do List", icon: CheckSquare, desc: "Daftar tugas & centang" },
-                      { name: "Calendar", icon: Calendar, desc: "Jadwal & deadline" },
-                      { name: "Message Board", icon: MessageSquare, desc: "Diskusi & pengumuman" },
-                      { name: "Docs & Files", icon: FileText, desc: "Dokumen & berkas" },
+                      { name: "To-Do List", icon: CheckSquare, desc: "4 Kolom: To-dos, In Progress, In Review & Done", color: "#7c3aed", bg: "#f5f3ff" },
+                      { name: "Calendar", icon: Calendar, desc: "Jadwal & deadline", color: "#4f46e5", bg: "#eef2ff" },
+                      { name: "Message Board", icon: MessageSquare, desc: "Diskusi & pengumuman", color: "#db2777", bg: "#fdf2f8" },
+                      { name: "Docs & Files", icon: FileText, desc: "Dokumen & berkas", color: "#0891b2", bg: "#ecfeff" },
                     ].map((preset, pIdx) => {
                       const IconComponent = preset.icon;
                       return (
@@ -371,8 +387,8 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
                           }}
                           onMouseEnter={e => {
                             const el = e.currentTarget as HTMLElement;
-                            el.style.borderColor = "var(--v)";
-                            el.style.background = "#f5f3ff";
+                            el.style.borderColor = preset.color;
+                            el.style.background = preset.bg;
                           }}
                           onMouseLeave={e => {
                             const el = e.currentTarget as HTMLElement;
@@ -382,7 +398,7 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
                         >
                           <div style={{
                             width: 28, height: 28, borderRadius: 6,
-                            background: "rgba(109,40,217,0.08)", color: "var(--v)",
+                            background: preset.bg, color: preset.color,
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0,
                           }}>
@@ -483,7 +499,7 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
             <div style={{
               background: "var(--card)", border: "1px solid var(--border)",
               borderRadius: 8, padding: "10px 12px",
-              borderLeft: `3px solid ${colColor(activeIndex)}`,
+              borderLeft: `3px solid ${colColor(activeIndex, activeCard ? columns.find(c => c.id === activeCard.column_id)?.name : undefined)}`,
               boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
               cursor: "grabbing", width: 256,
             }}>

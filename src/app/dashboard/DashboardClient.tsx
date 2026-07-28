@@ -406,122 +406,172 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
                 return (
                   <Link key={board.id} href={`/board/${board.id}`} style={{ textDecoration: "none" }}>
                     <div
-                      className="board-card"
+                      className="folder-card-wrapper"
                       style={{
-                        background: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "28px",
-                        padding: "24px",
-                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 10px -6px rgba(0, 0, 0, 0.02)",
+                        position: "relative",
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "space-between",
-                        minHeight: "260px",
-                        position: "relative",
-                        transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s",
+                        transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                         cursor: "pointer",
                       }}
                     >
-                      {/* Top Row: Icon & Saved Badge */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                        {/* Logo Wrapper */}
-                        <div style={{
-                          width: "48px",
-                          height: "48px",
-                          borderRadius: "50%",
-                          background: "#f8fafc",
-                          border: "1px solid #e2e8f0",
+                      {/* Folder Top Tab */}
+                      <div style={{ display: "flex", alignItems: "flex-end" }}>
+                        <div
+                          style={{
+                            background: isPinned
+                              ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                              : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+                            color: "#ffffff",
+                            padding: "6px 18px 4px 16px",
+                            borderRadius: "14px 14px 0 0",
+                            fontSize: "11px",
+                            fontWeight: "800",
+                            letterSpacing: "0.05em",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            boxShadow: "0 -2px 8px rgba(0,0,0,0.04)",
+                          }}
+                        >
+                          <FolderKanban style={{ width: "13px", height: "13px" }} />
+                          <span>KANVEXA</span>
+                        </div>
+
+                        {/* Tab Slant Transition Curve */}
+                        <div
+                          style={{
+                            width: 22,
+                            height: 16,
+                            background: isPinned ? "#059669" : "#6d28d9",
+                            clipPath: "polygon(0 100%, 0 0, 100% 100%)",
+                          }}
+                        />
+                      </div>
+
+                      {/* Folder Main Body Container */}
+                      <div
+                        className="folder-card-body"
+                        style={{
+                          background: "#ffffff",
+                          borderLeft: "1.5px solid #e2e8f0",
+                          borderRight: "1.5px solid #e2e8f0",
+                          borderBottom: "1.5px solid #e2e8f0",
+                          borderTop: `3px solid ${isPinned ? "#10b981" : "#7c3aed"}`,
+                          borderRadius: "0 24px 24px 24px",
+                          padding: "22px 24px 20px",
+                          boxShadow:
+                            "0 12px 28px -6px rgba(15, 23, 42, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.03)",
                           display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                        }}>
-                          <FolderKanban style={{ width: "22px", height: "22px", color: isPinned ? "#10b981" : "var(--v)" }} />
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          minHeight: "245px",
+                          position: "relative",
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        {/* Top Row: Logo & Status Badges */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                          <div style={{
+                            width: "44px",
+                            height: "44px",
+                            borderRadius: "14px",
+                            background: isPinned ? "#ecfdf5" : "#f5f3ff",
+                            border: `1px solid ${isPinned ? "#a7f3d0" : "#ddd6fe"}`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: isPinned ? "#059669" : "#7c3aed",
+                          }}>
+                            <FolderKanban style={{ width: "20px", height: "20px" }} />
+                          </div>
+
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            {isStarred && (
+                              <div
+                                title="Favorit"
+                                style={{
+                                  background: "#fffbeb",
+                                  border: "1px solid #fde68a",
+                                  width: "28px",
+                                  height: "28px",
+                                  borderRadius: "50%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <Star style={{ width: "12px", height: "12px", color: "#d97706", fill: "#d97706" }} />
+                              </div>
+                            )}
+                            {isPinned && (
+                              <div
+                                title="Disematkan"
+                                style={{
+                                  background: "#ecfdf5",
+                                  border: "1px solid #a7f3d0",
+                                  width: "28px",
+                                  height: "28px",
+                                  borderRadius: "50%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <Pin style={{ width: "12px", height: "12px", color: "#10b981", fill: "#10b981" }} />
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Status Badges (replaces star/pin buttons) */}
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          {isStarred && (
-                            <div 
-                              title="Favorit"
-                              style={{ 
-                                background: "#fffbeb", 
-                                border: "1px solid #fde68a", 
-                                width: "28px", 
-                                height: "28px", 
-                                borderRadius: "50%", 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center" 
-                              }}
-                            >
-                              <Star style={{ width: "12px", height: "12px", color: "#d97706", fill: "#d97706" }} />
-                            </div>
-                          )}
-                          {isPinned && (
-                            <div 
-                              title="Disematkan"
-                              style={{ 
-                                background: "#ecfdf5", 
-                                border: "1px solid #a7f3d0", 
-                                width: "28px", 
-                                height: "28px", 
-                                borderRadius: "50%", 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center" 
-                              }}
-                            >
-                              <Pin style={{ width: "12px", height: "12px", color: "#10b981", fill: "#10b981" }} />
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                        {/* Content Row */}
+                        <div style={{ flex: 1, marginBottom: "16px" }}>
+                          <div style={{ fontSize: "11px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px", fontWeight: "600" }}>
+                            <span>Kanvexa</span>
+                            <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#cbd5e1" }} />
+                            <span>{relativeTime}</span>
+                          </div>
 
-                      {/* Content Row */}
-                      <div style={{ flex: 1, marginBottom: "20px" }}>
-                        <div style={{ fontSize: "11px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px", fontWeight: "600" }}>
-                          <span>Kanvexa</span>
-                          <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#cbd5e1" }} />
-                          <span>{relativeTime}</span>
+                          <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#0f172a", margin: "0 0 14px", lineHeight: "1.3" }}>
+                            {board.name}
+                          </h3>
+
+                          {/* Pill Badges */}
+                          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                            <span style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#64748b", padding: "4px 12px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
+                              Kanban Board
+                            </span>
+                            <span style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#64748b", padding: "4px 12px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
+                              Workspace
+                            </span>
+                          </div>
                         </div>
 
-                        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a", margin: "0 0 14px", lineHeight: "1.3" }}>
-                          {board.name}
-                        </h3>
+                        {/* Divider Line */}
+                        <div style={{ borderTop: "1px solid #f1f5f9", margin: "0 -24px 16px" }} />
 
-                        {/* Pill Badges */}
-                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                          <span style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#64748b", padding: "5px 12px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
-                            Kanban Board
-                          </span>
-                          <span style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#64748b", padding: "5px 12px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
-                            Workspace
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Divider Line */}
-                      <div style={{ borderTop: "1px solid #f1f5f9", margin: "0 -24px 20px" }} />
-
-                      {/* Footer Row */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Proyek</div>
-                          <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "500" }}>{dateFormatted}</div>
-                        </div>
-                        <div style={{
-                          background: "#0f172a",
-                          color: "#ffffff",
-                          padding: "10px 22px",
-                          borderRadius: "14px",
-                          fontSize: "13px",
-                          fontWeight: "800",
-                          textAlign: "center",
-                          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
-                          transition: "background-color 0.2s",
-                        }} className="btn-open-board">
-                          Buka
+                        {/* Footer Row */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>Proyek</div>
+                            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "500" }}>{dateFormatted}</div>
+                          </div>
+                          <div
+                            style={{
+                              background: "#0f172a",
+                              color: "#ffffff",
+                              padding: "9px 20px",
+                              borderRadius: "14px",
+                              fontSize: "13px",
+                              fontWeight: "800",
+                              textAlign: "center",
+                              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
+                              transition: "all 0.2s ease",
+                            }}
+                            className="btn-open-board"
+                          >
+                            Buka
+                          </div>
                         </div>
                       </div>
                     </div>

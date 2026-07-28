@@ -14,7 +14,8 @@ import {
   ChevronDown,
   MoreVertical,
   Trash2,
-  Edit3
+  Edit3,
+  Settings
 } from "lucide-react";
 
 interface Board {
@@ -571,27 +572,50 @@ export default function Sidebar({
           )}
         </div>
         
-        <form action={signOutAction} style={{ display: "flex" }}>
-          <button 
-            type="submit" 
-            title="Keluar"
-            style={{ 
-              background: "none", 
-              border: "none", 
-              cursor: "pointer", 
-              color: "#94a3b8", 
-              display: "flex", 
-              alignItems: "center", 
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <button
+            type="button"
+            onClick={() => alert(`⚙️ Pengaturan / Settings App Kanvexa\n\n• User Login: ${userEmail}\n• Status Akun: Aktif\n• Versi App: v1.0.0 Pro`)}
+            title="Settings / Pengaturan"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#94a3b8",
+              display: "flex",
+              alignItems: "center",
               justifyContent: "center",
               padding: "8px",
               borderRadius: "8px",
               transition: "all 0.2s"
-            }} 
-            className="btn-sidebar-logout"
+            }}
+            className="btn-sidebar-settings"
           >
-            <LogOut style={{ width: "16px", height: "16px" }} />
+            <Settings style={{ width: "16px", height: "16px" }} />
           </button>
-        </form>
+          
+          <form action={signOutAction} style={{ display: "flex" }}>
+            <button 
+              type="submit" 
+              title="Keluar"
+              style={{ 
+                background: "none", 
+                border: "none", 
+                cursor: "pointer", 
+                color: "#94a3b8", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                padding: "8px",
+                borderRadius: "8px",
+                transition: "all 0.2s"
+              }} 
+              className="btn-sidebar-logout"
+            >
+              <LogOut style={{ width: "16px", height: "16px" }} />
+            </button>
+          </form>
+        </div>
       </div>
 
       <style>{`
@@ -630,6 +654,17 @@ export default function Sidebar({
         .btn-sidebar-logout:hover {
           background-color: #fef2f2 !important;
           color: #dc2626 !important;
+        }
+        .sidebar-settings-item:hover {
+          background-color: #f1f5f9 !important;
+          color: var(--v) !important;
+        }
+        .sidebar-settings-item:hover svg {
+          color: var(--v) !important;
+        }
+        .btn-sidebar-settings:hover {
+          background-color: #f1f5f9 !important;
+          color: var(--v) !important;
         }
         .sidebar-scroll::-webkit-scrollbar {
           width: 4px;

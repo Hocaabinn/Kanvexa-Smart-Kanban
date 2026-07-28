@@ -1,29 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
+const images = [
+  "https://res.cloudinary.com/harshitproject/image/upload/v1782138638/midjourney-image-one.png",
+  "https://res.cloudinary.com/harshitproject/image/upload/v1782138637/midjourney-image-two.png",
+  "https://res.cloudinary.com/harshitproject/image/upload/v1782138639/midjourney-image-three.png",
+  "https://res.cloudinary.com/harshitproject/image/upload/v1782138640/midjourney-image-four.png",
+];
+
+const prompts = [
+  "Buat alur kerja otomatis untuk peluncuran produk baru dengan Generative Kanban AI",
+  "Rencanakan jadwal acara kampus bulan depan lengkap dengan pembagian tugas panitia",
+  "Kelola proyek perancangan ulang sistem dari fase perencanaan hingga peluncuran",
+  "Otomatiskan pemecahan tugas administratif dan susun prioritas secara presisi",
+];
+
 export default function SignupPage() {
-  const [email, setEmail]       = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Form state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName]         = useState("");
-  const [error, setError]       = useState<string | null>(null);
+  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % images.length);
+    }, 3200);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!agreeTerms) {
+      setError("Anda harus menyetujui Syarat Layanan dan Kebijakan Privasi.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const supabase = createClient();
+      const fullName = `${firstName} ${lastName}`.trim();
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: { full_name: name },
+          data: { full_name: fullName },
         },
       });
       setLoading(false);
@@ -35,27 +68,31 @@ export default function SignupPage() {
     } catch (err: any) {
       setLoading(false);
       setError(
-        err?.message || "Gagal terhubung ke layanan autentikasi. Periksa koneksi internet Anda."
+        err?.message ||
+          "Gagal terhubung ke layanan autentikasi. Periksa koneksi internet Anda."
       );
     }
   }
 
   if (submitted) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
-        <div style={{ textAlign: "center", maxWidth: 420 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 14, background: "var(--v-light)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 24, margin: "0 auto 20px",
-          }}>✉️</div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-1)", margin: "0 0 10px" }}>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-900">
+        <div className="w-full max-w-[440px] text-center rounded-2xl bg-white p-8 shadow-xl border border-violet-100">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 text-3xl shadow-inner">
+            ✉️
+          </div>
+          <h1 className="mb-3 text-2xl font-bold tracking-tight text-slate-900">
             Cek email kamu
           </h1>
-          <p style={{ fontSize: 14, color: "var(--text-2)", lineHeight: 1.6, margin: "0 0 24px" }}>
-            Link konfirmasi sudah dikirim ke <strong>{email}</strong>. Klik link itu untuk mengaktifkan akun.
+          <p className="mb-6 text-sm text-slate-600 leading-relaxed">
+            Link konfirmasi sudah dikirim ke{" "}
+            <strong className="text-violet-600">{email}</strong>.
+            Klik link tersebut untuk mengaktifkan akun Anda.
           </p>
-          <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "var(--v)", textDecoration: "none" }}>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-violet-600 hover:text-violet-700 hover:underline"
+          >
             Kembali ke halaman masuk →
           </Link>
         </div>
@@ -64,103 +101,305 @@ export default function SignupPage() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* LEFT PANEL */}
-      <div style={{
-        flex: "0 0 42%", background: "var(--v-dark)", padding: "48px 40px",
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-      }} className="hidden-mobile">
-        <Link href="/" style={{ textDecoration: "none" }}>
-          <span style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Kanvexa</span>
-        </Link>
-        <div>
-          <h2 style={{ color: "#fff", fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 16px", lineHeight: 1.2 }}>
-            Dari satu kalimat<br />jadi tim yang produktif.
-          </h2>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 15, lineHeight: 1.7, margin: "0 0 32px" }}>
-            Tidak perlu meeting panjang hanya untuk bagi tugas. Ketik tujuan, AI yang urai, tim langsung kerja.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {["✦ Gratis untuk semua fitur dasar", "⟳ Real-time sync antar perangkat", "◈ Undang tim tanpa batas"].map((f) => (
-              <div key={f} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.75)" }}>{f}</span>
+    <section className="min-h-screen bg-slate-50 p-3 text-slate-900 antialiased">
+      <div className="grid min-h-[calc(100vh-1.5rem)] gap-6 lg:grid-cols-[0.94fr_1.06fr]">
+        {/* Left Visual Panel - Cerah Bright Purple Gradient */}
+        <div className="relative flex min-h-[640px] justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 px-7 py-12 text-white shadow-xl sm:px-10 lg:min-h-0 lg:py-16 xl:py-20">
+          {/* Ambient Soft Glowing Orbs */}
+          <div className="pointer-events-none absolute -left-20 -top-20 h-96 w-96 rounded-full bg-white/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-purple-300/30 blur-3xl" />
+
+          <div className="relative z-10 flex w-full max-w-[500px] flex-col items-center">
+            {/* Logo Header */}
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-white transition-opacity hover:opacity-90 drop-shadow-sm"
+            >
+              <KanvexaLogo className="size-7 text-white" />
+              Kanvexa
+            </Link>
+
+            {/* Carousel Tiles */}
+            <div className="relative mt-8 grid w-full grid-cols-[1.55fr_1fr] gap-2 rounded-xl">
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-violet-600/80 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-20 bg-gradient-to-t from-indigo-600/80 to-transparent" />
+              <ImageTile
+                src={images[0]}
+                active={activeIndex === 0}
+                className="row-span-2 h-[240px]"
+              />
+              <ImageTile
+                src={images[1]}
+                active={activeIndex === 1}
+                className="h-[116px]"
+              />
+              <ImageTile
+                src={images[3]}
+                active={activeIndex === 3}
+                className="h-[116px]"
+              />
+              <ImageTile
+                src={images[2]}
+                active={activeIndex === 2}
+                className="col-span-2 h-[115px]"
+              />
+            </div>
+
+            {/* Bright Glassmorphic Prompt Preview Box */}
+            <div className="mt-6 w-full rounded-2xl border border-white/30 bg-white/15 px-5 py-4 shadow-lg backdrop-blur-md">
+              <div className="flex items-end gap-4">
+                <p className="line-clamp-3 flex-1 text-xs leading-5 text-white/95">
+                  <span className="font-bold text-white underline underline-offset-2">
+                    /kanvexa ai
+                  </span>{" "}
+                  {prompts[activeIndex]}
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveIndex((prev) => (prev + 1) % prompts.length)
+                  }
+                  className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-violet-700 shadow-md transition-all hover:bg-white/90 hover:scale-105 active:scale-95"
+                  aria-label="Next prompt"
+                >
+                  <ArrowRight className="size-4" />
+                </button>
               </div>
-            ))}
+            </div>
+
+            <p className="mt-7 max-w-[320px] text-center text-xl font-bold leading-snug text-white drop-shadow-sm">
+              Ruang kerja Kanban AI cerdas untuk tim visioner & pembuat karya
+            </p>
+
+            {/* Carousel Indicators */}
+            <div className="mt-auto flex gap-2 pb-4 pt-6">
+              {prompts.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={
+                    activeIndex === index
+                      ? "h-1.5 w-8 rounded-full bg-white transition-all duration-300 shadow"
+                      : "h-1.5 w-3 rounded-full bg-white/40 transition-all duration-300 hover:bg-white/70"
+                  }
+                  aria-label={`Lihat gambar ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
-        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>© 2026 Kanvexa</p>
-      </div>
 
-      {/* RIGHT PANEL */}
-      <div style={{
-        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "40px 2rem",
-      }}>
-        <div style={{ width: "100%", maxWidth: 360 }}>
-          <Link href="/" style={{ display: "inline-block", marginBottom: 40, textDecoration: "none" }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "var(--v)", letterSpacing: "-0.02em" }}>Kanvexa</span>
-          </Link>
-
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text-1)", margin: "0 0 6px" }}>
-            Buat akun gratis
-          </h1>
-          <p style={{ fontSize: 14, color: "var(--text-2)", margin: "0 0 32px" }}>
-            Tidak perlu kartu kredit. Langsung bisa pakai.
-          </p>
-
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-1)", marginBottom: 6 }}>Nama lengkap</label>
-              <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="Andi Pratama"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: 14, border: "1px solid var(--border-strong)", outline: "none", background: "var(--card)", color: "var(--text-1)" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-1)", marginBottom: 6 }}>Email</label>
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="kamu@email.com"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: 14, border: "1px solid var(--border-strong)", outline: "none", background: "var(--card)", color: "var(--text-1)" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-1)", marginBottom: 6 }}>Password</label>
-              <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 6 karakter"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, fontSize: 14, border: "1px solid var(--border-strong)", outline: "none", background: "var(--card)", color: "var(--text-1)" }}
-              />
+        {/* Right Form Panel - Bright & Clean White */}
+        <div className="flex min-h-[640px] items-center justify-center rounded-2xl bg-white px-6 py-10 shadow-sm border border-violet-100/60 sm:px-10 lg:min-h-0 lg:px-14 xl:px-20">
+          <div className="mx-auto w-full max-w-[480px]">
+            <div className="mb-8 text-center sm:text-left">
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                Buat Akun Kanvexa
+              </h1>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                Mulai gratis tanpa kartu kredit. Kelola alur kerja AI dalam hitungan detik.
+              </p>
             </div>
 
-            {error && (
-              <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#DC2626" }}>
-                {error}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FieldInput
+                  label="Nama Depan"
+                  placeholder="Andi"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  type="text"
+                  required
+                />
+                <FieldInput
+                  label="Nama Belakang"
+                  placeholder="Pratama"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  type="text"
+                  required
+                />
               </div>
-            )}
 
-            <button type="submit" disabled={loading} style={{
-              marginTop: 4, padding: "11px", borderRadius: 8, fontSize: 14, fontWeight: 600,
-              background: loading ? "#A78BFA" : "var(--v)", color: "#fff", border: "none",
-              cursor: loading ? "not-allowed" : "pointer",
-            }}>
-              {loading ? "Membuat akun..." : "Daftar sekarang"}
-            </button>
-          </form>
+              <FieldInput
+                label="Alamat Email"
+                placeholder="nama@perusahaan.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                required
+              />
 
-          <p style={{ marginTop: 24, fontSize: 13, color: "var(--text-2)", textAlign: "center" }}>
-            Sudah punya akun?{" "}
-            <Link href="/login" style={{ fontWeight: 600, color: "var(--v)", textDecoration: "none" }}>Masuk</Link>
-          </p>
+              <FieldInput
+                label="Kata Sandi"
+                placeholder="Minimal 6 karakter"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                required
+                minLength={6}
+              />
 
-          <p style={{ marginTop: 16, fontSize: 11, color: "var(--text-3)", textAlign: "center" }}>
-            Dengan mendaftar, kamu menyetujui Syarat Layanan kami.
-          </p>
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2 text-xs font-medium text-slate-600">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                  />
+                  <span>
+                    Dengan membuat akun, Anda menyetujui{" "}
+                    <a
+                      href="#"
+                      className="font-bold text-violet-600 underline underline-offset-2 hover:text-violet-700"
+                    >
+                      Syarat Layanan
+                    </a>{" "}
+                    dan{" "}
+                    <a
+                      href="#"
+                      className="font-bold text-violet-600 underline underline-offset-2 hover:text-violet-700"
+                    >
+                      Kebijakan Privasi
+                    </a>{" "}
+                    Kanvexa.
+                  </span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-violet-600 text-base font-bold text-white shadow-lg shadow-violet-500/30 transition-all hover:bg-violet-700 active:scale-[0.99] disabled:opacity-50"
+              >
+                {loading ? "Membuat Akun..." : "Daftar Sekarang"}
+              </button>
+            </form>
+
+            <div className="mt-8 text-center text-sm font-medium text-slate-600">
+              Sudah memiliki akun?{" "}
+              <Link
+                href="/login"
+                className="font-bold text-violet-600 underline underline-offset-2 hover:text-violet-700"
+              >
+                Masuk ke akun
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
+    </section>
+  );
+}
 
-      <style>{`
-        @media (max-width: 640px) { .hidden-mobile { display: none !important; } }
-        input:focus { border-color: var(--v) !important; box-shadow: 0 0 0 3px rgba(109,40,217,0.1); }
-      `}</style>
+function ImageTile({
+  src,
+  active,
+  className,
+}: {
+  src: string;
+  active: boolean;
+  className: string;
+}) {
+  return (
+    <div
+      className={`${className} relative overflow-visible rounded-xl ${active ? "z-10" : "z-0"}`}
+    >
+      <img
+        src={src}
+        alt="Kanvexa AI visual"
+        className={`h-full w-full rounded-xl object-cover shadow-sm transition-all duration-700 ${active ? "opacity-100 scale-[1.02]" : "opacity-50"}`}
+      />
+      <FocusCorners active={active} />
     </div>
+  );
+}
+
+function FocusCorners({ active }: { active: boolean }) {
+  const baseClass = `pointer-events-none absolute h-4 w-4 border-white transition-all duration-500 ease-out ${active ? "translate-x-0 translate-y-0 opacity-100" : "opacity-0"}`;
+
+  return (
+    <>
+      <div
+        className={`${baseClass} -left-2 -top-2 border-l-2 border-t-2 ${active ? "" : "-translate-x-2 -translate-y-2"}`}
+      />
+      <div
+        className={`${baseClass} -right-2 -top-2 border-r-2 border-t-2 ${active ? "" : "translate-x-2 -translate-y-2"}`}
+      />
+      <div
+        className={`${baseClass} -bottom-2 -left-2 border-b-2 border-l-2 ${active ? "" : "-translate-x-2 translate-y-2"}`}
+      />
+      <div
+        className={`${baseClass} -bottom-2 -right-2 border-b-2 border-r-2 ${active ? "" : "translate-x-2 translate-y-2"}`}
+      />
+    </>
+  );
+}
+
+function FieldInput({
+  label,
+  placeholder,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  minLength,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  required?: boolean;
+  minLength?: number;
+}) {
+  return (
+    <div className="space-y-1.5 text-left">
+      <label className="block text-xs font-bold text-slate-700">
+        {label}
+      </label>
+      <div className="relative flex h-11 items-center rounded-xl border border-violet-100 bg-violet-50/40 px-3.5 transition-all focus-within:border-violet-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-violet-500/20">
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          minLength={minLength}
+          className="w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
+        />
+      </div>
+    </div>
+  );
+}
+
+function KanvexaLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      className={className}
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M5 25.5c5.4-3.3 9-9.7 9.8-18.8 5.2 5.5 8 11.8 8.8 18.8H5Z"
+        stroke="currentColor"
+        strokeWidth="2.2"
+      />
+      <path
+        d="M8 23.5h18M10.5 20.5h12.8M12.7 17.5h8.6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

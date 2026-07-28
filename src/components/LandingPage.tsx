@@ -40,6 +40,7 @@ import { Label } from "@/components/ui/label";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 
 const Twitter = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -843,8 +844,8 @@ export default function LandingPage() {
     }
   };
 
-  const handleSparklesClick = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleSparklesClick = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    if (e) e.preventDefault();
     const demoElement = document.getElementById("ai-demo");
     if (demoElement) {
       const navbarHeight = 80;
@@ -953,11 +954,8 @@ export default function LandingPage() {
               </a>
             ))}
           </div>
-          <Link
-            href="/signup"
-            className="rounded-full px-5 py-2 text-xs md:text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-all whitespace-nowrap shadow-sm"
-          >
-            Get Started
+          <Link href="/signup">
+            <LiquidMetalButton label="Get Started" />
           </Link>
         </motion.nav>
       </motion.div>
@@ -1013,21 +1011,14 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="mt-7 flex items-center gap-3.5 z-20"
+              className="mt-7 flex flex-wrap items-center justify-center gap-3.5 z-20"
             >
-              <Link
-                href="/signup"
-                className="rounded-full px-7 py-4 text-sm md:text-base font-medium font-body bg-primary text-primary-foreground hover:opacity-90 transition-opacity flex items-center justify-center h-12 shadow-lg shadow-primary/10"
-              >
-                Mulai Gratis Sekarang
+              <Link href="/signup">
+                <LiquidMetalButton label="Uji Coba Gratis" colorTheme="purple" />
               </Link>
-              <button
-                onClick={handleSparklesClick}
-                title="Coba Demo AI Interaktif"
-                className="flex items-center justify-center h-12 w-12 rounded-full border border-border/50 bg-background/90 backdrop-blur-sm shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background hover:scale-110 active:scale-95 transition-all cursor-pointer group"
-              >
-                <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400 group-hover:rotate-12 transition-transform" />
-              </button>
+              <a href="#pricing" onClick={(e) => handleScroll(e, "pricing")}>
+                <LiquidMetalButton label="Beralih ke Pro" badge="Diskon 20%" />
+              </a>
             </motion.div>
           </motion.div>
 
