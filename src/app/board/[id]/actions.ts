@@ -97,6 +97,58 @@ export async function createColumn(boardId: string, name: string) {
   revalidatePath(`/board/${boardId}`);
 }
 
+export async function createColumnWithCard(
+  boardId: string, 
+  columnName: string, 
+  cardTitle: string,
+  details?: { dueDate?: string; dueTime?: string; assignee?: string; notes?: string }
+) {
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("board_columns")
+    .select("position")
+    .eq("board_id", boardId)
+    .order("position", { ascending: false })
+    .limit(1);
+
+  const position = (existing?.[0]?.position ?? -1) + 1;
+
+  const { data: col, error: colErr } = await supabase
+    .from("board_columns")
+    .insert({
+      board_id: boardId,
+      name: columnName.trim(),
+      position: position,
+    })
+    .select()
+    .single();
+
+  if (colErr || !col) throw new Error(colErr?.message || "Gagal membuat kolom");
+
+  if (cardTitle && cardTitle.trim()) {
+    let fullTitle = cardTitle.trim();
+    const metaParts = [];
+    if (details?.dueDate) metaParts.push(`📅 ${details.dueDate}`);
+    if (details?.dueTime) metaParts.push(`⏰ ${details.dueTime}`);
+    if (details?.assignee) metaParts.push(`👤 ${details.assignee}`);
+    if (details?.notes) metaParts.push(`📝 ${details.notes}`);
+
+    if (metaParts.length > 0) {
+      fullTitle += ` (${metaParts.join(" • ")})`;
+    }
+
+    await supabase.from("cards").insert({
+      board_id: boardId,
+      column_id: col.id,
+      title: fullTitle,
+      position: 0,
+    });
+  }
+
+  revalidatePath(`/board/${boardId}`);
+}
+
 export async function deleteColumn(boardId: string, columnId: string) {
   const supabase = await createClient();
   // Cards inside are deleted automatically via ON DELETE CASCADE

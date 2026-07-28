@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { Share2, Calendar, Clock, User, FileText } from "lucide-react";
 import KanbanCard from "./KanbanCard";
 import { createCard, deleteColumn } from "../app/board/[id]/actions";
 
@@ -20,22 +21,81 @@ interface Props {
 
 export default function KanbanColumn({ id, boardId, name, accentColor, cards, isAdmin, canEdit }: Props) {
     const [addingCard, setAddingCard] = useState(false);
-    const [newTitle, setNewTitle] = useState("");
+    const [taskName, setTaskName] = useState("");
+    const [dueDate, setDueDate] = useState("");
+    const [dueTime, setDueTime] = useState("");
+    const [assignee, setAssignee] = useState("");
+    const [notes, setNotes] = useState("");
     const [saving, setSaving] = useState(false);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const [allCompleted, setAllCompleted] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = () => {
+        try {
+            navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2200);
+        } catch (e) {
+            console.error("Gagal menyalin link:", e);
+        }
+    };
 
     const { setNodeRef, isOver } = useDroppable({ id });
 
+    // Check if all cards in this column are marked as completed
     useEffect(() => {
-        if (addingCard) textareaRef.current?.focus();
-    }, [addingCard]);
+        if (!cards || cards.length === 0) {
+            setAllCompleted(false);
+            return;
+        }
+
+        const checkCompletion = () => {
+            try {
+                const isEveryCardDone = cards.every(card => {
+                    const stored = localStorage.getItem(`card_completed_${card.id}`);
+                    return stored !== null && JSON.parse(stored) === true;
+                });
+                setAllCompleted(isEveryCardDone);
+            } catch (e) {
+                setAllCompleted(false);
+            }
+        };
+
+        checkCompletion();
+        window.addEventListener("card_completion_changed", checkCompletion);
+        window.addEventListener("storage", checkCompletion);
+        const interval = setInterval(checkCompletion, 500);
+
+        return () => {
+            window.removeEventListener("card_completion_changed", checkCompletion);
+            window.removeEventListener("storage", checkCompletion);
+            clearInterval(interval);
+        };
+    }, [cards]);
 
     async function handleAddCard() {
-        const trimmed = newTitle.trim();
-        if (!trimmed) { setAddingCard(false); return; }
+        const trimmedTask = taskName.trim();
+        if (!trimmedTask) return;
+
         setSaving(true);
-        await createCard(boardId, id, trimmed);
-        setNewTitle("");
+        let fullTitle = trimmedTask;
+        const metaParts = [];
+        if (dueDate) metaParts.push(`📅 ${dueDate}`);
+        if (dueTime) metaParts.push(`⏰ ${dueTime}`);
+        if (assignee.trim()) metaParts.push(`👤 ${assignee.trim()}`);
+        if (notes.trim()) metaParts.push(`📝 ${notes.trim()}`);
+
+        if (metaParts.length > 0) {
+            fullTitle += ` (${metaParts.join(" • ")})`;
+        }
+
+        await createCard(boardId, id, fullTitle);
+
+        setTaskName("");
+        setDueDate("");
+        setDueTime("");
+        setAssignee("");
+        setNotes("");
         setSaving(false);
         setAddingCard(false);
     }
@@ -50,152 +110,327 @@ export default function KanbanColumn({ id, boardId, name, accentColor, cards, is
 
     return (
         <div style={{
-            width: 272, flexShrink: 0,
-            background: isOver ? "#EDEBFF" : "#F2F1EE",
-            borderRadius: 12, border: `1px solid ${isOver ? "#C4B5FD" : "var(--border)"}`,
+            width: 290, flexShrink: 0,
             display: "flex", flexDirection: "column",
             maxHeight: "calc(100vh - 140px)",
-            transition: "background 0.15s, border-color 0.15s",
         }}>
-            {/* Column header */}
+            {/* Column Header Title above Card Container */}
             <div style={{
-                padding: "11px 12px 9px",
-                display: "flex", alignItems: "center", gap: 7,
-                borderBottom: "1px solid var(--border)", flexShrink: 0,
+                padding: "4px 4px 10px 4px",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                flexShrink: 0,
             }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: accentColor, flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", flex: 1 }}>{name}</span>
-                <span style={{
-                    fontSize: 11, fontWeight: 600, borderRadius: 100,
-                    background: "rgba(0,0,0,0.07)", color: "var(--text-2)",
-                    padding: "1px 7px", marginRight: isAdmin ? 2 : 0,
-                }}>
-                    {cards.length}
-                </span>
-                {isAdmin && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.01em" }}>
+                        {name}
+                    </span>
+                    <span style={{
+                        fontSize: 11, fontWeight: 700, borderRadius: 100,
+                        background: "rgba(0,0,0,0.06)", color: "var(--text-2)",
+                        padding: "2px 8px",
+                    }}>
+                        {cards.length}
+                    </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <button
-                        onClick={handleDeleteColumn}
-                        title={`Hapus kolom "${name}"`}
+                        onClick={handleShare}
+                        title="Bagikan link proyek untuk kolaborasi"
                         style={{
-                            background: "none", border: "none", cursor: "pointer",
-                            color: "var(--text-3)", fontSize: 16, lineHeight: 1,
-                            padding: "1px 3px", borderRadius: 4,
-                            transition: "color 0.15s",
+                            background: copied ? "#ecfdf5" : "none",
+                            border: copied ? "1px solid #a7f3d0" : "1px solid transparent",
+                            cursor: "pointer",
+                            color: copied ? "#059669" : "var(--text-3)",
+                            fontSize: 12,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                            padding: "3px 6px",
+                            borderRadius: 6,
+                            transition: "all 0.15s ease",
                         }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#DC2626"}
-                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--text-3)"}
-                    >×</button>
-                )}
+                        onMouseEnter={e => {
+                            if (!copied) (e.currentTarget as HTMLElement).style.color = "var(--v)";
+                        }}
+                        onMouseLeave={e => {
+                            if (!copied) (e.currentTarget as HTMLElement).style.color = "var(--text-3)";
+                        }}
+                    >
+                        <Share2 style={{ width: 14, height: 14 }} />
+                        {copied && <span style={{ fontSize: 10, fontWeight: 700 }}>Disalin!</span>}
+                    </button>
+
+                    {isAdmin && (
+                        <button
+                            onClick={handleDeleteColumn}
+                            title={`Hapus "${name}"`}
+                            style={{
+                                background: "none", border: "none", cursor: "pointer",
+                                color: "var(--text-3)", fontSize: 16, lineHeight: 1,
+                                padding: "2px 5px", borderRadius: 4,
+                                transition: "color 0.15s",
+                            }}
+                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#DC2626"}
+                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--text-3)"}
+                        >×</button>
+                    )}
+                </div>
             </div>
 
-            {/* Cards drop area */}
-            <div
-                ref={setNodeRef}
-                style={{ flex: 1, overflowY: "auto", padding: "8px 8px 0" }}
-            >
-                <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
-                    {sortedCards.map(card => (
-                        <KanbanCard
-                            key={card.id}
-                            id={card.id}
-                            boardId={boardId}
-                            title={card.title}
-                            accentColor={accentColor}
-                            canEdit={canEdit}
-                        />
-                    ))}
-                </SortableContext>
-
-                {/* Placeholder when column is empty and being hovered */}
-                {cards.length === 0 && !isOver && !addingCard && (
+            {/* Single Large Card Container */}
+            <div style={{
+                flex: 1,
+                background: isOver ? "#EDEBFF" : "var(--card)",
+                borderRadius: 16,
+                border: `1.5px solid ${isOver ? "#C4B5FD" : "var(--border-strong)"}`,
+                padding: "20px 16px 14px",
+                display: "flex", flexDirection: "column",
+                position: "relative",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                transition: "all 0.15s ease",
+                minHeight: 280,
+                overflow: "hidden",
+            }}>
+                {/* ALL DONE! Stamp Badge */}
+                {allCompleted && (
                     <div style={{
-                        border: "1.5px dashed var(--border-strong)", borderRadius: 8,
-                        padding: "18px 12px", textAlign: "center", marginBottom: 8,
+                        position: "absolute",
+                        top: 16,
+                        right: 16,
+                        pointerEvents: "none",
+                        zIndex: 20,
+                        animation: "stampPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
                     }}>
-                        <p style={{ margin: 0, fontSize: 12, color: "var(--text-3)" }}>Belum ada kartu</p>
+                        <div style={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: "50%",
+                            border: "2.5px double #10b981",
+                            background: "rgba(236, 253, 245, 0.95)",
+                            backdropFilter: "blur(6px)",
+                            color: "#059669",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transform: "rotate(-14deg)",
+                            boxShadow: "0 4px 14px rgba(16, 185, 129, 0.18)",
+                            padding: 4,
+                        }}>
+                            <div style={{ borderBottom: "1px solid #10b981", width: "80%", textAlign: "center", fontSize: 7, fontWeight: 800, letterSpacing: "0.08em", paddingBottom: 1, marginBottom: 1 }}>
+                                ✦ STATUS ✦
+                            </div>
+                            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.05em", lineHeight: 1.1, textAlign: "center" }}>
+                                ALL DONE!
+                            </div>
+                            <div style={{ borderTop: "1px solid #10b981", width: "80%", textAlign: "center", fontSize: 7, fontWeight: 800, letterSpacing: "0.08em", paddingTop: 1, marginTop: 1 }}>
+                                COMPLETE
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <style>{`
+                    @keyframes stampPop {
+                        0% { transform: scale(1.8) rotate(-35deg); opacity: 0; }
+                        100% { transform: scale(1) rotate(-14deg); opacity: 1; }
+                    }
+                `}</style>
+
+                {/* Cards drop area inside single large card */}
+                <div
+                    ref={setNodeRef}
+                    style={{ flex: 1, overflowY: "auto", minHeight: 120, paddingRight: 2 }}
+                >
+                    <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
+                        {sortedCards.map(card => (
+                            <KanbanCard
+                                key={card.id}
+                                id={card.id}
+                                boardId={boardId}
+                                title={card.title}
+                                accentColor={accentColor}
+                                canEdit={canEdit}
+                            />
+                        ))}
+                    </SortableContext>
+
+                    {cards.length === 0 && !addingCard && (
+                        <div style={{
+                            padding: "32px 16px", textAlign: "center",
+                            fontSize: 13, color: "var(--text-3)",
+                            border: "1px dashed var(--border)", borderRadius: 10,
+                            margin: "8px 0",
+                        }}>
+                            Belum ada tugas
+                        </div>
+                    )}
+                </div>
+
+                {/* Add Card Form / Button */}
+                {canEdit && (
+                    <div style={{ paddingTop: 10, borderTop: "1px solid var(--border)", marginTop: 8, flexShrink: 0 }}>
+                        {addingCard ? (
+                            <div style={{
+                                background: "#ffffff",
+                                border: "1px solid var(--v)",
+                                borderRadius: 12,
+                                padding: "14px",
+                                boxShadow: "0 10px 25px rgba(109,40,217,0.12)",
+                                display: "flex", flexDirection: "column", gap: 10,
+                            }}>
+                                <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--v)" }}>
+                                    ✦ Tambah Tugas Baru
+                                </div>
+
+                                {/* 1. Nama Tugas */}
+                                <div>
+                                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                                        Nama Tugas
+                                    </label>
+                                    <input
+                                        autoFocus
+                                        value={taskName}
+                                        onChange={e => setTaskName(e.target.value)}
+                                        placeholder="misal: ayo makan, kerjakan revisi..."
+                                        style={{
+                                            width: "100%", padding: "7px 10px", borderRadius: 8, fontSize: 13,
+                                            border: "1px solid #cbd5e1", outline: "none", color: "#0f172a",
+                                            background: "#f8fafc",
+                                        }}
+                                    />
+                                </div>
+
+                                {/* 2. Tanggal Selesai & Jam */}
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                                    <div>
+                                        <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                                            <Calendar style={{ width: 12, height: 12, color: "#4f46e5" }} />
+                                            <span>Tanggal</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={dueDate}
+                                            onChange={e => setDueDate(e.target.value)}
+                                            style={{
+                                                width: "100%", padding: "6px 8px", borderRadius: 7, fontSize: 11,
+                                                border: "1px solid #cbd5e1", outline: "none", color: "#0f172a",
+                                                background: "#f8fafc",
+                                            }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                                            <Clock style={{ width: 12, height: 12, color: "#d97706" }} />
+                                            <span>Jam</span>
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={dueTime}
+                                            onChange={e => setDueTime(e.target.value)}
+                                            style={{
+                                                width: "100%", padding: "6px 8px", borderRadius: 7, fontSize: 11,
+                                                border: "1px solid #cbd5e1", outline: "none", color: "#0f172a",
+                                                background: "#f8fafc",
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 3. Ditugaskan Kepada */}
+                                <div>
+                                    <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                                        <User style={{ width: 12, height: 12, color: "#059669" }} />
+                                        <span>Ditugaskan Kepada</span>
+                                    </label>
+                                    <input
+                                        value={assignee}
+                                        onChange={e => setAssignee(e.target.value)}
+                                        placeholder="misal: Andi, Budi"
+                                        style={{
+                                            width: "100%", padding: "7px 10px", borderRadius: 8, fontSize: 12,
+                                            border: "1px solid #cbd5e1", outline: "none", color: "#0f172a",
+                                            background: "#f8fafc",
+                                        }}
+                                    />
+                                </div>
+
+                                {/* 4. Catatan / Instructions */}
+                                <div>
+                                    <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                                        <FileText style={{ width: 12, height: 12, color: "#64748b" }} />
+                                        <span>Catatan / Instructions</span>
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        value={notes}
+                                        onChange={e => setNotes(e.target.value)}
+                                        placeholder="Catatan atau instruksi..."
+                                        style={{
+                                            width: "100%", padding: "7px 10px", borderRadius: 8, fontSize: 12,
+                                            border: "1px solid #cbd5e1", outline: "none", color: "#0f172a",
+                                            background: "#f8fafc", resize: "none", fontFamily: "inherit"
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Form Buttons */}
+                                <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                                    <button
+                                        onClick={handleAddCard}
+                                        disabled={saving || !taskName.trim()}
+                                        style={{
+                                            flex: 1, padding: "7px", borderRadius: 7, fontSize: 12, fontWeight: 700,
+                                            background: "var(--v)", color: "#fff", border: "none",
+                                            cursor: saving || !taskName.trim() ? "not-allowed" : "pointer",
+                                            opacity: saving || !taskName.trim() ? 0.6 : 1,
+                                        }}
+                                    >
+                                        {saving ? "Menyimpan..." : "Tambah Kartu ✦"}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setTaskName(""); setDueDate(""); setDueTime("");
+                                            setAssignee(""); setNotes(""); setAddingCard(false);
+                                        }}
+                                        style={{
+                                            padding: "7px 12px", borderRadius: 7, fontSize: 12,
+                                            background: "none", border: "1px solid #cbd5e1",
+                                            color: "#475569", cursor: "pointer",
+                                        }}
+                                    >
+                                        Batal
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setAddingCard(true)}
+                                style={{
+                                    width: "100%", padding: "8px 12px", borderRadius: 8,
+                                    border: "1px dashed var(--border-strong)", background: "transparent",
+                                    color: "var(--text-3)", cursor: "pointer", fontSize: 13,
+                                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                                    transition: "all 0.15s",
+                                }}
+                                onMouseEnter={e => {
+                                    const el = e.currentTarget as HTMLElement;
+                                    el.style.background = "rgba(109,40,217,0.04)";
+                                    el.style.color = "var(--v)";
+                                    el.style.borderColor = "var(--v)";
+                                }}
+                                onMouseLeave={e => {
+                                    const el = e.currentTarget as HTMLElement;
+                                    el.style.background = "transparent";
+                                    el.style.color = "var(--text-3)";
+                                    el.style.borderColor = "var(--border-strong)";
+                                }}
+                            >
+                                <span>+</span> Tambah kartu
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
-
-            {/* Add card area */}
-            {canEdit && (
-                <div style={{ padding: "6px 8px 8px", flexShrink: 0 }}>
-                    {addingCard ? (
-                        <div style={{
-                            background: "var(--card)", border: "1px solid var(--v)",
-                            borderRadius: 8, padding: "8px",
-                            boxShadow: "0 0 0 3px rgba(109,40,217,0.1)",
-                        }}>
-                            <textarea
-                                ref={textareaRef}
-                                value={newTitle}
-                                onChange={e => setNewTitle(e.target.value)}
-                                placeholder="Judul kartu..."
-                                rows={2}
-                                disabled={saving}
-                                onKeyDown={e => {
-                                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddCard(); }
-                                    if (e.key === "Escape") { setNewTitle(""); setAddingCard(false); }
-                                }}
-                                style={{
-                                    width: "100%", resize: "none", border: "none", outline: "none",
-                                    background: "transparent", fontSize: 13, color: "var(--text-1)",
-                                    fontFamily: "inherit", lineHeight: 1.45, marginBottom: 8,
-                                }}
-                            />
-                            <div style={{ display: "flex", gap: 6 }}>
-                                <button
-                                    onClick={handleAddCard}
-                                    disabled={saving || !newTitle.trim()}
-                                    style={{
-                                        flex: 1, padding: "6px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                                        background: "var(--v)", color: "#fff", border: "none",
-                                        cursor: saving || !newTitle.trim() ? "not-allowed" : "pointer",
-                                        opacity: saving || !newTitle.trim() ? 0.6 : 1,
-                                    }}
-                                >
-                                    {saving ? "Menyimpan..." : "Simpan"}
-                                </button>
-                                <button
-                                    onClick={() => { setNewTitle(""); setAddingCard(false); }}
-                                    style={{
-                                        padding: "6px 10px", borderRadius: 6, fontSize: 12,
-                                        background: "none", border: "1px solid var(--border-strong)",
-                                        color: "var(--text-2)", cursor: "pointer",
-                                    }}
-                                >
-                                    Batal
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setAddingCard(true)}
-                            style={{
-                                width: "100%", padding: "7px", borderRadius: 8, fontSize: 13,
-                                border: "1px dashed var(--border-strong)", background: "transparent",
-                                color: "var(--text-3)", cursor: "pointer",
-                                display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
-                                transition: "background 0.15s, color 0.15s, border-color 0.15s",
-                            }}
-                            onMouseEnter={e => {
-                                const el = e.currentTarget as HTMLElement;
-                                el.style.background = "var(--card)";
-                                el.style.color = "var(--text-1)";
-                                el.style.borderColor = "var(--v)";
-                            }}
-                            onMouseLeave={e => {
-                                const el = e.currentTarget as HTMLElement;
-                                el.style.background = "transparent";
-                                el.style.color = "var(--text-3)";
-                                el.style.borderColor = "var(--border-strong)";
-                            }}
-                        >
-                            <span style={{ fontSize: 16 }}>+</span> Tambah kartu
-                        </button>
-                    )}
-                </div>
-            )}
         </div>
     );
 }
