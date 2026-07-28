@@ -9,7 +9,11 @@ import {
   FolderKanban, 
   Plus, 
   Star, 
-  Pin
+  Pin,
+  Rocket,
+  GraduationCap,
+  Share2,
+  BookOpen
 } from "lucide-react";
 
 interface Board {
@@ -236,16 +240,152 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
           {/* BOARD GRID */}
           {!sortedBoards.length ? (
             <div style={{
-              border: "2px dashed #cbd5e1", borderRadius: 24,
-              padding: "80px 24px", textAlign: "center", background: "#ffffff",
+              border: "2px dashed var(--border)", borderRadius: 16,
+              padding: "60px 32px", textAlign: "center", background: "#ffffff",
             }}>
-              <div style={{ fontSize: 44, marginBottom: 16 }}>📋</div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", margin: "0 0 8px" }}>
-                Belum ada papan kerja
+              <div style={{ fontSize: 40, marginBottom: 16 }}>✦</div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-1)", margin: "0 0 8px" }}>
+                Mulai proyek pertamamu
               </h2>
-              <p style={{ fontSize: 14, color: "#64748b", maxWidth: 400, margin: "0 auto", lineHeight: 1.5 }}>
-                Mulai buat papan pertama Anda dengan tombol "Papan Baru" di bilah samping.
+              <p style={{ fontSize: 14, color: "var(--text-2)", margin: "0 0 28px", lineHeight: 1.6 }}>
+                Ketik satu kalimat tujuan — AI langsung urai jadi board, kolom, dan kartu tugas siap pakai.
               </p>
+
+              {/* AI input inline */}
+              <form action={createBoardAction} style={{ maxWidth: 480, margin: "0 auto 16px" }}>
+                <div style={{
+                  display: "flex", gap: 8,
+                  background: "var(--card)", border: "1px solid var(--border-strong)",
+                  borderRadius: 12, padding: "6px 6px 6px 14px",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                }}>
+                  <span style={{ fontSize: 16, color: "var(--v)", alignSelf: "center", flexShrink: 0 }}>✦</span>
+                  <input
+                    name="name"
+                    required
+                    placeholder='misal: "Persiapan seminar kampus bulan depan"'
+                    style={{
+                      flex: 1, border: "none", outline: "none", fontSize: 14,
+                      background: "transparent", color: "var(--text-1)",
+                    }}
+                  />
+                  <button type="submit" style={{
+                    padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                    background: "var(--v)", color: "#fff", border: "none",
+                    cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+                  }}>
+                    Buat dengan AI ✦
+                  </button>
+                </div>
+              </form>
+
+              <p style={{ fontSize: 12, color: "var(--text-3)" }}>
+                atau{" "}
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  style={{
+                    background: "none", border: "none", fontSize: 12,
+                    color: "var(--v)", cursor: "pointer", textDecoration: "underline",
+                    padding: 0,
+                  }}
+                >
+                  buat board manual
+                </button>
+                {" "}dari modal
+              </p>
+
+              {/* Template Proyek Cepat (Quick Start Templates) */}
+              <div style={{ marginTop: 44, paddingTop: 32, borderTop: "1px solid #f1f5f9" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18, justifyContent: "center" }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>
+                    Template Proyek Cepat
+                  </span>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, maxWidth: 840, margin: "0 auto" }}>
+                  {[
+                    {
+                      title: "Peluncuran Produk / App",
+                      desc: "Dev, UI/UX, Launch",
+                      prompt: "Peluncuran Produk / App",
+                      icon: Rocket,
+                      color: "#6366f1",
+                      bg: "#eef2ff",
+                    },
+                    {
+                      title: "Acara Kampus / Seminar",
+                      desc: "Panitia, Venue, Sponsorship",
+                      prompt: "Acara Kampus / Seminar",
+                      icon: GraduationCap,
+                      color: "#8b5cf6",
+                      bg: "#f5f3ff",
+                    },
+                    {
+                      title: "Konten & Social Media",
+                      desc: "Ide, Draft, Publishing",
+                      prompt: "Konten & Social Media",
+                      icon: Share2,
+                      color: "#ec4899",
+                      bg: "#fdf2f8",
+                    },
+                    {
+                      title: "Manajemen Skripsi / Tugas Akhir",
+                      desc: "Riset, Bab 1-5, Revisi",
+                      prompt: "Manajemen Skripsi / Tugas Akhir",
+                      icon: BookOpen,
+                      color: "#059669",
+                      bg: "#ecfdf5",
+                    },
+                  ].map((tpl, idx) => {
+                    const IconComp = tpl.icon;
+                    return (
+                      <form key={idx} action={createBoardAction} style={{ margin: 0 }}>
+                        <input type="hidden" name="name" value={tpl.prompt} />
+                        <button
+                          type="submit"
+                          style={{
+                            width: "100%",
+                            textAlign: "left",
+                            padding: "16px",
+                            borderRadius: 14,
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 10,
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+                          }}
+                          className="template-card-btn"
+                        >
+                          <div style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 10,
+                            background: tpl.bg,
+                            color: tpl.color,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}>
+                            <IconComp style={{ width: 18, height: 18 }} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginBottom: 3, lineHeight: 1.3 }}>
+                              {tpl.title}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>
+                              {tpl.desc}
+                            </div>
+                          </div>
+                        </button>
+                      </form>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))", gap: 24 }}>
@@ -702,6 +842,11 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
         .board-card:hover .btn-open-board {
           background-color: var(--v) !important;
           box-shadow: 0 4px 14px rgba(109, 40, 217, 0.25) !important;
+        }
+        .template-card-btn:hover {
+          border-color: var(--v) !important;
+          transform: translateY(-3px) !important;
+          box-shadow: 0 8px 20px rgba(109, 40, 217, 0.12) !important;
         }
       `}</style>
     </div>

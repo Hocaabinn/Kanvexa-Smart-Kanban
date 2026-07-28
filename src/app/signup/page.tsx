@@ -16,17 +16,28 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email, password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: { full_name: name },
-      },
-    });
-    setLoading(false);
-    if (error) { setError(error.message); return; }
-    setSubmitted(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: { full_name: name },
+        },
+      });
+      setLoading(false);
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      setSubmitted(true);
+    } catch (err: any) {
+      setLoading(false);
+      setError(
+        err?.message || "Gagal terhubung ke layanan autentikasi. Periksa koneksi internet Anda."
+      );
+    }
   }
 
   if (submitted) {

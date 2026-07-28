@@ -27,20 +27,27 @@ import {
   FolderKanban,
   Bot,
   Wand2,
+  HelpCircle,
+  MessageCircle,
+  ChevronDown,
+  Star,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import confetti from "canvas-confetti";
+import NumberFlow from "@number-flow/react";
 
 const Twitter = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    fill="currentColor"
     {...props}
   >
-    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
 
@@ -120,18 +127,18 @@ interface HeroIconData {
 
 const CTA_ICONS: HeroIconData[] = [
   // Left side flank (kept strictly away from center max-w-2xl text)
-  { id: 1, icon: Brain,          className: "top-[12%] left-[2%] lg:left-[4%]" },
-  { id: 2, icon: ListTodo,       className: "top-[32%] left-[10%] lg:left-[13%]" },
-  { id: 3, icon: Lightbulb,      className: "top-[52%] left-[2%] lg:left-[4%]" },
-  { id: 4, icon: Target,         className: "top-[72%] left-[9%] lg:left-[12%]" },
-  { id: 5, icon: Timer,          className: "top-[88%] left-[2%] lg:left-[4%]" },
+  { id: 1, icon: Brain, className: "top-[12%] left-[2%] lg:left-[4%]" },
+  { id: 2, icon: ListTodo, className: "top-[32%] left-[10%] lg:left-[13%]" },
+  { id: 3, icon: Lightbulb, className: "top-[52%] left-[2%] lg:left-[4%]" },
+  { id: 4, icon: Target, className: "top-[72%] left-[9%] lg:left-[12%]" },
+  { id: 5, icon: Timer, className: "top-[88%] left-[2%] lg:left-[4%]" },
 
   // Right side flank (kept strictly away from center max-w-2xl text)
-  { id: 6, icon: Zap,            className: "top-[12%] right-[2%] lg:right-[4%]" },
-  { id: 7, icon: Bot,            className: "top-[32%] right-[10%] lg:right-[13%]" },
+  { id: 6, icon: Zap, className: "top-[12%] right-[2%] lg:right-[4%]" },
+  { id: 7, icon: Bot, className: "top-[32%] right-[10%] lg:right-[13%]" },
   { id: 8, icon: ClipboardCheck, className: "top-[52%] right-[2%] lg:right-[4%]" },
-  { id: 9, icon: Rocket,         className: "top-[72%] right-[9%] lg:right-[12%]" },
-  { id: 10, icon: CalendarDays,  className: "top-[88%] right-[2%] lg:right-[4%]" },
+  { id: 9, icon: Rocket, className: "top-[72%] right-[9%] lg:right-[12%]" },
+  { id: 10, icon: CalendarDays, className: "top-[88%] right-[2%] lg:right-[4%]" },
 ];
 
 const FloatingIcon = ({
@@ -345,6 +352,406 @@ function MarqueeTestimonialsColumn(props: {
   );
 }
 
+const CustomAccordion = AccordionPrimitive.Root;
+
+const CustomAccordionItem = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
+>(({ className, ...props }, ref) => (
+  <AccordionPrimitive.Item
+    ref={ref}
+    className={cn('', className)}
+    {...props}
+  />
+));
+CustomAccordionItem.displayName = 'CustomAccordionItem';
+
+const CustomAccordionTrigger = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <AccordionPrimitive.Header className="flex">
+    <AccordionPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        'group flex flex-1 items-center justify-between gap-4 rounded-2xl p-4 sm:p-5 text-left',
+        'bg-white/75 backdrop-blur-xl text-slate-900 border border-white/90 shadow-md shadow-indigo-950/5',
+        'hover:bg-white/90 hover:border-white hover:shadow-lg transition-all duration-300',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/40',
+        'data-[state=open]:bg-white/95 data-[state=open]:border-white data-[state=open]:shadow-lg',
+        className
+      )}
+      {...props}
+    >
+      <div className="flex items-center gap-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25">
+          <HelpCircle className="h-5 w-5 text-white" />
+        </div>
+        <span className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">
+          {children}
+        </span>
+      </div>
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/90 border border-indigo-100 text-indigo-700 shadow-xs transition-transform duration-300 group-hover:scale-105 group-data-[state=open]:rotate-180">
+        <ChevronDown className="h-4 w-4 text-indigo-700" />
+      </div>
+    </AccordionPrimitive.Trigger>
+  </AccordionPrimitive.Header>
+));
+CustomAccordionTrigger.displayName = 'CustomAccordionTrigger';
+
+const CustomAccordionContent = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <AccordionPrimitive.Content
+    ref={ref}
+    className={cn(
+      'overflow-hidden text-slate-800',
+      'data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down pb-2',
+      className
+    )}
+    {...props}
+  >
+    <div className="mt-3 sm:mt-4 ml-0 sm:ml-14">
+      <div className="flex items-start gap-4 rounded-2xl bg-white/85 backdrop-blur-xl p-4 sm:p-5 shadow-sm border border-white/90 transition-all">
+        <span className="flex-1 text-sm sm:text-base leading-relaxed text-slate-700 font-medium">{children}</span>
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-sm transition-transform hover:scale-105">
+          <MessageCircle className="h-4 w-4 text-white" />
+        </div>
+      </div>
+    </div>
+  </AccordionPrimitive.Content>
+));
+CustomAccordionContent.displayName = 'CustomAccordionContent';
+
+export {
+  CustomAccordion,
+  CustomAccordionItem,
+  CustomAccordionTrigger,
+  CustomAccordionContent,
+};
+
+const faqs = [
+  {
+    question: 'Apa itu Kanvexa dan bagaimana cara kerjanya?',
+    answer:
+      'Kanvexa adalah platform Kanban board cerdas berbasis AI yang mengubah perintah satu kalimat menjadi rencana kerja, alur tugas, dan daftar Kanban otomatis.',
+  },
+  {
+    question: 'Apakah Kanvexa mendukung kolaborasi tim?',
+    answer:
+      'Ya! Kanvexa dirancang untuk tim modern dengan dukungan pembaruan real-time, pembagian tugas anggota, serta tracking status papan bersama.',
+  },
+  {
+    question: 'Apakah ada paket uji coba gratis?',
+    answer:
+      'Tentu saja. Anda dapat mendaftar dan mencoba fitur utama Kanvexa secara gratis tanpa memerlukan kartu kredit.',
+  },
+  {
+    question: 'Bagaimana AI Kanvexa memecah proyek saya?',
+    answer:
+      'Cukup ketik ide atau instruksi proyek Anda, AI Kanvexa akan otomatis menganalisis dan membaginya menjadi beberapa sub-tugas yang terstruktur.',
+  },
+  {
+    question: 'Apakah data proyek saya aman di Kanvexa?',
+    answer:
+      'Keamanan data adalah prioritas utama kami. Semua data disimpan dan dilindungi menggunakan enkripsi standar industri serta infrastruktur cloud Supabase.',
+  },
+];
+
+export function AccordionComponent() {
+  return (
+    <section id="faq" className="relative z-10 px-6 md:px-12 lg:px-20 py-24 md:py-28 overflow-hidden bg-gradient-to-br from-indigo-100/90 via-purple-100/80 to-pink-100/90">
+      {/* Bright Vibrant Glowing Aura Blobs */}
+      <div className="absolute top-12 left-1/4 w-[450px] h-[350px] bg-indigo-400/30 rounded-full blur-[100px] pointer-events-none z-0" />
+      <div className="absolute bottom-12 right-1/4 w-[450px] h-[350px] bg-pink-400/30 rounded-full blur-[100px] pointer-events-none z-0" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[350px] bg-purple-400/25 rounded-full blur-[110px] pointer-events-none z-0" />
+
+      <div className="max-w-3xl w-full mx-auto relative z-10">
+        <div className="text-center mb-12">
+          <span className="inline-block px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-indigo-700 bg-white/80 border border-white/90 rounded-full shadow-sm backdrop-blur-md mb-4">
+            FAQ
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display text-slate-900 tracking-tight">
+            Frequently Asked Questions
+          </h2>
+          <p className="mt-3.5 text-slate-700 text-sm sm:text-base max-w-lg mx-auto font-medium">
+            Pertanyaan umum seputar penggunaan Kanvexa, AI task breakdown, dan fitur alur kerja.
+          </p>
+        </div>
+        <CustomAccordion
+          type="single"
+          collapsible
+          defaultValue="item-0"
+          className="space-y-4 sm:space-y-5"
+        >
+          {faqs.map((faq, index) => (
+            <CustomAccordionItem
+              key={index}
+              value={`item-${index}`}
+            >
+              <CustomAccordionTrigger>{faq.question}</CustomAccordionTrigger>
+              <CustomAccordionContent>{faq.answer}</CustomAccordionContent>
+            </CustomAccordionItem>
+          ))}
+        </CustomAccordion>
+      </div>
+    </section>
+  );
+}
+
+interface PricingPlan {
+  name: string;
+  price: string;
+  yearlyPrice: string;
+  period: string;
+  features: string[];
+  description: string;
+  buttonText: string;
+  href: string;
+  isPopular: boolean;
+}
+
+interface PricingProps {
+  plans?: PricingPlan[];
+  title?: string;
+  description?: string;
+}
+
+const defaultPlans: PricingPlan[] = [
+  {
+    name: "STARTER",
+    price: "19",
+    yearlyPrice: "15",
+    period: "per bulan",
+    features: [
+      "Hingga 5 papan Kanban",
+      "AI Task Breakdown dasar",
+      "Kolaborasi 3 anggota tim",
+      "Dukungan komunitas",
+    ],
+    description: "Cocok untuk individu dan tim kecil yang baru mulai.",
+    buttonText: "Mulai Gratis",
+    href: "/signup",
+    isPopular: false,
+  },
+  {
+    name: "PROFESSIONAL",
+    price: "49",
+    yearlyPrice: "39",
+    period: "per bulan",
+    features: [
+      "Papan Kanban tak terbatas",
+      "AI Task Breakdown tanpa batas",
+      "Hingga 15 anggota tim",
+      "Analitik alur kerja tingkat lanjut",
+      "Prioritas dukungan 24/7",
+      "Integrasi kustom",
+    ],
+    description: "Ideal untuk tim dan bisnis yang terus berkembang.",
+    buttonText: "Coba Pro Gratis",
+    href: "/signup",
+    isPopular: true,
+  },
+  {
+    name: "ENTERPRISE",
+    price: "149",
+    yearlyPrice: "119",
+    period: "per bulan",
+    features: [
+      "Semua fitur Paket Professional",
+      "Anggota tim tanpa batas",
+      "Dedicated Account Manager",
+      "SSO & Keamanan tingkat tinggi",
+      "SLA Garansi Uptime 99.9%",
+      "Kontrak & tagihan kustom",
+    ],
+    description: "Untuk organisasi besar yang membutuhkan skala & kontrol ekstra.",
+    buttonText: "Hubungi Tim Sales",
+    href: "mailto:hello@nexora.app",
+    isPopular: false,
+  },
+];
+
+export function PricingSection({
+  plans = defaultPlans,
+  title = "Pilihan Paket Harga Simpel & Transparan",
+  description = "Pilih paket yang sesuai dengan kebutuhan tim Anda.\nSemua paket mencakup akses penuh ke AI breakdown & kolaborasi papan Kanban.",
+}: PricingProps) {
+  const [isMonthly, setIsMonthly] = useState(true);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const switchRef = useRef<HTMLButtonElement>(null);
+
+  const handleToggle = (checked: boolean) => {
+    setIsMonthly(!checked);
+    if (checked && switchRef.current) {
+      const rect = switchRef.current.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+
+      confetti({
+        particleCount: 60,
+        spread: 70,
+        origin: {
+          x: x / window.innerWidth,
+          y: y / window.innerHeight,
+        },
+        colors: ["#6366f1", "#8b5cf6", "#ec4899", "#3b82f6"],
+        ticks: 200,
+        gravity: 1.2,
+        decay: 0.94,
+        startVelocity: 30,
+        shapes: ["circle"],
+      });
+    }
+  };
+
+  return (
+    <section id="pricing" className="relative z-10 px-6 md:px-12 lg:px-20 py-24 md:py-32 overflow-hidden bg-gradient-to-br from-indigo-100/90 via-purple-100/80 to-pink-100/90">
+      {/* Bright Glowing Aura Blobs */}
+      <div className="absolute top-10 left-10 w-[500px] h-[350px] bg-indigo-400/25 rounded-full blur-[110px] pointer-events-none z-0" />
+      <div className="absolute bottom-10 right-10 w-[500px] h-[350px] bg-pink-400/25 rounded-full blur-[110px] pointer-events-none z-0" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-purple-400/20 rounded-full blur-[120px] pointer-events-none z-0" />
+
+      <div className="max-w-6xl mx-auto relative z-10">
+        <div className="text-center space-y-3 mb-12">
+          <span className="inline-block px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-indigo-700 bg-white/80 border border-white/90 rounded-full shadow-sm backdrop-blur-md mb-2">
+            PRICING
+          </span>
+          <h2 className="text-4xl font-bold font-display tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+            {title}
+          </h2>
+          <p className="text-slate-700 font-medium text-base sm:text-lg max-w-2xl mx-auto whitespace-pre-line leading-relaxed">
+            {description}
+          </p>
+        </div>
+
+        <div className="flex justify-center items-center mb-12">
+          <div className="inline-flex items-center gap-3 bg-white/80 border border-white/90 shadow-md backdrop-blur-md px-6 py-3 rounded-full">
+            <span className={cn("text-sm font-semibold transition-colors cursor-pointer", isMonthly ? "text-slate-900 font-bold" : "text-slate-500")} onClick={() => handleToggle(false)}>
+              Bulanan
+            </span>
+            <Label className="flex items-center">
+              <Switch
+                ref={switchRef as any}
+                checked={!isMonthly}
+                onCheckedChange={handleToggle}
+                className="relative"
+              />
+            </Label>
+            <span className={cn("text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer", !isMonthly ? "text-indigo-700 font-bold" : "text-slate-500")} onClick={() => handleToggle(true)}>
+              Tahunan <span className="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-xs">Hemat 20%</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+          {plans.map((plan, index) => (
+            <motion.div
+              key={index}
+              initial={{ y: 50, opacity: 1 }}
+              whileInView={
+                isDesktop
+                  ? {
+                      y: plan.isPopular ? -12 : 0,
+                      opacity: 1,
+                      scale: plan.isPopular ? 1.04 : 0.98,
+                    }
+                  : {}
+              }
+              viewport={{ once: true }}
+              transition={{
+                duration: 1.2,
+                type: "spring",
+                stiffness: 100,
+                damping: 25,
+                delay: index * 0.15,
+              }}
+              className={cn(
+                `rounded-3xl p-7 sm:p-8 backdrop-blur-xl relative flex flex-col justify-between transition-all duration-300 min-h-[520px]`,
+                plan.isPopular
+                  ? "bg-white/95 border-2 border-indigo-500 shadow-2xl shadow-indigo-500/20 z-10"
+                  : "bg-white/75 border border-white/90 shadow-lg shadow-indigo-950/5 z-0"
+              )}
+            >
+              {plan.isPopular && (
+                <div className="absolute -top-3.5 right-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold px-3.5 py-1 rounded-full shadow-md flex items-center gap-1">
+                  <Star className="h-3.5 w-3.5 fill-current" />
+                  <span>Popular Choice</span>
+                </div>
+              )}
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <p className="text-sm font-bold tracking-wider uppercase text-indigo-700">
+                    {plan.name}
+                  </p>
+                  <div className="mt-5 flex items-baseline gap-x-1.5">
+                    <span className="text-5xl font-extrabold tracking-tight text-slate-900 font-display">
+                      <NumberFlow
+                        value={
+                          isMonthly ? Number(plan.price) : Number(plan.yearlyPrice)
+                        }
+                        format={{
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }}
+                        transformTiming={{
+                          duration: 500,
+                          easing: "ease-out",
+                        }}
+                        willChange
+                        className="tabular-nums"
+                      />
+                    </span>
+                    <span className="text-sm font-medium text-slate-600">
+                      / {plan.period}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {isMonthly ? "ditagih bulanan" : "ditagih tahunan"}
+                  </p>
+
+                  <p className="mt-4 text-xs leading-relaxed text-slate-600 font-medium border-b border-slate-200/80 pb-5">
+                    {plan.description}
+                  </p>
+
+                  <ul className="mt-5 space-y-3">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-sm font-medium text-slate-800">
+                        <div className="h-5 w-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+                          <Check className="h-3.5 w-3.5 stroke-[3]" />
+                        </div>
+                        <span className="text-left">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-8 pt-4">
+                  <Link
+                    href={plan.href}
+                    className={cn(
+                      "w-full py-3.5 px-6 rounded-full font-bold text-sm text-center block transition-all duration-300 shadow-md",
+                      plan.isPopular
+                        ? "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-indigo-500/25 hover:shadow-lg"
+                        : "bg-white border border-slate-200/90 text-slate-900 hover:bg-slate-50 hover:border-slate-300"
+                    )}
+                  >
+                    {plan.buttonText}
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const [typed, setTyped] = useState("");
   const [phase, setPhase] = useState<"idle" | "typing" | "generating" | "done">("idle");
@@ -391,7 +798,7 @@ export default function LandingPage() {
       setIsScrolled(window.scrollY > 20);
 
       // 2. Scrollspy tracking
-      const sections = ["home", "about", "pricing", "contact"];
+      const sections = ["home", "about", "pricing", "faq", "contact"];
       const scrollPosition = window.scrollY + 120; // offset of navbar
 
       // If at the very bottom, force the last section to highlight
@@ -433,6 +840,21 @@ export default function LandingPage() {
 
       setActiveSection(id);
       window.history.pushState(null, "", `#${id}`);
+    }
+  };
+
+  const handleSparklesClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const demoElement = document.getElementById("ai-demo");
+    if (demoElement) {
+      const navbarHeight = 80;
+      const elementPosition = demoElement.getBoundingClientRect().top + window.scrollY;
+      const offsetPosition = elementPosition - navbarHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
     }
   };
 
@@ -508,17 +930,17 @@ export default function LandingPage() {
               { name: "Home", id: "home" },
               { name: "About", id: "about" },
               { name: "Pricing", id: "pricing" },
+              { name: "FAQ", id: "faq" },
               { name: "Contact", id: "contact" },
             ].map((link) => (
               <a
                 key={link.id}
                 href={`#${link.id}`}
                 onClick={(e) => handleScroll(e, link.id)}
-                className={`text-sm font-medium transition-colors relative py-1 ${
-                  activeSection === link.id
+                className={`text-sm font-medium transition-colors relative py-1 ${activeSection === link.id
                     ? "text-primary font-semibold"
                     : "text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 {link.name}
                 {activeSection === link.id && (
@@ -566,7 +988,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 backdrop-blur-sm px-4 py-1.5 text-sm text-muted-foreground font-body mb-6 shadow-sm"
             >
-              Now with GPT-5 support ✨
+              Generative Kanban AI v1.0 ✨
             </motion.div>
 
             <motion.h1
@@ -575,7 +997,7 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-center font-display text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] leading-[0.95] tracking-tight text-foreground max-w-3xl"
             >
-              The Future of <span className="font-display italic text-violet-600 dark:text-violet-400">Smarter</span> Automation
+              Ubah Ide Menjadi <span className="font-display italic text-violet-600 dark:text-violet-400">Alur Kerja</span> Instan
             </motion.h1>
 
             <motion.p
@@ -584,7 +1006,7 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-6 text-center text-base sm:text-lg md:text-xl text-muted-foreground max-w-[650px] leading-relaxed font-body"
             >
-              Automate your busywork with intelligent agents that learn, adapt, and execute—so your team can focus on what matters most.
+              Otomatiskan pekerjaan administratif dengan AI yang mampu memahami, memecah, dan menyusun tugas secara presisi | sehingga tim Anda bisa fokus pada hal yang paling berdampak.
             </motion.p>
 
             <motion.div
@@ -599,14 +1021,19 @@ export default function LandingPage() {
               >
                 Mulai Gratis Sekarang
               </Link>
-              <button className="flex items-center justify-center h-12 w-12 rounded-full border border-border/50 bg-background/90 backdrop-blur-sm shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background transition-all cursor-pointer">
-                <Play className="h-4 w-4 fill-foreground text-foreground ml-0.5" />
+              <button
+                onClick={handleSparklesClick}
+                title="Coba Demo AI Interaktif"
+                className="flex items-center justify-center h-12 w-12 rounded-full border border-border/50 bg-background/90 backdrop-blur-sm shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background hover:scale-110 active:scale-95 transition-all cursor-pointer group"
+              >
+                <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400 group-hover:rotate-12 transition-transform" />
               </button>
             </motion.div>
           </motion.div>
 
           {/* 3D Locomotive Scroll Parallax Dashboard Card */}
           <motion.div
+            id="ai-demo"
             style={{
               rotateX: cardRotateX,
               scale: cardScale,
@@ -1006,7 +1433,7 @@ export default function LandingPage() {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center flex flex-col items-center mb-16"
         >
-          <motion.span variants={fadeUp} className="rn-eyebrow">Diandalkan Tim yang Bergerak Cepat</motion.span>
+          <motion.span variants={fadeUp} className="rn-eyebrow">TESTIMONIAL</motion.span>
           <motion.h2 variants={fadeUp} className="font-display text-4xl sm:text-5xl md:text-6xl tracking-tight text-foreground leading-[1.08] mt-3">
             Kurangi Koordinasi, Perbanyak Eksekusi
           </motion.h2>
@@ -1027,54 +1454,10 @@ export default function LandingPage() {
       </section>
 
       {/* ===================== PRICING ===================== */}
-      <section id="pricing" className="relative z-10 px-6 md:px-12 lg:px-20 py-20 bg-[var(--bg-soft)]">
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          className="max-w-3xl mx-auto text-center mb-16"
-        >
-          <motion.span variants={fadeUp} className="rn-eyebrow">Pricing</motion.span>
-          <motion.h2 variants={fadeUp} className="font-display text-4xl md:text-5xl tracking-tight text-foreground mt-3">
-            Start free, scale when you need to
-          </motion.h2>
-        </motion.div>
+      <PricingSection />
 
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"
-        >
-          {[
-            { name: "Starter", price: "Free", note: "for individuals", features: ["1 active board", "Up to 20 tasks", "Basic AI parsing"], highlighted: false },
-            { name: "Team", price: "$12", note: "/ seat / month", features: ["Unlimited boards", "Unlimited tasks", "Full AI automation", "Shared workspaces"], highlighted: true },
-            { name: "Enterprise", price: "Custom", note: "for organizations", features: ["SSO & permissions", "Dedicated support", "Custom integrations"], highlighted: false },
-          ].map((p) => (
-            <motion.div key={p.name} variants={fadeUp} className={`rn-price-card ${p.highlighted ? "is-highlighted" : ""}`}>
-              {p.highlighted && <span className="rn-price-badge">Most popular</span>}
-              <h3 className="font-display text-2xl text-foreground">{p.name}</h3>
-              <p className="mt-4 mb-1">
-                <span className="text-3xl font-semibold text-foreground font-display">{p.price}</span>
-                <span className="text-sm text-muted-foreground ml-1">{p.note}</span>
-              </p>
-              <ul className="mt-6 mb-8 space-y-3 text-left">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-foreground font-body">
-                    <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--violet)" }} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button className={`rn-price-btn ${p.highlighted ? "is-active" : ""}`}>
-                {p.name === "Enterprise" ? "Talk to sales" : "Get started"}
-              </button>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
+      {/* ===================== FAQ SECTION ===================== */}
+      <AccordionComponent />
 
       {/* ===================== FINAL CTA ===================== */}
       <section id="contact" className="relative z-10 px-6 md:px-12 lg:px-20 py-24 md:py-32 text-center overflow-hidden min-h-[520px] flex flex-col justify-center" onMouseMove={handleHeroMouseMove}>
@@ -1084,16 +1467,13 @@ export default function LandingPage() {
           muted
           loop
           playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-70"
+          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-90"
         >
           <source
-            src="https://vjs.zencdn.net/v/oceans.mp4"
+            src="/img/Video_orbit.mp4"
             type="video/mp4"
           />
         </video>
-
-        {/* Ambient Gradient Overlay for text contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/40 to-background z-0 pointer-events-none" />
 
         {/* Floating interactive icons - strictly positioned on left & right flanks */}
         <div className="absolute inset-0 w-full h-full z-0 pointer-events-none hidden md:block">
@@ -1113,12 +1493,15 @@ export default function LandingPage() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
-          className="max-w-3xl mx-auto relative z-10"
+          className="max-w-3xl mx-auto relative z-10 flex flex-col items-center text-center"
         >
+          <motion.span variants={fadeUp} className="inline-block px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-slate-700 bg-slate-100 border border-slate-200/80 rounded-full shadow-xs mb-4">
+            CONTACT
+          </motion.span>
           <motion.h2 variants={fadeUp} className="font-display text-4xl sm:text-5xl md:text-6xl tracking-tight text-foreground leading-[1.05]">
             Satu Papan untuk Semua Alat Kerja
           </motion.h2>
-          <motion.p variants={fadeUp} className="mt-5 max-w-xl mx-auto text-base md:text-lg text-muted-foreground font-body leading-relaxed">
+          <motion.p variants={fadeUp} className="mt-5 max-w-xl mx-auto text-base md:text-lg text-muted-foreground font-body leading-relaxed font-normal">
             Kelola semua tugas, proyek, dan integrasi aplikasi Anda dalam satu alur kerja cerdas berbasis AI.
           </motion.p>
           <motion.div variants={fadeUp} className="mt-9 flex flex-wrap items-center justify-center gap-4">
@@ -1130,7 +1513,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="mailto:hello@nexora.app"
-              className="rounded-full px-7 py-4 text-sm md:text-base font-medium font-body border border-border/80 bg-background/80 backdrop-blur-sm text-foreground hover:bg-background transition-colors shadow-sm"
+              className="rounded-full px-7 py-4 text-sm md:text-base font-medium font-body border border-border/80 bg-white text-foreground hover:bg-slate-50 transition-colors shadow-sm"
             >
               Hubungi Kami
             </Link>
@@ -1139,14 +1522,14 @@ export default function LandingPage() {
       </section>
 
       {/* ===================== FOOTER ===================== */}
-      <footer className="relative z-10 px-6 md:px-12 lg:px-20 py-12 border-t border-border">
+      <footer className="relative z-10 px-6 md:px-12 lg:px-20 py-12 border-t border-gray-600/40 bg-[#757575] text-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
-            <span className="text-lg font-semibold tracking-tight text-foreground flex items-center gap-1.5">
+            <span className="text-lg font-semibold tracking-tight text-white flex items-center gap-1.5 font-display">
               ✦ Kanvexa
             </span>
-            <p className="text-sm text-muted-foreground mt-2 max-w-xs font-body">
-              Automate your busywork with intelligent agents that plan, adapt, and execute.
+            <p className="text-sm text-gray-200 mt-2 max-w-xs font-body font-normal">
+              Otomatiskan pekerjaan administratif dengan AI yang mampu memahami, memecah, dan menyusun tugas secara presisi.
             </p>
           </div>
           <div className="flex items-center gap-6">
@@ -1160,19 +1543,35 @@ export default function LandingPage() {
                 key={link.id}
                 href={`#${link.id}`}
                 onClick={(e) => handleScroll(e, link.id)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-gray-200 hover:text-white transition-colors font-medium"
               >
                 {link.name}
               </a>
             ))}
           </div>
           <div className="flex items-center gap-4">
-            <Twitter className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer" />
-            <Instagram className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer" />
-            <Linkedin className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer" />
+            <a
+              href="https://x.com/BinnDevv7941"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="X (Twitter) @BinnDevv7941"
+              className="text-gray-200 hover:text-white transition-colors"
+            >
+              <Twitter className="h-4 w-4" />
+            </a>
+            <a
+              href="https://www.instagram.com/chocobinnz_/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Instagram @chocobinnz_"
+              className="text-gray-200 hover:text-white transition-colors"
+            >
+              <Instagram className="h-4 w-4" />
+            </a>
+            <Linkedin className="h-4 w-4 text-gray-200 hover:text-white transition-colors cursor-pointer" />
           </div>
         </div>
-        <p className="max-w-6xl mx-auto mt-8 pt-6 border-t border-border text-xs text-muted-foreground font-mono">
+        <p className="max-w-6xl mx-auto mt-8 pt-6 border-t border-gray-500/50 text-xs text-gray-300 font-mono">
           © {new Date().getFullYear()} Kanvexa. All rights reserved.
         </p>
       </footer>
