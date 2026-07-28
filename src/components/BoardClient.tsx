@@ -15,9 +15,17 @@ import {
   type DragOverEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
+import { 
+  CheckSquare, 
+  Calendar, 
+  MessageSquare, 
+  FileText 
+} from "lucide-react";
 import KanbanColumn from "./KanbanColumn";
+import TodoListColumn from "./board/todolist/TodoListColumn";
+import TodoListPresetModal from "./board/todolist/TodoListPresetModal";
 import AIBreakdownModal from "./AIBreakdownModal";
-import { moveCard, createColumn } from "@/app/board/[id]/actions";
+import { moveCard, createColumn, createColumnWithCard } from "@/app/board/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 
 interface Card   { id: string; column_id: string; title: string; position: number; }
@@ -59,6 +67,14 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
   const [addingCol, setAddingCol]       = useState(false);
   const [colName, setColName]           = useState("");
   const [savingCol, setSavingCol]       = useState(false);
+
+  // Preset Modal Config State
+  const [selectedPresetModal, setSelectedPresetModal] = useState<string | null>(null);
+
+  const openPresetModal = (type: string) => {
+    setSelectedPresetModal(type);
+    setAddingCol(false);
+  };
 
   // Real-time synchronization via Supabase Realtime
   useEffect(() => {
@@ -255,6 +271,15 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
           onDone={() => { setShowAI(false); router.refresh(); }}
         />
       )}
+
+      {/* Preset Column Config Modal */}
+      {selectedPresetModal && (
+        <TodoListPresetModal
+          boardId={boardId}
+          presetType={selectedPresetModal}
+          onClose={() => setSelectedPresetModal(null)}
+        />
+      )}
       {canEdit && (
         <div style={{
           padding: "12px 20px 0",
@@ -292,7 +317,7 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
           className="scrollbar-hide"
         >
           {sortedCols.map((col, i) => (
-            <KanbanColumn
+            <TodoListColumn
               key={col.id}
               id={col.id}
               boardId={boardId}
@@ -309,25 +334,94 @@ export default function BoardClient({ boardId, initialColumns, initialCards, isA
             <div style={{ flexShrink: 0 }}>
               {addingCol ? (
                 <div style={{
-                  width: 260, background: "var(--card)",
-                  border: "1px solid var(--v)", borderRadius: 12,
-                  padding: "14px", boxShadow: "0 0 0 3px rgba(109,40,217,0.1)",
+                  width: 275, background: "var(--card)",
+                  border: "1px solid var(--v)", borderRadius: 14,
+                  padding: "16px", boxShadow: "0 10px 30px rgba(109,40,217,0.15)",
                 }}>
-                  <input
-                    autoFocus
-                    value={colName}
-                    onChange={e => setColName(e.target.value)}
-                    placeholder="Nama kolom..."
-                    onKeyDown={e => {
-                      if (e.key === "Enter") handleAddColumn();
-                      if (e.key === "Escape") { setColName(""); setAddingCol(false); }
-                    }}
-                    style={{
-                      width: "100%", padding: "8px 10px", borderRadius: 7, fontSize: 13,
-                      border: "1px solid var(--border-strong)", outline: "none",
-                      marginBottom: 10, color: "var(--text-1)",
-                    }}
-                  />
+                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-3)", marginBottom: 10 }}>
+                    Pilih Jenis Kolom
+                  </div>
+
+                  {/* Preset Column Chips */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+                    {[
+                      { name: "To-Do List", icon: CheckSquare, desc: "Daftar tugas & centang" },
+                      { name: "Calendar", icon: Calendar, desc: "Jadwal & deadline" },
+                      { name: "Message Board", icon: MessageSquare, desc: "Diskusi & pengumuman" },
+                      { name: "Docs & Files", icon: FileText, desc: "Dokumen & berkas" },
+                    ].map((preset, pIdx) => {
+                      const IconComponent = preset.icon;
+                      return (
+                        <button
+                          key={pIdx}
+                          type="button"
+                          onClick={() => openPresetModal(preset.name)}
+                          disabled={savingCol}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            padding: "8px 10px",
+                            borderRadius: 8,
+                            border: "1px solid var(--border)",
+                            background: "#ffffff",
+                            cursor: savingCol ? "wait" : "pointer",
+                            textAlign: "left",
+                            transition: "all 0.15s ease",
+                          }}
+                          onMouseEnter={e => {
+                            const el = e.currentTarget as HTMLElement;
+                            el.style.borderColor = "var(--v)";
+                            el.style.background = "#f5f3ff";
+                          }}
+                          onMouseLeave={e => {
+                            const el = e.currentTarget as HTMLElement;
+                            el.style.borderColor = "var(--border)";
+                            el.style.background = "#ffffff";
+                          }}
+                        >
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 6,
+                            background: "rgba(109,40,217,0.08)", color: "var(--v)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0,
+                          }}>
+                            <IconComponent style={{ width: 14, height: 14 }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-1)" }}>
+                              {preset.name}
+                            </div>
+                            <div style={{ fontSize: 10, color: "var(--text-3)" }}>
+                              {preset.desc}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", marginBottom: 6 }}>
+                      Atau Nama Kustom:
+                    </div>
+                    <input
+                      autoFocus
+                      value={colName}
+                      onChange={e => setColName(e.target.value)}
+                      placeholder="misal: 'Revisi Client'..."
+                      onKeyDown={e => {
+                        if (e.key === "Enter") handleAddColumn();
+                        if (e.key === "Escape") { setColName(""); setAddingCol(false); }
+                      }}
+                      style={{
+                        width: "100%", padding: "8px 10px", borderRadius: 7, fontSize: 13,
+                        border: "1px solid var(--border-strong)", outline: "none",
+                        color: "var(--text-1)",
+                      }}
+                    />
+                  </div>
+
                   <div style={{ display: "flex", gap: 6 }}>
                     <button
                       onClick={handleAddColumn}
