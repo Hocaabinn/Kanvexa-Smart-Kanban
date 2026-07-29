@@ -250,7 +250,7 @@ export default function KanbanColumn({ id, boardId, name, accentColor, cards, is
                             padding: 4,
                         }}>
                             <div style={{ borderBottom: "1px solid #10b981", width: "80%", textAlign: "center", fontSize: 7, fontWeight: 800, letterSpacing: "0.08em", paddingBottom: 1, marginBottom: 1 }}>
-                                ✦ STATUS ✦
+                                STATUS
                             </div>
                             <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.05em", lineHeight: 1.1, textAlign: "center" }}>
                                 ALL DONE!
@@ -311,7 +311,7 @@ export default function KanbanColumn({ id, boardId, name, accentColor, cards, is
                                 display: "flex", flexDirection: "column", gap: 10,
                             }}>
                                 <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--v)" }}>
-                                    ✦ Tambah Tugas Baru
+                                    Tambah Tugas Baru
                                 </div>
 
                                 {/* 1. Nama Tugas */}
@@ -417,7 +417,7 @@ export default function KanbanColumn({ id, boardId, name, accentColor, cards, is
                                             opacity: saving || !taskName.trim() ? 0.6 : 1,
                                         }}
                                     >
-                                        {saving ? "Menyimpan..." : "Tambah Kartu ✦"}
+                                        {saving ? "Menyimpan..." : "Tambah Kartu"}
                                     </button>
                                     <button
                                         onClick={() => {

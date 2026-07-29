@@ -28,6 +28,8 @@ import KanbanColumn from "./KanbanColumn";
 import TodoListColumn from "./board/todolist/TodoListColumn";
 import TodoListPresetModal from "./board/todolist/TodoListPresetModal";
 import AIBreakdownModal from "./AIBreakdownModal";
+import MessageBoardView from "./board/MessageBoard/MessageBoardView";
+import type { BoardPost, BoardPostComment } from "./board/MessageBoard/messageboard-utils";
 import { moveCard, createColumn, createColumnWithCard } from "@/app/board/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 
@@ -39,6 +41,8 @@ interface Props {
   userEmail?: string;
   initialColumns: Column[];
   initialCards: Card[];
+  initialPosts?: BoardPost[];
+  initialComments?: BoardPostComment[];
   isAdmin: boolean;
   canEdit: boolean;
 }
@@ -56,8 +60,20 @@ function colColor(index: number, name?: string) {
   return COL_COLORS[index % COL_COLORS.length];
 }
 
-export default function BoardClient({ boardId, userEmail = "", initialColumns, initialCards, isAdmin, canEdit }: Props) {
+export default function BoardClient({
+  boardId,
+  userEmail = "",
+  initialColumns,
+  initialCards,
+  initialPosts = [],
+  initialComments = [],
+  isAdmin,
+  canEdit
+}: Props) {
   const router = useRouter();
+
+  // Tab state: "kanban" vs "messageboard"
+  const [activeTab, setActiveTab] = useState<"kanban" | "messageboard">("kanban");
 
   // Derived state from props to allow server-side updates / revalidations to reflect in client state
   const [prevInitialColumns, setPrevInitialColumns] = useState(initialColumns);
@@ -72,6 +88,20 @@ export default function BoardClient({ boardId, userEmail = "", initialColumns, i
   if (initialCards !== prevInitialCards) {
     setCards(initialCards);
     setPrevInitialCards(initialCards);
+  }
+
+  const [prevInitialPosts, setPrevInitialPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState(initialPosts);
+  if (initialPosts !== prevInitialPosts) {
+    setPosts(initialPosts);
+    setPrevInitialPosts(initialPosts);
+  }
+
+  const [prevInitialComments, setPrevInitialComments] = useState(initialComments);
+  const [comments, setComments] = useState(initialComments);
+  if (initialComments !== prevInitialComments) {
+    setComments(initialComments);
+    setPrevInitialComments(initialComments);
   }
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
@@ -118,12 +148,37 @@ export default function BoardClient({ boardId, userEmail = "", initialColumns, i
           router.refresh();
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "board_posts",
+          filter: `board_id=eq.${boardId}`,
+        },
+        () => {
+          router.refresh();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "board_post_comments",
+          filter: `board_id=eq.${boardId}`,
+        },
+        () => {
+          router.refresh();
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [boardId, router]);
+
 
   // Parallax background movement based on cursor direction
   useEffect(() => {
@@ -294,12 +349,82 @@ export default function BoardClient({ boardId, userEmail = "", initialColumns, i
           onClose={() => setSelectedPresetModal(null)}
         />
       )}
-      {canEdit && (
+      {/* Tab Navigation & Action Bar */}
+      <div style={{
+        padding: "12px 20px 0",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexShrink: 0,
+        gap: 12,
+        flexWrap: "wrap",
+      }}>
+        {/* View Switcher Tabs */}
         <div style={{
-          padding: "12px 20px 0",
-          display: "flex", justifyContent: "flex-end",
-          flexShrink: 0,
+          display: "flex",
+          gap: 4,
+          background: "rgba(241, 245, 249, 0.8)",
+          padding: 4,
+          borderRadius: 10,
+          border: "1px solid var(--border)",
         }}>
+          <button
+            onClick={() => setActiveTab("kanban")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 14px",
+              borderRadius: 7,
+              fontSize: 13,
+              fontWeight: 600,
+              border: "none",
+              background: activeTab === "kanban" ? "#ffffff" : "transparent",
+              color: activeTab === "kanban" ? "var(--v)" : "#64748b",
+              boxShadow: activeTab === "kanban" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <CheckSquare width={14} height={14} />
+            <span>Kanban Board</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("messageboard")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 14px",
+              borderRadius: 7,
+              fontSize: 13,
+              fontWeight: 600,
+              border: "none",
+              background: activeTab === "messageboard" ? "#ffffff" : "transparent",
+              color: activeTab === "messageboard" ? "var(--v)" : "#64748b",
+              boxShadow: activeTab === "messageboard" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <MessageSquare width={14} height={14} />
+            <span>Message Board</span>
+            {posts.length > 0 && (
+              <span style={{
+                background: activeTab === "messageboard" ? "var(--v)" : "#cbd5e1",
+                color: "#ffffff",
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "2px 6px",
+                borderRadius: 10,
+              }}>
+                {posts.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* AI Breakdown Button (Shown in Kanban view) */}
+        {activeTab === "kanban" && canEdit && (
           <button
             onClick={() => setShowAI(true)}
             style={{
@@ -314,8 +439,25 @@ export default function BoardClient({ boardId, userEmail = "", initialColumns, i
           >
             ✦ Urai dengan AI
           </button>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Main Tab Content */}
+      {activeTab === "messageboard" ? (
+        <MessageBoardView
+          boardId={boardId}
+          userEmail={userEmail}
+          posts={posts}
+          comments={comments}
+          columns={columns.map(c => ({ id: c.id, name: c.name }))}
+          canEdit={canEdit}
+          onTasksCreated={() => {
+            setActiveTab("kanban");
+            router.refresh();
+          }}
+        />
+      ) : (
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -510,6 +652,8 @@ export default function BoardClient({ boardId, userEmail = "", initialColumns, i
           )}
         </DragOverlay>
       </DndContext>
+      )}
     </>
   );
 }
+

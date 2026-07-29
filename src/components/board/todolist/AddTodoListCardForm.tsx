@@ -65,7 +65,7 @@ export default function AddTodoListCardForm({ boardId, columnId, userEmail = "",
             display: "flex", flexDirection: "column", gap: 10,
         }}>
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--v)" }}>
-                ✦ Tambah Tugas Baru
+                Tambah Tugas Baru
             </div>
 
             {/* 1. Nama Tugas */}
@@ -181,7 +181,7 @@ export default function AddTodoListCardForm({ boardId, columnId, userEmail = "",
                         opacity: saving || !taskName.trim() ? 0.6 : 1,
                     }}
                 >
-                    {saving ? "Menyimpan..." : "Tambah Kartu ✦"}
+                    {saving ? "Menyimpan..." : "Tambah Kartu"}
                 </button>
                 <button
                     onClick={onCancel}

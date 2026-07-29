@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Clock, User, FileText } from "lucide-react";
-import { createColumnWithCard, createKanbanWorkflow } from "@/app/board/[id]/actions";
+import { Calendar, Clock, User, FileText, MessageSquare, Pin, Sparkles, Paperclip, Upload, X, AlertCircle } from "lucide-react";
+import { createColumnWithCard, createKanbanWorkflow, createPost } from "@/app/board/[id]/actions";
+import { PostCategory, getCategoryBadge, formatFileSize } from "../MessageBoard/messageboard-utils";
+import { createClient } from "@/lib/supabase/client";
 
 interface Props {
     boardId: string;
@@ -13,6 +15,14 @@ interface Props {
 
 function getModalTheme(type: string) {
     const lower = type.toLowerCase().trim();
+    if (lower.includes("message")) {
+        return {
+            main: "#db2777",
+            bg: "#fdf2f8",
+            border: "#fbcfe8",
+            shadow: "rgba(219, 39, 119, 0.25)",
+        };
+    }
     if (lower.includes("review") || lower.includes("peninjauan")) {
         return {
             main: "#2563eb",
@@ -45,17 +55,46 @@ function getModalTheme(type: string) {
     };
 }
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+
 export default function TodoListPresetModal({ boardId, userEmail = "", presetType, onClose }: Props) {
+    const isMessageBoard = presetType.toLowerCase().includes("message");
     const defaultColTitle = presetType.includes("To-Do List") ? "To-dos" : presetType;
     const theme = getModalTheme(presetType);
 
+    // General preset states
     const [presetColTitle, setPresetColTitle] = useState(defaultColTitle);
     const [presetSubTitle, setPresetSubTitle] = useState("");
     const [presetDueDate, setPresetDueDate] = useState("");
     const [presetDueTime, setPresetDueTime] = useState("");
     const [presetAssignee, setPresetAssignee] = useState("");
     const [presetNotes, setPresetNotes] = useState("");
+    
+    // Message Board custom states
+    const [msgTitle, setMsgTitle] = useState("Pengumuman & Diskusi Tim");
+    const [msgContent, setMsgContent] = useState("Selamat datang di Message Board! Silakan bagikan ide, pengumuman, atau pertanyaan untuk tim di sini.");
+    const [msgCategory, setMsgCategory] = useState<PostCategory>("announcement");
+    const [msgIsPinned, setMsgIsPinned] = useState(true);
+
+    // File upload state (Message Board preset)
+    const [msgFile, setMsgFile] = useState<File | null>(null);
+    const [msgFileError, setMsgFileError] = useState<string | null>(null);
+
     const [saving, setSaving] = useState(false);
+
+    const handleMsgFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
+        if (!selectedFile) return;
+
+        if (selectedFile.size > MAX_FILE_SIZE) {
+            setMsgFileError("Ukuran file melebihi batas maksimum 50 MB!");
+            setMsgFile(null);
+            return;
+        }
+
+        setMsgFileError(null);
+        setMsgFile(selectedFile);
+    };
 
     const registeredUsers = Array.from(new Set([
         ...(userEmail ? [userEmail] : []),
@@ -67,12 +106,49 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const colName = presetColTitle.trim() || defaultColTitle;
-        const cardTaskName = presetSubTitle.trim() || "Tugas Pertama";
-
+        if (msgFileError) return;
         setSaving(true);
+
         try {
-            if (presetType.includes("To-Do List") || presetType.includes("Kanban")) {
+            if (isMessageBoard) {
+                let fileUrl: string | null = null;
+                let fileName: string | null = null;
+                let fileSize: number | null = null;
+
+                if (msgFile) {
+                    fileName = msgFile.name;
+                    fileSize = msgFile.size;
+
+                    const formData = new FormData();
+                    formData.append("file", msgFile);
+                    formData.append("boardId", boardId);
+
+                    const uploadRes = await fetch("/API/upload", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    if (!uploadRes.ok) {
+                        const errJson = await uploadRes.json();
+                        throw new Error(errJson?.error || "Gagal mengunggah berkas.");
+                    }
+
+                    const uploadData = await uploadRes.json();
+                    fileUrl = uploadData.url;
+                }
+
+                await createPost(
+                    boardId,
+                    msgTitle.trim() || "Pengumuman Tim",
+                    msgContent.trim() || "Diskusi awal",
+                    msgCategory,
+                    msgIsPinned,
+                    fileUrl,
+                    fileName,
+                    fileSize
+                );
+            } else if (presetType.includes("To-Do List") || presetType.includes("Kanban")) {
+                const cardTaskName = presetSubTitle.trim() || "Tugas Pertama";
                 await createKanbanWorkflow(
                     boardId,
                     cardTaskName,
@@ -84,6 +160,8 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                     }
                 );
             } else {
+                const colName = presetColTitle.trim() || defaultColTitle;
+                const cardTaskName = presetSubTitle.trim() || "Tugas Pertama";
                 await createColumnWithCard(
                     boardId,
                     colName,
@@ -98,7 +176,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
             }
             onClose();
         } catch (err: any) {
-            alert("Gagal membuat kolom: " + err.message);
+            alert("Gagal membuat preset: " + err.message);
         } finally {
             setSaving(false);
         }
@@ -133,7 +211,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                     alignItems: "center",
                 }}>
                     <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ color: theme.main }}>✦</span> Konfigurasi Kolom ({presetType})
+                        Konfigurasi Kolom ({presetType})
                     </h3>
                     <button
                         onClick={onClose}
@@ -150,115 +228,282 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                 <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column" }}>
                     <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 16, maxHeight: "68vh", overflowY: "auto" }}>
                         
-                        {/* 1. Item Tugas / Kartu Pertama (dengan Kotak Centang) */}
-                        <div>
-                            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
-                                Nama Tugas / Item Checklist
-                            </label>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 10, padding: "8px 12px" }}>
-                                <div style={{
-                                    width: 18, height: 18, borderRadius: 4, border: `2px solid ${theme.main}`,
-                                    display: "flex", alignItems: "center", justifyContent: "center", background: theme.bg, flexShrink: 0
-                                }}>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={theme.main} strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+                        {isMessageBoard ? (
+                            /* CUSTOM MESSAGE BOARD FORM FIELDS */
+                            <>
+                                {/* 1. Judul Topik / Pengumuman */}
+                                <div>
+                                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        Judul Topik / Pengumuman Awal
+                                    </label>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 10, padding: "8px 12px" }}>
+                                        <MessageSquare style={{ width: 16, height: 16, color: theme.main, flexShrink: 0 }} />
+                                        <input
+                                            required
+                                            autoFocus
+                                            value={msgTitle}
+                                            onChange={(e) => setMsgTitle(e.target.value)}
+                                            placeholder="misal: Rencana Peluncuran / Diskusi Tim"
+                                            style={{
+                                                flex: 1, border: "none", outline: "none", fontSize: 14,
+                                                background: "transparent", color: "#0f172a",
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                                <input
-                                    required
-                                    autoFocus
-                                    value={presetSubTitle}
-                                    onChange={(e) => setPresetSubTitle(e.target.value)}
-                                    placeholder="misal: Ayo gym, Kerjakan tugas, dll..."
-                                    style={{
-                                        flex: 1, border: "none", outline: "none", fontSize: 14,
-                                        background: "transparent", color: "#0f172a",
-                                    }}
-                                />
-                            </div>
-                        </div>
 
-                        {/* 2. Tanggal & Jam */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                            <div>
-                                <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
-                                    <Calendar style={{ width: 13, height: 13, color: "#4f46e5" }} />
-                                    <span>Tanggal Selesai</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    value={presetDueDate}
-                                    onChange={(e) => setPresetDueDate(e.target.value)}
-                                    style={{
-                                        width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
-                                        border: "1px solid #cbd5e1", outline: "none",
-                                        background: "#f8fafc", color: "#0f172a",
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
-                                    <Clock style={{ width: 13, height: 13, color: "#d97706" }} />
-                                    <span>Jam</span>
-                                </label>
-                                <input
-                                    type="time"
-                                    value={presetDueTime}
-                                    onChange={(e) => setPresetDueTime(e.target.value)}
-                                    style={{
-                                        width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
-                                        border: "1px solid #cbd5e1", outline: "none",
-                                        background: "#f8fafc", color: "#0f172a",
-                                    }}
-                                />
-                            </div>
-                        </div>
+                                {/* 2. Kategori Postingan */}
+                                <div>
+                                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        Kategori Postingan
+                                    </label>
+                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                        {(["announcement", "idea", "discussion", "qa"] as PostCategory[]).map((cat) => {
+                                            const b = getCategoryBadge(cat);
+                                            const isSelected = msgCategory === cat;
+                                            return (
+                                                <button
+                                                    key={cat}
+                                                    type="button"
+                                                    onClick={() => setMsgCategory(cat)}
+                                                    style={{
+                                                        padding: "6px 12px",
+                                                        borderRadius: 8,
+                                                        fontSize: 12,
+                                                        fontWeight: 600,
+                                                        border: isSelected ? `2px solid ${b.color}` : "1px solid #cbd5e1",
+                                                        background: isSelected ? b.bg : "#ffffff",
+                                                        color: isSelected ? b.color : "#64748b",
+                                                        cursor: "pointer",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: 4,
+                                                        transition: "all 0.15s ease",
+                                                    }}
+                                                >
+                                                    {(() => {
+                                                        const CategoryIcon = b.icon;
+                                                        return <CategoryIcon width={13} height={13} />;
+                                                    })()}
+                                                    <span>{b.label}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
 
-                        {/* 3. Ditugaskan Kepada */}
-                        <div>
-                            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
-                                <User style={{ width: 13, height: 13, color: "#059669" }} />
-                                <span>Ditugaskan Kepada (User Terdaftar)</span>
-                            </label>
-                            <select
-                                value={presetAssignee}
-                                onChange={(e) => setPresetAssignee(e.target.value)}
-                                style={{
-                                    width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
-                                    border: "1px solid #cbd5e1", outline: "none",
-                                    background: "#f8fafc", color: "#0f172a", cursor: "pointer", fontWeight: 500
-                                }}
-                            >
-                                <option value="">-- Pilih User Terdaftar --</option>
-                                {registeredUsers.map((uEmail) => {
-                                    const namePart = uEmail.split("@")[0];
-                                    const isMe = userEmail && uEmail.toLowerCase() === userEmail.toLowerCase();
-                                    return (
-                                        <option key={uEmail} value={namePart}>
-                                            👤 {namePart} ({uEmail}){isMe ? " - Saya" : ""}
-                                        </option>
-                                    );
-                                })}
-                            </select>
-                        </div>
+                                {/* 3. Isi Pesan / Diskusi Awal */}
+                                <div>
+                                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        Isi Pesan / Diskusi Awal
+                                    </label>
+                                    <textarea
+                                        rows={4}
+                                        value={msgContent}
+                                        onChange={(e) => setMsgContent(e.target.value)}
+                                        placeholder="Tuliskan detail pesan, ide, atau pengumuman awal di sini..."
+                                        style={{
+                                            width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13,
+                                            border: "1px solid #cbd5e1", outline: "none",
+                                            background: "#f8fafc", color: "#0f172a", resize: "vertical",
+                                            fontFamily: "inherit", boxSizing: "border-box",
+                                        }}
+                                    />
+                                </div>
 
-                        {/* 4. Catatan */}
-                        <div>
-                            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
-                                <FileText style={{ width: 13, height: 13, color: "#64748b" }} />
-                                <span>Catatan / Instructions</span>
-                            </label>
-                            <textarea
-                                rows={3}
-                                value={presetNotes}
-                                onChange={(e) => setPresetNotes(e.target.value)}
-                                placeholder="Tulis catatan tambahan, referensi, atau instruksi..."
-                                style={{
-                                    width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13,
-                                    border: "1px solid #cbd5e1", outline: "none",
-                                    background: "#f8fafc", color: "#0f172a", resize: "vertical",
-                                    fontFamily: "inherit"
-                                }}
-                            />
-                        </div>
+                                {/* 4. Lampiran File (Max 50MB) */}
+                                <div>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                                        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569" }}>
+                                            <Paperclip width={14} height={14} style={{ color: "#7c3aed" }} />
+                                            <span>Lampiran File</span>
+                                        </label>
+                                        <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>Maksimal 50 MB</span>
+                                    </div>
+
+                                    {msgFile ? (
+                                        <div style={{
+                                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                                            padding: "10px 14px", borderRadius: 10, background: "#f8fafc",
+                                            border: "1px solid #cbd5e1", fontSize: 13,
+                                        }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
+                                                <FileText width={18} height={18} style={{ color: "#6d28d9", flexShrink: 0 }} />
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div style={{ fontWeight: 600, color: "#0f172a", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                                                        {msgFile.name}
+                                                    </div>
+                                                    <div style={{ fontSize: 11, color: "#64748b" }}>
+                                                        {formatFileSize(msgFile.size)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setMsgFile(null)}
+                                                style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}
+                                            >
+                                                <X width={16} height={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label style={{
+                                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                                            padding: "12px 16px", borderRadius: 10, border: "2px dashed #cbd5e1",
+                                            background: "#f8fafc", cursor: "pointer", fontSize: 13, color: "#64748b",
+                                            fontWeight: 500, transition: "all 0.15s ease",
+                                        }}>
+                                            <Upload width={16} height={16} style={{ color: "#7c3aed" }} />
+                                            <span>Pilih File untuk Diunggah (Max 50MB)</span>
+                                            <input
+                                                type="file"
+                                                onChange={handleMsgFileChange}
+                                                disabled={saving}
+                                                style={{ display: "none" }}
+                                            />
+                                        </label>
+                                    )}
+
+                                    {msgFileError && (
+                                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#dc2626", marginTop: 6, fontWeight: 600 }}>
+                                            <AlertCircle width={14} height={14} />
+                                            <span>{msgFileError}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 4. Pin option */}
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <input
+                                        type="checkbox"
+                                        id="presetMsgPinned"
+                                        checked={msgIsPinned}
+                                        onChange={(e) => setMsgIsPinned(e.target.checked)}
+                                        style={{ cursor: "pointer", width: 16, height: 16 }}
+                                    />
+                                    <label
+                                        htmlFor="presetMsgPinned"
+                                        style={{ fontSize: 13, color: "#334155", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                                    >
+                                        <Pin width={13} height={13} style={{ color: "#7c3aed" }} />
+                                        <span>Sematkan postingan ini di bagian atas (Pinned Post)</span>
+                                    </label>
+                                </div>
+                            </>
+                        ) : (
+                            /* STANDARD CHECKLIST / TODOLIST FORM FIELDS */
+                            <>
+                                {/* 1. Item Tugas / Kartu Pertama (dengan Kotak Centang) */}
+                                <div>
+                                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        Nama Tugas / Item Checklist
+                                    </label>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 10, padding: "8px 12px" }}>
+                                        <div style={{
+                                            width: 18, height: 18, borderRadius: 4, border: `2px solid ${theme.main}`,
+                                            display: "flex", alignItems: "center", justifyContent: "center", background: theme.bg, flexShrink: 0
+                                        }}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={theme.main} strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                        </div>
+                                        <input
+                                            required
+                                            autoFocus
+                                            value={presetSubTitle}
+                                            onChange={(e) => setPresetSubTitle(e.target.value)}
+                                            placeholder="misal: Ayo gym, Kerjakan tugas, dll..."
+                                            style={{
+                                                flex: 1, border: "none", outline: "none", fontSize: 14,
+                                                background: "transparent", color: "#0f172a",
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 2. Tanggal & Jam */}
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                                    <div>
+                                        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                            <Calendar style={{ width: 13, height: 13, color: "#4f46e5" }} />
+                                            <span>Tanggal Selesai</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={presetDueDate}
+                                            onChange={(e) => setPresetDueDate(e.target.value)}
+                                            style={{
+                                                width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
+                                                border: "1px solid #cbd5e1", outline: "none",
+                                                background: "#f8fafc", color: "#0f172a",
+                                            }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                            <Clock style={{ width: 13, height: 13, color: "#d97706" }} />
+                                            <span>Jam</span>
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={presetDueTime}
+                                            onChange={(e) => setPresetDueTime(e.target.value)}
+                                            style={{
+                                                width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
+                                                border: "1px solid #cbd5e1", outline: "none",
+                                                background: "#f8fafc", color: "#0f172a",
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 3. Ditugaskan Kepada */}
+                                <div>
+                                    <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        <User style={{ width: 13, height: 13, color: "#059669" }} />
+                                        <span>Ditugaskan Kepada (User Terdaftar)</span>
+                                    </label>
+                                    <select
+                                        value={presetAssignee}
+                                        onChange={(e) => setPresetAssignee(e.target.value)}
+                                        style={{
+                                            width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
+                                            border: "1px solid #cbd5e1", outline: "none",
+                                            background: "#f8fafc", color: "#0f172a", cursor: "pointer", fontWeight: 500
+                                        }}
+                                    >
+                                        <option value="">-- Pilih User Terdaftar --</option>
+                                        {registeredUsers.map((uEmail) => {
+                                            const namePart = uEmail.split("@")[0];
+                                            const isMe = userEmail && uEmail.toLowerCase() === userEmail.toLowerCase();
+                                            return (
+                                                <option key={uEmail} value={namePart}>
+                                                    👤 {namePart} ({uEmail}){isMe ? " - Saya" : ""}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
+
+                                {/* 4. Catatan */}
+                                <div>
+                                    <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        <FileText style={{ width: 13, height: 13, color: "#64748b" }} />
+                                        <span>Catatan / Instructions</span>
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        value={presetNotes}
+                                        onChange={(e) => setPresetNotes(e.target.value)}
+                                        placeholder="Tulis catatan tambahan, referensi, atau instruksi..."
+                                        style={{
+                                            width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13,
+                                            border: "1px solid #cbd5e1", outline: "none",
+                                            background: "#f8fafc", color: "#0f172a", resize: "vertical",
+                                            fontFamily: "inherit"
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* Modal Footer */}
@@ -293,7 +538,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                 display: "flex", alignItems: "center", gap: 6,
                             }}
                         >
-                            {saving ? "Membuat..." : "Buat Papan Ini ✦"}
+                            {saving ? "Membuat..." : isMessageBoard ? "Buat Postingan" : "Buat Papan Ini"}
                         </button>
                     </div>
                 </form>
@@ -301,3 +546,4 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
         </div>
     );
 }
+

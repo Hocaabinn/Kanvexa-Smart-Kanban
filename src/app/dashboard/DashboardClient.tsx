@@ -243,7 +243,6 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
               border: "2px dashed var(--border)", borderRadius: 16,
               padding: "60px 32px", textAlign: "center", background: "#ffffff",
             }}>
-              <div style={{ fontSize: 40, marginBottom: 16 }}>✦</div>
               <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-1)", margin: "0 0 8px" }}>
                 Mulai proyek pertamamu
               </h2>
@@ -259,7 +258,6 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
                   borderRadius: 12, padding: "6px 6px 6px 14px",
                   boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
                 }}>
-                  <span style={{ fontSize: 16, color: "var(--v)", alignSelf: "center", flexShrink: 0 }}>✦</span>
                   <input
                     name="name"
                     required
@@ -274,7 +272,7 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
                     background: "var(--v)", color: "#fff", border: "none",
                     cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                   }}>
-                    Buat dengan AI ✦
+                    Buat dengan AI
                   </button>
                 </div>
               </form>
@@ -612,7 +610,7 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
               alignItems: "center",
             }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ color: "var(--v)" }}>✦</span> Buat Proyek Baru
+                Buat Proyek Baru
               </h3>
               <button 
                 onClick={() => setShowCreateModal(false)}
