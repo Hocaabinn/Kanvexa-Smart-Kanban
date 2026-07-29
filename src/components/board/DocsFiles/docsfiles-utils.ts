@@ -6,7 +6,6 @@ export interface DocFolderItem {
   id: string;
   name: string;
   fileCount: number;
-  parentId?: string | null;
   subfolders?: DocFolderItem[];
 }
 
@@ -26,6 +25,29 @@ export interface DocFileItem {
   created_at: string;
   updated_at: string;
 }
+
+export const INITIAL_SAMPLE_FOLDERS: DocFolderItem[] = [
+  {
+    id: "f-1",
+    name: "General Knowledge",
+    fileCount: 10,
+    subfolders: [
+      {
+        id: "f-1-1",
+        name: "Onboarding",
+        fileCount: 15,
+        subfolders: [
+          { id: "f-1-1-1", name: "Subfolder 1", fileCount: 5 },
+          { id: "f-1-1-2", name: "Subfolder 2", fileCount: 10 },
+        ],
+      },
+      { id: "f-1-2", name: "Integrations", fileCount: 5 },
+      { id: "f-1-3", name: "Technical Specs", fileCount: 8 },
+    ],
+  },
+  { id: "f-2", name: "Onboarding Design", fileCount: 4 },
+  { id: "f-3", name: "Team Interviews", fileCount: 6 },
+];
 
 export interface AIDocResponse {
   action: "generate_doc" | "summarize_doc" | "improve_doc";
@@ -59,29 +81,6 @@ export function getDocCategoryBadge(category: DocCategory): {
       return { label: "Umum", icon: FileText, bg: "rgba(100, 116, 139, 0.12)", color: "#475569", border: "rgba(100, 116, 139, 0.25)" };
   }
 }
-
-export const INITIAL_SAMPLE_FOLDERS: DocFolderItem[] = [
-  {
-    id: "f-1",
-    name: "General Knowledge",
-    fileCount: 10,
-    subfolders: [
-      {
-        id: "f-1-1",
-        name: "Onboarding",
-        fileCount: 15,
-        subfolders: [
-          { id: "f-1-1-1", name: "Subfolder 1", fileCount: 5 },
-          { id: "f-1-1-2", name: "Subfolder 2", fileCount: 10 },
-        ],
-      },
-      { id: "f-1-2", name: "Integrations", fileCount: 5 },
-      { id: "f-1-3", name: "Documents", fileCount: 8 },
-    ],
-  },
-  { id: "f-2", name: "Onboarding Design", fileCount: 4 },
-  { id: "f-3", name: "Team Interviews", fileCount: 6 },
-];
 
 export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
   {
@@ -147,7 +146,7 @@ export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
 ---
 
 ## 📝 Poin Pembahasan
-- Pembahasan layout **Knowledge Base / Folders Hub** untuk Docs & Files.
+- Pembahasan layout **Split-Screen** untuk Message Board dan Docs & Files.
 - Penyempurnaan warna latar kartu menjadi **Gradient Ungu Cerah**.
 - Penambahan tombol **\`✦ Urai dengan AI\`** pada header.
 
@@ -157,5 +156,18 @@ export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
 - [x] Implementasi 50 MB Upload Route Handler
 - [x] Penambahan fitur Share & Kolaborasi
 - [ ] Pengujian akhir sebelum push ke GitHub main branch`,
+  },
+  {
+    id: "doc-3",
+    board_id: "general",
+    folder_id: "f-1-3",
+    title: "Spesifikasi Teknis & Arsitektur API",
+    category: "Technical Spec",
+    author_email: "bintangwcproger@gmail.com",
+    created_at: new Date(Date.now() - 3600000 * 72).toISOString(),
+    updated_at: new Date().toISOString(),
+    content_markdown: `# Spesifikasi Teknis & Arsitektur API
+
+Dokumen spesifikasi teknis platform Kanvexa SaaS untuk integrasi API dan database real-time.`,
   },
 ];

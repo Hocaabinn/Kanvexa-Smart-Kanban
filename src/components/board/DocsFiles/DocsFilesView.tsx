@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Folder,
   FolderPlus,
@@ -29,6 +29,7 @@ import {
   Filter,
   MoreVertical,
 } from "lucide-react";
+import { AnimatedFolder } from "@/components/ui/3d-folder";
 import {
   DocCategory,
   DocFileItem,
@@ -48,8 +49,56 @@ interface Props {
 }
 
 export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
-  const [folders, setFolders] = useState<DocFolderItem[]>(INITIAL_SAMPLE_FOLDERS);
-  const [docs, setDocs] = useState<DocFileItem[]>(INITIAL_SAMPLE_DOCS);
+  const FOLDERS_STORAGE_KEY = `kanvexa_folders_${boardId}`;
+  const DOCS_STORAGE_KEY = `kanvexa_docs_${boardId}`;
+
+  const [folders, setFolders] = useState<DocFolderItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(FOLDERS_STORAGE_KEY);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved folders", e);
+        }
+      }
+    }
+    return INITIAL_SAMPLE_FOLDERS;
+  });
+
+  const [docs, setDocs] = useState<DocFileItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(DOCS_STORAGE_KEY);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved docs", e);
+        }
+      }
+    }
+    return INITIAL_SAMPLE_DOCS;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders));
+      } catch (e) {
+        console.error("Failed to save folders", e);
+      }
+    }
+  }, [folders, FOLDERS_STORAGE_KEY]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(docs));
+      } catch (e) {
+        console.error("Failed to save docs", e);
+      }
+    }
+  }, [docs, DOCS_STORAGE_KEY]);
   
   const [selectedFolderId, setSelectedFolderId] = useState<string>("f-1");
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -57,6 +106,11 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
   const [sidebarTab, setSidebarTab] = useState<"folders" | "tags">("folders");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  // Folder Context Menu & Rename States
+  const [activeMenuFolderId, setActiveMenuFolderId] = useState<string | null>(null);
+  const [renameFolderModal, setRenameFolderModal] = useState<{ id: string; currentName: string } | null>(null);
+  const [renameInput, setRenameInput] = useState("");
 
   // Folder Expansion State
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
@@ -80,12 +134,113 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
   // File upload state for documents
   const [uploadingFile, setUploadingFile] = useState(false);
 
+  const findFolderInTree = (items: DocFolderItem[], targetId: string): DocFolderItem | null => {
+    for (const item of items) {
+      if (item.id === targetId) return item;
+      if (item.subfolders && item.subfolders.length > 0) {
+        const found = findFolderInTree(item.subfolders, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const getFolderFileCount = (folderId: string): number => {
+    if (folderId === "f-1") {
+      return docs.length;
+    }
+    return docs.filter((d) => d.folder_id === folderId).length;
+  };
+
+  const currentFolderItem = findFolderInTree(folders, selectedFolderId);
+  const currentFolder = {
+    id: selectedFolderId,
+    name: currentFolderItem ? currentFolderItem.name : "General Knowledge",
+    fileCount: getFolderFileCount(selectedFolderId),
+  };
+
   const selectedDoc = docs.find((d) => d.id === selectedDocId) || null;
-  const currentFolder = folders.find((f) => f.id === selectedFolderId) || folders[0];
+
+  // Filter docs based on selected folder & search
+  const currentFolderDocs = docs.filter((d) => {
+    const matchesFolder =
+      selectedFolderId === "f-1" || d.folder_id === selectedFolderId || (!d.folder_id && selectedFolderId === "f-1");
+    const matchesSearch =
+      d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.content_markdown.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFolder && matchesSearch;
+  });
 
   const toggleFolderExpand = (folderId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedFolders((prev) => ({ ...prev, [folderId]: !prev[folderId] }));
+  };
+
+  const getGridFolders = (folderTree: DocFolderItem[]) => {
+    const result: { id: string; name: string; files: string; projects: any[] }[] = [];
+
+    const defaultProjectsMap: Record<string, any[]> = {
+      "f-1-1": [
+        { id: "ob-1", image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop", title: "Onboarding Guide" },
+        { id: "ob-2", image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=80&w=600&auto=format&fit=crop", title: "Welcome Deck" },
+        { id: "ob-3", image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=600&auto=format&fit=crop", title: "Design System" },
+      ],
+      "f-1-2": [
+        { id: "it-1", image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=600&auto=format&fit=crop", title: "API Docs" },
+        { id: "it-2", image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop", title: "Webhook Specs" },
+        { id: "it-3", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop", title: "Auth Protocol" },
+      ],
+      "f-1-3": [
+        { id: "ts-1", image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600&auto=format&fit=crop", title: "Architecture" },
+        { id: "ts-2", image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop", title: "Database Schema" },
+        { id: "ts-3", image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?q=80&w=600&auto=format&fit=crop", title: "Vercel Setup" },
+      ],
+      "f-2": [
+        { id: "ti-1", image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop", title: "User Research" },
+        { id: "ti-2", image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop", title: "Interview Notes" },
+        { id: "ti-3", image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop", title: "Persona Specs" },
+      ],
+    };
+
+    const traverse = (items: DocFolderItem[]) => {
+      for (const item of items) {
+        if (item.subfolders && item.subfolders.length > 0) {
+          traverse(item.subfolders);
+        } else {
+          const count = getFolderFileCount(item.id);
+          result.push({
+            id: item.id,
+            name: item.name,
+            files: `${count} Files`,
+            projects: defaultProjectsMap[item.id] || [
+              { id: `${item.id}-1`, image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 1` },
+              { id: `${item.id}-2`, image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 2` },
+              { id: `${item.id}-3`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 3` },
+            ],
+          });
+        }
+      }
+    };
+
+    traverse(folderTree);
+
+    for (const item of folderTree) {
+      if (!result.some((r) => r.id === item.id)) {
+        const count = getFolderFileCount(item.id);
+        result.push({
+          id: item.id,
+          name: item.name,
+          files: `${count} Files`,
+          projects: defaultProjectsMap[item.id] || [
+            { id: `${item.id}-1`, image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 1` },
+            { id: `${item.id}-2`, image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 2` },
+            { id: `${item.id}-3`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 3` },
+          ],
+        });
+      }
+    }
+
+    return result;
   };
 
   const handleCreateFolder = (e: React.FormEvent) => {
@@ -98,10 +253,55 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
       fileCount: 0,
     };
 
-    setFolders([...folders, newFolder]);
+    setFolders((prev) => [...prev, newFolder]);
     setSelectedFolderId(newFolder.id);
     setNewFolderName("");
     setShowCreateFolderModal(false);
+  };
+
+  const handleStartRename = (id: string, currentName: string) => {
+    setRenameFolderModal({ id, currentName });
+    setRenameInput(currentName);
+  };
+
+  const handleSaveRename = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renameFolderModal || !renameInput.trim()) return;
+
+    const renameRecursive = (items: DocFolderItem[]): DocFolderItem[] => {
+      return items.map((item) => {
+        if (item.id === renameFolderModal.id) {
+          return { ...item, name: renameInput.trim() };
+        }
+        if (item.subfolders && item.subfolders.length > 0) {
+          return { ...item, subfolders: renameRecursive(item.subfolders) };
+        }
+        return item;
+      });
+    };
+
+    setFolders(renameRecursive(folders));
+    setRenameFolderModal(null);
+  };
+
+  const handleDeleteFolder = (id: string, folderName: string) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus folder "${folderName}" beserta seluruh isinya?`)) return;
+
+    const deleteRecursive = (items: DocFolderItem[]): DocFolderItem[] => {
+      return items
+        .filter((item) => item.id !== id)
+        .map((item) => {
+          if (item.subfolders && item.subfolders.length > 0) {
+            return { ...item, subfolders: deleteRecursive(item.subfolders) };
+          }
+          return item;
+        });
+    };
+
+    setFolders(deleteRecursive(folders));
+    if (selectedFolderId === id) {
+      setSelectedFolderId("f-1");
+    }
   };
 
   const startNewDoc = () => {
@@ -188,48 +388,73 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !selectedDoc) return;
-
-    setUploadingFile(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("boardId", boardId);
-
-      const res = await fetch("/API/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("Gagal upload file.");
-      const uploadData = await res.json();
-
-      setDocs(
-        docs.map((d) =>
-          d.id === selectedDoc.id
-            ? {
-                ...d,
-                file_url: uploadData.url,
-                file_name: uploadData.name,
-                file_size: uploadData.size,
-              }
-            : d
-        )
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Gagal mengunggah berkas lampiran.");
-    } finally {
-      setUploadingFile(false);
-    }
+  // Tree View Helper Component: Document File Item in Tree
+  const renderTreeDocItem = (docItem: DocFileItem, depth: number) => {
+    const isDocSelected = selectedDocId === docItem.id;
+    return (
+      <div
+        key={docItem.id}
+        onClick={(e) => {
+          e.stopPropagation();
+          openDocPreview(docItem);
+        }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: `5px 8px 5px ${12 + depth * 16 + 14}px`,
+          borderRadius: 6,
+          background: isDocSelected ? "rgba(109, 40, 217, 0.12)" : "transparent",
+          color: isDocSelected ? "#6d28d9" : "#475569",
+          fontSize: 12,
+          fontWeight: isDocSelected ? 600 : 400,
+          cursor: "pointer",
+          transition: "all 0.12s ease",
+          marginTop: 1,
+        }}
+        onMouseEnter={(e) => {
+          if (!isDocSelected) e.currentTarget.style.background = "#f1f5f9";
+        }}
+        onMouseLeave={(e) => {
+          if (!isDocSelected) e.currentTarget.style.background = "transparent";
+        }}
+      >
+        <FileText width={13} height={13} style={{ color: isDocSelected ? "#6d28d9" : "#94a3b8", flexShrink: 0 }} />
+        <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", flex: 1 }}>
+          {docItem.title}
+        </span>
+      </div>
+    );
   };
 
-  // Tree View Helper Component
+  const getAllFolderIds = (items: DocFolderItem[]): Set<string> => {
+    const set = new Set<string>();
+    const traverse = (list: DocFolderItem[]) => {
+      for (const item of list) {
+        set.add(item.id);
+        if (item.subfolders && item.subfolders.length > 0) {
+          traverse(item.subfolders);
+        }
+      }
+    };
+    traverse(items);
+    return set;
+  };
+
+  // Tree View Helper Component: Folder Node in Tree
   const renderTreeFolder = (folder: DocFolderItem, depth = 0) => {
-    const hasSub = folder.subfolders && folder.subfolders.length > 0;
-    const isExpanded = expandedFolders[folder.id];
+    const subfolders = folder.subfolders || [];
+    const validFolderIds = getAllFolderIds(folders);
+
+    const folderFiles = docs.filter((d) => {
+      if (folder.id === "f-1") {
+        return !d.folder_id || d.folder_id === "f-1" || !validFolderIds.has(d.folder_id);
+      }
+      return d.folder_id === folder.id;
+    });
+
+    const hasChildren = subfolders.length > 0 || folderFiles.length > 0;
+    const isExpanded = expandedFolders[folder.id] ?? true;
     const isSelected = selectedFolderId === folder.id;
 
     return (
@@ -251,7 +476,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-            {hasSub ? (
+            {hasChildren ? (
               <span onClick={(e) => toggleFolderExpand(folder.id, e)} style={{ display: "flex", alignItems: "center", color: "#64748b" }}>
                 {isExpanded ? <ChevronDown width={14} height={14} /> : <ChevronRight width={14} height={14} />}
               </span>
@@ -264,13 +489,14 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
             </span>
           </div>
           <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: isSelected ? "#6d28d9" : "#e2e8f0", color: isSelected ? "#ffffff" : "#64748b" }}>
-            {folder.fileCount}
+            {getFolderFileCount(folder.id)}
           </span>
         </div>
 
-        {hasSub && isExpanded && (
+        {hasChildren && isExpanded && (
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {folder.subfolders!.map((sub) => renderTreeFolder(sub, depth + 1))}
+            {subfolders.map((sub) => renderTreeFolder(sub, depth + 1))}
+            {folderFiles.map((docFile) => renderTreeDocItem(docFile, depth + 1))}
           </div>
         )}
       </div>
@@ -282,7 +508,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
       {/* 2 Main Columns Layout: Left Knowledge Base Sidebar (280px), Right Explorer Area (Flex 1) */}
       <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
         
-        {/* SISI KIRI: Knowledge Base Sidebar (Sama persis seperti gambar yang diberikan pengguna) */}
+        {/* SISI KIRI: Knowledge Base Sidebar */}
         <div
           style={{
             width: 280,
@@ -297,29 +523,11 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
             gap: 14,
           }}
         >
-          {/* Header Title + Action Buttons */}
+          {/* Header Title */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <h3 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
               <span>Knowledge Base</span>
             </h3>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <button
-                onClick={() => setShowCreateFolderModal(true)}
-                title="Tambah Folder Baru"
-                style={{
-                  background: "rgba(109, 40, 217, 0.08)",
-                  border: "1px solid rgba(109, 40, 217, 0.2)",
-                  borderRadius: 6,
-                  padding: 5,
-                  cursor: "pointer",
-                  color: "#6d28d9",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <Plus width={14} height={14} />
-              </button>
-            </div>
           </div>
 
           {/* Search Box */}
@@ -420,7 +628,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
           )}
         </div>
 
-        {/* AREA UTAMA KANAN: Explorer Area (Folders Grid + Files Table + AI Bar) */}
+        {/* AREA UTAMA KANAN: Explorer Area */}
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
           
           {/* Header Action & Selection Bar */}
@@ -451,7 +659,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
                 }}
               >
                 <Sparkles width={14} height={14} style={{ color: "#fef08a" }} />
-                <span>✦ Urai dengan AI</span>
+                <span>Urai dengan AI</span>
               </button>
 
               {canEdit && (
@@ -501,204 +709,241 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
             </div>
           </div>
 
-          {/* SECTION 1: Folders Grid (Authentic 3D Stacked Folder Cards seperti di Gambar) */}
+          {/* SECTION 1: Folders Grid (dengan Tombol Titik 3 Menu Context) */}
           <div>
             <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", margin: "0 0 16px 0" }}>
               Folders
             </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 18 }}>
-              {[
-                { id: "f-1-1", name: "Onboarding", files: 15 },
-                { id: "f-1-2", name: "Integrations", files: 5 },
-                { id: "f-1-3", name: "Technical Specs", files: 8 },
-                { id: "f-2", name: "Team Interviews", files: 6 },
-              ].map((fItem) => (
-                <div
-                  key={fItem.id}
-                  onClick={() => setSelectedFolderId(fItem.id)}
-                  style={{
-                    background: "#f8fafc",
-                    borderRadius: 20,
-                    padding: "24px 20px 20px",
-                    border: "1px solid #e2e8f0",
-                    cursor: "pointer",
-                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.background = "#ffffff";
-                    e.currentTarget.style.borderColor = "#c084fc";
-                    e.currentTarget.style.boxShadow = "0 12px 25px rgba(109, 40, 217, 0.12)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.background = "#f8fafc";
-                    e.currentTarget.style.borderColor = "#e2e8f0";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                >
-                  {/* Authentic 3D Stacked Folder Graphic */}
-                  <div style={{ position: "relative", width: 140, height: 110, marginBottom: 12 }}>
-                    {/* Document paper 1 (Back angled) */}
-                    <div style={{
-                      position: "absolute", top: 6, left: 24, width: 88, height: 65,
-                      background: "#ffffff", borderRadius: 8, border: "1px solid #cbd5e1",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)", transform: "rotate(-5deg)",
-                      padding: 8, display: "flex", flexDirection: "column", gap: 4
-                    }}>
-                      <div style={{ fontSize: 7, fontWeight: 800, color: "#ea4335" }}>PDF</div>
-                      <div style={{ width: "70%", height: 3, background: "#cbd5e1", borderRadius: 2 }} />
-                      <div style={{ width: "90%", height: 2, background: "#e2e8f0", borderRadius: 2 }} />
-                    </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+              {getGridFolders(folders).map((fItem) => (
+                <div key={fItem.id} style={{ position: "relative", zIndex: 1 }}>
+                  {/* Tombol Titik 3 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMenuFolderId(activeMenuFolderId === fItem.id ? null : fItem.id);
+                    }}
+                    title="Opsi Folder"
+                    style={{
+                      position: "absolute",
+                      top: 10,
+                      right: 10,
+                      zIndex: 35,
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "#ffffff",
+                      border: "1.5px solid #d8b4fe",
+                      color: "#6d28d9",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.15)",
+                    }}
+                  >
+                    <MoreVertical width={14} height={14} />
+                  </button>
 
-                    {/* Document paper 2 (Front angled) */}
-                    <div style={{
-                      position: "absolute", top: 2, left: 28, width: 84, height: 65,
-                      background: "#ffffff", borderRadius: 8, border: "1px solid #cbd5e1",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)", transform: "rotate(4deg)",
-                      padding: 8, display: "flex", flexDirection: "column", gap: 4
-                    }}>
-                      <div style={{ width: "40%", height: 4, background: "#7c3aed", borderRadius: 2 }} />
-                      <div style={{ width: "80%", height: 2, background: "#e2e8f0", borderRadius: 2 }} />
-                      <div style={{ width: "60%", height: 2, background: "#e2e8f0", borderRadius: 2 }} />
-                    </div>
+                  {/* Context Menu Dropdown */}
+                  {activeMenuFolderId === fItem.id && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 42,
+                        right: 10,
+                        zIndex: 100,
+                        background: "#ffffff",
+                        borderRadius: 12,
+                        padding: 6,
+                        boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+                        border: "1px solid #e2e8f0",
+                        minWidth: 160,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                      }}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuFolderId(null);
+                          handleStartRename(fItem.id, fItem.name);
+                        }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#334155", background: "none", border: "none", cursor: "pointer" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#faf5ff")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                      >
+                        <Edit3 width={14} height={14} style={{ color: "#6d28d9" }} />
+                        <span>Ubah Nama</span>
+                      </button>
 
-                    {/* Folder Back Tab */}
-                    <div style={{
-                      position: "absolute", bottom: 0, left: 10, width: 120, height: 80,
-                      background: "#475569", borderRadius: 14,
-                    }}>
-                      <div style={{
-                        position: "absolute", top: -8, left: 0, width: 44, height: 12,
-                        background: "#475569", borderRadius: "6px 6px 0 0",
-                      }} />
-                    </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuFolderId(null);
+                          setSelectedFolderId(fItem.id);
+                          startNewDoc();
+                        }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#334155", background: "none", border: "none", cursor: "pointer" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#faf5ff")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                      >
+                        <Plus width={14} height={14} style={{ color: "#059669" }} />
+                        <span>Buat Dokumen</span>
+                      </button>
 
-                    {/* Folder Front Pocket Cover */}
-                    <div style={{
-                      position: "absolute", bottom: 0, left: 4, width: 132, height: 72,
-                      background: "linear-gradient(180deg, #475569 0%, #334155 100%)",
-                      borderRadius: 14, boxShadow: "0 10px 20px rgba(15, 23, 42, 0.25)",
-                      display: "flex", alignItems: "flex-end", padding: "10px 12px",
-                      borderTop: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}>
-                      {/* App Badges at bottom left */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
-                          <span style={{ fontSize: 9 }}>📐</span>
-                        </div>
-                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#18181b", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, border: "1px solid #3f3f46" }}>
-                          N
-                        </div>
-                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#0284c7", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800 }}>
-                          ☁️
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                      <div style={{ height: 1, background: "#f1f5f9", margin: "2px 0" }} />
 
-                  {/* Folder Details */}
-                  <div style={{ textAlign: "center", marginTop: 4 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", marginBottom: 2 }}>
-                      {fItem.name}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuFolderId(null);
+                          handleDeleteFolder(fItem.id, fItem.name);
+                        }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#ef4444", background: "none", border: "none", cursor: "pointer" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                      >
+                        <Trash2 width={14} height={14} />
+                        <span>Hapus Folder</span>
+                      </button>
                     </div>
-                    <div style={{ fontSize: 13, color: "#64748b", fontWeight: 500 }}>
-                      {fItem.files} Files
-                    </div>
+                  )}
+
+                  <div onClick={() => setSelectedFolderId(fItem.id)}>
+                    <AnimatedFolder
+                      title={fItem.name}
+                      subtitle={fItem.files}
+                      projects={fItem.projects}
+                    />
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* SECTION 2: Files & Documents List (Table Format seperti di Gambar) */}
+          {/* SECTION 2: Files & Documents List (Filter Sesuai Folder Aktif) */}
           <div style={{ marginTop: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                Files & Documents
+                Files & Documents ({currentFolder.name})
               </h3>
               <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
-                {docs.length} Berkas Ditemukan
+                {currentFolderDocs.length} Berkas Ditemukan
               </span>
             </div>
 
-            <div
-              style={{
-                background: "#ffffff",
-                borderRadius: 16,
-                border: "1px solid var(--border)",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.03)",
-                overflow: "hidden",
-              }}
-            >
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                <thead>
-                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", fontSize: 12, fontWeight: 700, color: "#64748b" }}>
-                    <th style={{ padding: "12px 16px" }}>Nama Dokumen</th>
-                    <th style={{ padding: "12px 16px" }}>Kategori</th>
-                    <th style={{ padding: "12px 16px" }}>Dibuat Oleh</th>
-                    <th style={{ padding: "12px 16px" }}>Tanggal</th>
-                    <th style={{ padding: "12px 16px", textAlign: "right" }}>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {docs.map((doc) => {
-                    const b = getDocCategoryBadge(doc.category);
-                    const BadgeIcon = b.icon;
+            {currentFolderDocs.length === 0 ? (
+              <div
+                style={{
+                  padding: "40px 24px",
+                  background: "#ffffff",
+                  borderRadius: 16,
+                  border: "1px dashed #cbd5e1",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 12,
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(109, 40, 217, 0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: "#6d28d9" }}>
+                  <Folder width={24} height={24} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", margin: "0 0 4px 0" }}>
+                    Belum ada berkas di folder "{currentFolder.name}"
+                  </h4>
+                  <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+                    Buat dokumen baru untuk menambahkan berkas ke dalam folder ini.
+                  </p>
+                </div>
+                <button
+                  onClick={startNewDoc}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, background: "var(--v)", color: "#ffffff", border: "none", cursor: "pointer", boxShadow: "0 4px 12px rgba(109, 40, 217, 0.25)" }}
+                >
+                  <Plus width={14} height={14} />
+                  <span>Buat Dokumen Pertama</span>
+                </button>
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: "#ffffff",
+                  borderRadius: 16,
+                  border: "1px solid var(--border)",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.03)",
+                  overflow: "hidden",
+                }}
+              >
+                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                  <thead>
+                    <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", fontSize: 12, fontWeight: 700, color: "#64748b" }}>
+                      <th style={{ padding: "12px 16px" }}>Nama Dokumen</th>
+                      <th style={{ padding: "12px 16px" }}>Kategori</th>
+                      <th style={{ padding: "12px 16px" }}>Dibuat Oleh</th>
+                      <th style={{ padding: "12px 16px" }}>Tanggal</th>
+                      <th style={{ padding: "12px 16px", textAlign: "right" }}>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentFolderDocs.map((doc) => {
+                      const b = getDocCategoryBadge(doc.category);
+                      const BadgeIcon = b.icon;
 
-                    return (
-                      <tr
-                        key={doc.id}
-                        onClick={() => openDocPreview(doc)}
-                        style={{
-                          borderBottom: "1px solid #f1f5f9",
-                          fontSize: 13,
-                          cursor: "pointer",
-                          transition: "background 0.12s ease",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#faf5ff")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
-                      >
-                        <td style={{ padding: "12px 16px", fontWeight: 700, color: "#0f172a" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <FileText width={16} height={16} style={{ color: "#6d28d9" }} />
-                            <span>{doc.title}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: "12px 16px" }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 6, background: b.bg, color: b.color, border: `1px solid ${b.border}`, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                            <BadgeIcon width={11} height={11} />
-                            {b.label}
-                          </span>
-                        </td>
-                        <td style={{ padding: "12px 16px", color: "#475569" }}>
-                          {doc.author_email}
-                        </td>
-                        <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>
-                          {new Date(doc.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                        </td>
-                        <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openDocPreview(doc);
-                              }}
-                              style={{ padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(109, 40, 217, 0.1)", color: "#6d28d9", border: "none", cursor: "pointer" }}
-                            >
-                              Buka Dokumen
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      return (
+                        <tr
+                          key={doc.id}
+                          onClick={() => openDocPreview(doc)}
+                          style={{
+                            borderBottom: "1px solid #f1f5f9",
+                            fontSize: 13,
+                            cursor: "pointer",
+                            transition: "background 0.12s ease",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#faf5ff")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+                        >
+                          <td style={{ padding: "12px 16px", fontWeight: 700, color: "#0f172a" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <FileText width={16} height={16} style={{ color: "#6d28d9" }} />
+                              <span>{doc.title}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 6, background: b.bg, color: b.color, border: `1px solid ${b.border}`, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <BadgeIcon width={11} height={11} />
+                              {b.label}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 16px", color: "#475569" }}>
+                            {doc.author_email}
+                          </td>
+                          <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>
+                            {new Date(doc.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                          </td>
+                          <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDocPreview(doc);
+                                }}
+                                style={{ padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(109, 40, 217, 0.1)", color: "#6d28d9", border: "none", cursor: "pointer" }}
+                              >
+                                Buka Dokumen
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
         </div>
@@ -820,6 +1065,33 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
                 </button>
                 <button type="submit" style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "var(--v)", color: "#ffffff", border: "none", cursor: "pointer" }}>
                   Buat Folder
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* RENAME FOLDER MODAL */}
+      {renameFolderModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.45)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
+          <div style={{ background: "#ffffff", borderRadius: 16, padding: 24, width: "100%", maxWidth: 420, border: "1px solid var(--border)" }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: "0 0 14px 0" }}>Ubah Nama Folder</h3>
+            <form onSubmit={handleSaveRename} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <input
+                type="text"
+                autoFocus
+                required
+                value={renameInput}
+                onChange={(e) => setRenameInput(e.target.value)}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #cbd5e1", fontSize: 13, outline: "none", boxSizing: "border-box" }}
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <button type="button" onClick={() => setRenameFolderModal(null)} style={{ padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "none", border: "1px solid #cbd5e1", color: "#475569" }}>
+                  Batal
+                </button>
+                <button type="submit" style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "var(--v)", color: "#ffffff", border: "none", cursor: "pointer" }}>
+                  Simpan Nama
                 </button>
               </div>
             </form>

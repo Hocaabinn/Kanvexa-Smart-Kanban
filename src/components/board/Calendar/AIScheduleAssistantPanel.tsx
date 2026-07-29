@@ -109,7 +109,7 @@ export default function AIScheduleAssistantPanel({ selectedTask, allTasks, onRes
           }}
         >
           {rescheduling ? <RotateCw width={14} height={14} className="animate-spin" /> : <Sparkles width={14} height={14} />}
-          <span>{rescheduling ? "Menyusun Ulang..." : "✦ Rencanakan Ulang (Reschedule with AI)"}</span>
+          <span>{rescheduling ? "Menyusun Ulang..." : "Rencanakan Ulang (Reschedule with AI)"}</span>
         </button>
 
         {rescheduleResultMsg && (
