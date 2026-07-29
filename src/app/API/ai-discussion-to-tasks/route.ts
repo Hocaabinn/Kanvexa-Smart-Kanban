@@ -6,7 +6,7 @@ interface ColumnOption {
   name: string;
 }
 
-const SYSTEM_PROMPT = `Kamu adalah AI Assistant Manajemen Tugas untuk Kanvexa (Smart Kanban).
+const SYSTEM_PROMPT = `Kamu adalah AI Assistant Manajemen Tugas untuk Kanvexa (Smart Kanban Board).
 Tugasmu adalah menganalisis teks diskusi/pengumuman dari Message Board tim dan mengurutkan/mengekstrak tugas-tugas konkret yang harus dikerjakan tim.
 
 User akan memberikan:
@@ -28,6 +28,23 @@ Aturan:
 - Hasilkan 2-6 tugas yang paling actionable dan jelas dari diskusi.
 - Judul tugas harus singkat dan padat (max 10-12 kata).
 - Pilih \`suggestedColumnId\` yang paling cocok dari daftar kolom yang disediakan user (misalnya kolom 'To Do' atau 'Backlog'). Jika ragu, gunakan id kolom pertama.`;
+
+function safeParseJson(raw: string): any {
+  let cleaned = raw
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .replace(/^[\\\]\s]+/, "")
+    .trim();
+
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+
+  if (start !== -1 && end !== -1 && end > start) {
+    cleaned = cleaned.substring(start, end + 1);
+  }
+
+  return JSON.parse(cleaned);
+}
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -62,11 +79,13 @@ export async function POST(req: Request) {
         "X-Title": "Kanvexa",
       },
       body: JSON.stringify({
-        model: "openrouter/free",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
         ],
+        temperature: 0.2,
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -79,9 +98,7 @@ export async function POST(req: Request) {
     const data = await res.json();
     const raw = data.choices?.[0]?.message?.content ?? "";
 
-    const cleaned = raw.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(cleaned);
-
+    const parsed = safeParseJson(raw);
     return NextResponse.json(parsed);
   } catch (err: any) {
     console.error("AI Discussion to Tasks error:", err);

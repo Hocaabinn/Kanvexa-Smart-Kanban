@@ -24,6 +24,23 @@ Aturan:
 - Ambil substansi inti dari ide/pengumuman/komentar.
 - Jika belum ada keputusan pasti, berikan estimasi rekomendasi di bagian decisions.`;
 
+function safeParseJson(raw: string): any {
+  let cleaned = raw
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .replace(/^[\\\]\s]+/, "")
+    .trim();
+
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+
+  if (start !== -1 && end !== -1 && end > start) {
+    cleaned = cleaned.substring(start, end + 1);
+  }
+
+  return JSON.parse(cleaned);
+}
+
 export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -49,11 +66,13 @@ export async function POST(req: Request) {
         "X-Title": "Kanvexa",
       },
       body: JSON.stringify({
-        model: "openrouter/free",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: postsContent.trim() },
         ],
+        temperature: 0.2,
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -66,9 +85,7 @@ export async function POST(req: Request) {
     const data = await res.json();
     const raw = data.choices?.[0]?.message?.content ?? "";
 
-    const cleaned = raw.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(cleaned);
-
+    const parsed = safeParseJson(raw);
     return NextResponse.json(parsed);
   } catch (err: any) {
     console.error("AI Message Summary error:", err);

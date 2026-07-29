@@ -29,6 +29,8 @@ import TodoListColumn from "./board/todolist/TodoListColumn";
 import TodoListPresetModal from "./board/todolist/TodoListPresetModal";
 import AIBreakdownModal from "./AIBreakdownModal";
 import MessageBoardView from "./board/MessageBoard/MessageBoardView";
+import CalendarView from "./board/Calendar/CalendarView";
+import DocsFilesView from "./board/DocsFiles/DocsFilesView";
 import type { BoardPost, BoardPostComment } from "./board/MessageBoard/messageboard-utils";
 import { moveCard, createColumn, createColumnWithCard } from "@/app/board/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -72,8 +74,8 @@ export default function BoardClient({
 }: Props) {
   const router = useRouter();
 
-  // Tab state: "kanban" vs "messageboard"
-  const [activeTab, setActiveTab] = useState<"kanban" | "messageboard">("kanban");
+  // Tab state: "kanban" vs "messageboard" vs "calendar" vs "docs"
+  const [activeTab, setActiveTab] = useState<"kanban" | "messageboard" | "calendar" | "docs">("kanban");
 
   // Derived state from props to allow server-side updates / revalidations to reflect in client state
   const [prevInitialColumns, setPrevInitialColumns] = useState(initialColumns);
@@ -421,6 +423,50 @@ export default function BoardClient({
               </span>
             )}
           </button>
+
+          <button
+            onClick={() => setActiveTab("calendar")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 14px",
+              borderRadius: 7,
+              fontSize: 13,
+              fontWeight: 600,
+              border: "none",
+              background: activeTab === "calendar" ? "#ffffff" : "transparent",
+              color: activeTab === "calendar" ? "var(--v)" : "#64748b",
+              boxShadow: activeTab === "calendar" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <Calendar width={14} height={14} />
+            <span>Kalender</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("docs")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 14px",
+              borderRadius: 7,
+              fontSize: 13,
+              fontWeight: 600,
+              border: "none",
+              background: activeTab === "docs" ? "#ffffff" : "transparent",
+              color: activeTab === "docs" ? "var(--v)" : "#64748b",
+              boxShadow: activeTab === "docs" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <FileText width={14} height={14} />
+            <span>Docs & Files</span>
+          </button>
         </div>
 
         {/* AI Breakdown Button (Shown in Kanban view) */}
@@ -455,6 +501,19 @@ export default function BoardClient({
             setActiveTab("kanban");
             router.refresh();
           }}
+        />
+      ) : activeTab === "calendar" ? (
+        <CalendarView
+          boardId={boardId}
+          cards={cards}
+          columns={columns}
+          canEdit={canEdit}
+        />
+      ) : activeTab === "docs" ? (
+        <DocsFilesView
+          boardId={boardId}
+          userEmail={userEmail}
+          canEdit={canEdit}
         />
       ) : (
 
