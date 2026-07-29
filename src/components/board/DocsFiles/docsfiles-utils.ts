@@ -2,9 +2,18 @@ import { FileText, Calendar, CheckSquare, Sparkles, BookOpen, Layers, type Lucid
 
 export type DocCategory = "PRD" | "Meeting Notes" | "Briefing" | "Technical Spec" | "General";
 
+export interface DocFolderItem {
+  id: string;
+  name: string;
+  fileCount: number;
+  parentId?: string | null;
+  subfolders?: DocFolderItem[];
+}
+
 export interface DocFileItem {
   id: string;
   board_id: string;
+  folder_id?: string;
   title: string;
   category: DocCategory;
   content_markdown: string;
@@ -51,10 +60,34 @@ export function getDocCategoryBadge(category: DocCategory): {
   }
 }
 
+export const INITIAL_SAMPLE_FOLDERS: DocFolderItem[] = [
+  {
+    id: "f-1",
+    name: "General Knowledge",
+    fileCount: 10,
+    subfolders: [
+      {
+        id: "f-1-1",
+        name: "Onboarding",
+        fileCount: 15,
+        subfolders: [
+          { id: "f-1-1-1", name: "Subfolder 1", fileCount: 5 },
+          { id: "f-1-1-2", name: "Subfolder 2", fileCount: 10 },
+        ],
+      },
+      { id: "f-1-2", name: "Integrations", fileCount: 5 },
+      { id: "f-1-3", name: "Documents", fileCount: 8 },
+    ],
+  },
+  { id: "f-2", name: "Onboarding Design", fileCount: 4 },
+  { id: "f-3", name: "Team Interviews", fileCount: 6 },
+];
+
 export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
   {
     id: "doc-1",
     board_id: "general",
+    folder_id: "f-1-1",
     title: "Product Requirement Document (PRD) - Kanvexa SaaS",
     category: "PRD",
     author_email: "andi@kanvexa.com",
@@ -92,6 +125,7 @@ export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
   {
     id: "doc-2",
     board_id: "general",
+    folder_id: "f-1-2",
     title: "Catatan Rapat Peluncuran Fitur Baru",
     category: "Meeting Notes",
     author_email: "bintangwcproger@gmail.com",
@@ -113,7 +147,7 @@ export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
 ---
 
 ## 📝 Poin Pembahasan
-- Pembahasan layout **Split-Screen** untuk Message Board dan Docs & Files.
+- Pembahasan layout **Knowledge Base / Folders Hub** untuk Docs & Files.
 - Penyempurnaan warna latar kartu menjadi **Gradient Ungu Cerah**.
 - Penambahan tombol **\`✦ Urai dengan AI\`** pada header.
 
