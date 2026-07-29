@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Clock, User, FileText, MessageSquare, Pin, Sparkles, Paperclip, Upload, X, AlertCircle } from "lucide-react";
+import { Calendar, Clock, User, FileText, MessageSquare, Pin, Sparkles, Paperclip, Upload, X, AlertCircle, BookOpen, Layers } from "lucide-react";
 import { createColumnWithCard, createKanbanWorkflow, createPost } from "@/app/board/[id]/actions";
 import { PostCategory, getCategoryBadge, formatFileSize } from "../MessageBoard/messageboard-utils";
-import { createClient } from "@/lib/supabase/client";
 
 interface Props {
     boardId: string;
@@ -12,6 +11,8 @@ interface Props {
     presetType: string;
     onClose: () => void;
 }
+
+type DocCategory = "PRD" | "Meeting Notes" | "Briefing" | "Technical Spec" | "General";
 
 function getModalTheme(type: string) {
     const lower = type.toLowerCase().trim();
@@ -21,6 +22,14 @@ function getModalTheme(type: string) {
             bg: "#fdf2f8",
             border: "#fbcfe8",
             shadow: "rgba(219, 39, 119, 0.25)",
+        };
+    }
+    if (lower.includes("doc") || lower.includes("file") || lower.includes("dokumen")) {
+        return {
+            main: "#6d28d9",
+            bg: "#faf5ff",
+            border: "#d8b4fe",
+            shadow: "rgba(109, 40, 217, 0.25)",
         };
     }
     if (lower.includes("calendar") || lower.includes("kalender")) {
@@ -68,7 +77,8 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 export default function TodoListPresetModal({ boardId, userEmail = "", presetType, onClose }: Props) {
     const isMessageBoard = presetType.toLowerCase().includes("message");
     const isCalendar = presetType.toLowerCase().includes("calendar") || presetType.toLowerCase().includes("kalender");
-    
+    const isDocsFiles = presetType.toLowerCase().includes("doc") || presetType.toLowerCase().includes("file") || presetType.toLowerCase().includes("dokumen");
+
     const defaultColTitle = presetType.includes("To-Do List") ? "To-dos" : presetType;
     const theme = getModalTheme(presetType);
 
@@ -88,7 +98,12 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
     const [msgCategory, setMsgCategory] = useState<PostCategory>("announcement");
     const [msgIsPinned, setMsgIsPinned] = useState(true);
 
-    // File upload state (Message Board preset)
+    // Docs & Files custom states
+    const [docTitle, setDocTitle] = useState("Product Requirement Document (PRD) Tim");
+    const [docCategory, setDocCategory] = useState<DocCategory>("PRD");
+    const [docContent, setDocContent] = useState("# Product Requirement Document (PRD)\n\n## 📌 Ringkasan Dokumen\nDokumen ini berisi spesifikasi teknis, rancangan alur, dan catatan proyek tim.\n\n### 🎯 Poin Utama\n- Spesifikasi antarmuka pengguna\n- Alur integrasi API dan autentikasi\n- Jadwal peluncuran dan pengujian");
+
+    // File upload state (Message Board & Docs preset)
     const [msgFile, setMsgFile] = useState<File | null>(null);
     const [msgFileError, setMsgFileError] = useState<string | null>(null);
 
@@ -159,6 +174,17 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                     fileName,
                     fileSize
                 );
+            } else if (isDocsFiles) {
+                const colName = "Docs & Files";
+                const cardTaskName = docTitle.trim() || "Dokumen Proyek Utama";
+                await createColumnWithCard(
+                    boardId,
+                    colName,
+                    cardTaskName,
+                    {
+                        notes: `[Kategori: ${docCategory}]\n\n${docContent}`,
+                    }
+                );
             } else if (presetType.includes("To-Do List") || presetType.includes("Kanban")) {
                 const cardTaskName = presetSubTitle.trim() || "Tugas Pertama";
                 await createKanbanWorkflow(
@@ -209,7 +235,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                 borderTop: `4px solid ${theme.main}`,
                 borderRadius: 20,
                 width: "100%",
-                maxWidth: 500,
+                maxWidth: 520,
                 boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
                 overflow: "hidden",
                 animation: "modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -223,7 +249,9 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                     alignItems: "center",
                 }}>
                     <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                        {isCalendar
+                        {isDocsFiles
+                            ? "Konfigurasi Docs & Files Hub"
+                            : isCalendar
                             ? "Konfigurasi Jadwal & Kalender Tugas"
                             : isMessageBoard
                             ? "Konfigurasi Message Board"
@@ -244,7 +272,149 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                 <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column" }}>
                     <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 16, maxHeight: "68vh", overflowY: "auto" }}>
                         
-                        {isMessageBoard ? (
+                        {isDocsFiles ? (
+                            /* CUSTOM DOCS & FILES FORM FIELDS */
+                            <>
+                                {/* 1. Judul Dokumen Awal */}
+                                <div>
+                                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        Judul Dokumen Awal
+                                    </label>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 10, padding: "8px 12px" }}>
+                                        <FileText style={{ width: 16, height: 16, color: theme.main, flexShrink: 0 }} />
+                                        <input
+                                            required
+                                            autoFocus
+                                            value={docTitle}
+                                            onChange={(e) => setDocTitle(e.target.value)}
+                                            placeholder="misal: PRD Fitur Utama / Spesifikasi API"
+                                            style={{
+                                                flex: 1, border: "none", outline: "none", fontSize: 14,
+                                                background: "transparent", color: "#0f172a",
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 2. Kategori Dokumen */}
+                                <div>
+                                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        Kategori Dokumen
+                                    </label>
+                                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                        {[
+                                            { cat: "PRD", label: "PRD", color: "#6d28d9", bg: "rgba(109, 40, 217, 0.1)" },
+                                            { cat: "Meeting Notes", label: "Catatan Rapat", color: "#2563eb", bg: "rgba(37, 99, 235, 0.1)" },
+                                            { cat: "Briefing", label: "Briefing Tim", color: "#d97706", bg: "rgba(217, 119, 6, 0.1)" },
+                                            { cat: "Technical Spec", label: "Spesifikasi Teknis", color: "#059669", bg: "rgba(16, 185, 129, 0.1)" },
+                                            { cat: "General", label: "Umum", color: "#475569", bg: "rgba(100, 116, 139, 0.1)" },
+                                        ].map((item) => {
+                                            const isSelected = docCategory === item.cat;
+                                            return (
+                                                <button
+                                                    key={item.cat}
+                                                    type="button"
+                                                    onClick={() => setDocCategory(item.cat as DocCategory)}
+                                                    style={{
+                                                        padding: "6px 12px",
+                                                        borderRadius: 8,
+                                                        fontSize: 12,
+                                                        fontWeight: 700,
+                                                        border: isSelected ? `2px solid ${item.color}` : "1px solid #cbd5e1",
+                                                        background: isSelected ? item.bg : "#ffffff",
+                                                        color: isSelected ? item.color : "#64748b",
+                                                        cursor: "pointer",
+                                                        transition: "all 0.15s ease",
+                                                    }}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* 3. Isi Dokumen Awal (Markdown) */}
+                                <div>
+                                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                                        Isi Dokumen Awal (Format Markdown)
+                                    </label>
+                                    <textarea
+                                        rows={6}
+                                        value={docContent}
+                                        onChange={(e) => setDocContent(e.target.value)}
+                                        placeholder="Tuliskan spesifikasi, deskripsi, atau catatan proyek di sini..."
+                                        style={{
+                                            width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13,
+                                            border: "1px solid #cbd5e1", outline: "none",
+                                            background: "#f8fafc", color: "#0f172a", resize: "vertical",
+                                            fontFamily: "monospace", lineHeight: 1.5, boxSizing: "border-box",
+                                        }}
+                                    />
+                                </div>
+
+                                {/* 4. Lampiran Berkas (Max 50 MB) */}
+                                <div>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                                        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569" }}>
+                                            <Paperclip width={14} height={14} style={{ color: "#6d28d9" }} />
+                                            <span>Lampiran Berkas (Opsional)</span>
+                                        </label>
+                                        <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>Maksimal 50 MB</span>
+                                    </div>
+
+                                    {msgFile ? (
+                                        <div style={{
+                                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                                            padding: "10px 14px", borderRadius: 10, background: "#f8fafc",
+                                            border: "1px solid #cbd5e1", fontSize: 13,
+                                        }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
+                                                <FileText width={18} height={18} style={{ color: "#6d28d9", flexShrink: 0 }} />
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div style={{ fontWeight: 600, color: "#0f172a", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                                                        {msgFile.name}
+                                                    </div>
+                                                    <div style={{ fontSize: 11, color: "#64748b" }}>
+                                                        {formatFileSize(msgFile.size)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setMsgFile(null)}
+                                                style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}
+                                            >
+                                                <X width={16} height={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label style={{
+                                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                                            padding: "12px 16px", borderRadius: 10, border: "2px dashed #cbd5e1",
+                                            background: "#f8fafc", cursor: "pointer", fontSize: 13, color: "#64748b",
+                                            fontWeight: 500, transition: "all 0.15s ease",
+                                        }}>
+                                            <Upload width={16} height={16} style={{ color: "#6d28d9" }} />
+                                            <span>Pilih File Lampiran (PDF, Doc, Zip max 50MB)</span>
+                                            <input
+                                                type="file"
+                                                onChange={handleMsgFileChange}
+                                                disabled={saving}
+                                                style={{ display: "none" }}
+                                            />
+                                        </label>
+                                    )}
+
+                                    {msgFileError && (
+                                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#dc2626", marginTop: 6, fontWeight: 600 }}>
+                                            <AlertCircle width={14} height={14} />
+                                            <span>{msgFileError}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        ) : isMessageBoard ? (
                             /* CUSTOM MESSAGE BOARD FORM FIELDS */
                             <>
                                 {/* 1. Judul Topik / Pengumuman */}
@@ -439,7 +609,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                     </div>
                                 </div>
 
-                                {/* 2. Tanggal & Jam Tenggat (Highlight untuk Kalender) */}
+                                {/* 2. Tanggal & Jam Tenggat */}
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                                     <div>
                                         <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
@@ -559,7 +729,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                 display: "flex", alignItems: "center", gap: 6,
                             }}
                         >
-                            {saving ? "Membuat..." : isCalendar ? "Buat Jadwal Kalender" : isMessageBoard ? "Buat Postingan" : "Buat Papan Ini"}
+                            {saving ? "Membuat..." : isDocsFiles ? "Buat Dokumen Ini" : isCalendar ? "Buat Jadwal Kalender" : isMessageBoard ? "Buat Postingan" : "Buat Papan Ini"}
                         </button>
                     </div>
                 </form>
