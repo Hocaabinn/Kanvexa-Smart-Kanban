@@ -406,7 +406,7 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
                   <Link key={board.id} href={`/board/${board.id}`} style={{ textDecoration: "none" }}>
                     <AnimatedFolder
                       title={board.name}
-                      subtitle={`Kanvexa • ${relativeTime}`}
+                      subtitle={`Kanvexa • ${dateFormatted}`}
                       isPinned={isPinned}
                       isStarred={isStarred}
                       showOpenButton={true}
