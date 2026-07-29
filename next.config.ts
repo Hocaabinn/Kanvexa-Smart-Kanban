@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   experimental: {
     preloadEntriesOnStart: false,
     turbopackFileSystemCacheForDev: true,
+    serverActions: {
+      bodySizeLimit: "50mb",
+    },
   },
 };
 

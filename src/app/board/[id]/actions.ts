@@ -264,3 +264,131 @@ export async function insertAIBreakdown(boardId: string, aiColumns: AIColumn[], 
 
   revalidatePath(`/board/${boardId}`);
 }
+
+// ── Message Board Actions ──────────────────────────────────────────────────
+
+export async function createPost(
+  boardId: string,
+  title: string,
+  content: string,
+  category: "announcement" | "idea" | "discussion" | "qa" = "discussion",
+  isPinned: boolean = false,
+  fileUrl?: string | null,
+  fileName?: string | null,
+  fileSize?: number | null
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase.from("board_posts").insert({
+    board_id: boardId,
+    author_id: user.id,
+    author_email: user.email || "Anonim",
+    title: title.trim(),
+    content: content.trim(),
+    category,
+    is_pinned: isPinned,
+    file_url: fileUrl || null,
+    file_name: fileName || null,
+    file_size: fileSize || null,
+  });
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/board/${boardId}`);
+}
+
+export async function deletePost(boardId: string, postId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("board_posts").delete().eq("id", postId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/board/${boardId}`);
+}
+
+export async function togglePinPost(boardId: string, postId: string, newPinnedState: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("board_posts")
+    .update({ is_pinned: newPinnedState, updated_at: new Date().toISOString() })
+    .eq("id", postId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/board/${boardId}`);
+}
+
+export async function createComment(boardId: string, postId: string, content: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase.from("board_post_comments").insert({
+    post_id: postId,
+    board_id: boardId,
+    author_id: user.id,
+    author_email: user.email || "Anonim",
+    content: content.trim(),
+  });
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/board/${boardId}`);
+}
+
+export async function deleteComment(boardId: string, commentId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("board_post_comments").delete().eq("id", commentId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/board/${boardId}`);
+}
+
+export async function insertTasksFromDiscussion(
+  boardId: string,
+  tasks: { title: string; description?: string; columnId: string }[]
+) {
+  const supabase = await createClient();
+
+  for (const task of tasks) {
+    // Get current max position for target column
+    const { data: existing } = await supabase
+      .from("cards")
+      .select("position")
+      .eq("column_id", task.columnId)
+      .order("position", { ascending: false })
+      .limit(1);
+
+    const position = (existing?.[0]?.position ?? -1) + 1;
+
+    await supabase.from("cards").insert({
+      board_id: boardId,
+      column_id: task.columnId,
+      title: task.title.trim(),
+      description: task.description?.trim() || null,
+      position,
+    });
+  }
+
+  revalidatePath(`/board/${boardId}`);
+}
+
+export async function inviteBoardMember(
+  boardId: string,
+  email: string,
+  role: "admin" | "member" | "viewer" = "member"
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  // Attempt inserting into board_members table if table exists
+  try {
+    await supabase.from("board_members").insert({
+      board_id: boardId,
+      user_id: user.id, // For demo/testing invitation
+      role: role,
+    });
+  } catch (e) {
+    console.log("board_members insert handled:", e);
+  }
+
+  revalidatePath(`/board/${boardId}`);
+}
+
+

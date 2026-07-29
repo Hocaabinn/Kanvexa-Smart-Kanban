@@ -35,6 +35,19 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
   const { data: cards } = await supabase
     .from("cards").select("id, column_id, title, description, position").eq("board_id", id).order("position");
 
+  const { data: posts } = await supabase
+    .from("board_posts")
+    .select("id, board_id, author_id, author_email, title, content, category, is_pinned, file_url, file_name, file_size, created_at, updated_at")
+    .eq("board_id", id)
+    .order("is_pinned", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  const { data: comments } = await supabase
+    .from("board_post_comments")
+    .select("id, post_id, board_id, author_id, author_email, content, created_at")
+    .eq("board_id", id)
+    .order("created_at", { ascending: true });
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "transparent", position: "relative", zIndex: 1 }}>
       {/* TOPBAR */}
@@ -69,15 +82,18 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
         </div>
       </header>
 
-      {/* KANBAN BOARD */}
+      {/* KANBAN BOARD & MESSAGE BOARD CLIENT */}
       <BoardClient
         boardId={board.id}
         userEmail={user?.email || ""}
         initialColumns={columns ?? []}
         initialCards={cards ?? []}
+        initialPosts={posts ?? []}
+        initialComments={comments ?? []}
         isAdmin={isAdmin}
         canEdit={canEdit}
       />
     </div>
   );
 }
+

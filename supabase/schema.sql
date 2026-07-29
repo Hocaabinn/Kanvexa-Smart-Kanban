@@ -182,8 +182,73 @@ create policy "cards_delete" on cards for delete
   using (public.is_board_member(board_id));
 
 -- ============================================================
+-- Message Board Tables & Policies
+-- ============================================================
+
+create table if not exists board_posts (
+  id uuid primary key default gen_random_uuid(),
+  board_id uuid not null references boards(id) on delete cascade,
+  author_id uuid not null references auth.users(id) on delete cascade,
+  author_email text not null,
+  title text not null,
+  content text not null,
+  category text not null check (category in ('announcement', 'idea', 'discussion', 'qa')) default 'discussion',
+  is_pinned boolean not null default false,
+  file_url text,
+  file_name text,
+  file_size bigint,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists board_post_comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references board_posts(id) on delete cascade,
+  board_id uuid not null references boards(id) on delete cascade,
+  author_id uuid not null references auth.users(id) on delete cascade,
+  author_email text not null,
+  content text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table board_posts enable row level security;
+alter table board_post_comments enable row level security;
+
+-- Policies for board_posts
+drop policy if exists "posts_select" on board_posts;
+create policy "posts_select" on board_posts for select
+  using (public.is_board_member(board_id));
+
+drop policy if exists "posts_insert" on board_posts;
+create policy "posts_insert" on board_posts for insert
+  with check (public.is_board_editor(board_id));
+
+drop policy if exists "posts_update" on board_posts;
+create policy "posts_update" on board_posts for update
+  using (public.is_board_editor(board_id));
+
+drop policy if exists "posts_delete" on board_posts;
+create policy "posts_delete" on board_posts for delete
+  using (public.is_board_editor(board_id) or auth.uid() = author_id);
+
+-- Policies for board_post_comments
+drop policy if exists "comments_select" on board_post_comments;
+create policy "comments_select" on board_post_comments for select
+  using (public.is_board_member(board_id));
+
+drop policy if exists "comments_insert" on board_post_comments;
+create policy "comments_insert" on board_post_comments for insert
+  with check (public.is_board_editor(board_id));
+
+drop policy if exists "comments_delete" on board_post_comments;
+create policy "comments_delete" on board_post_comments for delete
+  using (public.is_board_editor(board_id) or auth.uid() = author_id);
+
+-- ============================================================
 -- Realtime: broadcast changes on these tables to subscribers
 -- ============================================================
 
 alter publication supabase_realtime add table board_columns;
 alter publication supabase_realtime add table cards;
+alter publication supabase_realtime add table board_posts;
+alter publication supabase_realtime add table board_post_comments;
