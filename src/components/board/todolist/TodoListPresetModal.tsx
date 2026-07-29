@@ -23,6 +23,14 @@ function getModalTheme(type: string) {
             shadow: "rgba(219, 39, 119, 0.25)",
         };
     }
+    if (lower.includes("calendar") || lower.includes("kalender")) {
+        return {
+            main: "#7c3aed",
+            bg: "#f5f3ff",
+            border: "#ddd6fe",
+            shadow: "rgba(124, 58, 237, 0.25)",
+        };
+    }
     if (lower.includes("review") || lower.includes("peninjauan")) {
         return {
             main: "#2563eb",
@@ -59,14 +67,18 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
 export default function TodoListPresetModal({ boardId, userEmail = "", presetType, onClose }: Props) {
     const isMessageBoard = presetType.toLowerCase().includes("message");
+    const isCalendar = presetType.toLowerCase().includes("calendar") || presetType.toLowerCase().includes("kalender");
+    
     const defaultColTitle = presetType.includes("To-Do List") ? "To-dos" : presetType;
     const theme = getModalTheme(presetType);
 
+    const todayIso = new Date().toISOString().split("T")[0];
+
     // General preset states
     const [presetColTitle, setPresetColTitle] = useState(defaultColTitle);
-    const [presetSubTitle, setPresetSubTitle] = useState("");
-    const [presetDueDate, setPresetDueDate] = useState("");
-    const [presetDueTime, setPresetDueTime] = useState("");
+    const [presetSubTitle, setPresetSubTitle] = useState(isCalendar ? "Deadline Pekerjaan Utama" : "");
+    const [presetDueDate, setPresetDueDate] = useState(isCalendar ? todayIso : "");
+    const [presetDueTime, setPresetDueTime] = useState(isCalendar ? "17:00" : "");
     const [presetAssignee, setPresetAssignee] = useState("");
     const [presetNotes, setPresetNotes] = useState("");
     
@@ -161,13 +173,13 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                 );
             } else {
                 const colName = presetColTitle.trim() || defaultColTitle;
-                const cardTaskName = presetSubTitle.trim() || "Tugas Pertama";
+                const cardTaskName = presetSubTitle.trim() || (isCalendar ? "Tenggat Pekerjaan Utama" : "Tugas Pertama");
                 await createColumnWithCard(
                     boardId,
                     colName,
                     cardTaskName,
                     {
-                        dueDate: presetDueDate,
+                        dueDate: presetDueDate || (isCalendar ? todayIso : undefined),
                         dueTime: presetDueTime,
                         assignee: presetAssignee.trim(),
                         notes: presetNotes.trim(),
@@ -211,7 +223,11 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                     alignItems: "center",
                 }}>
                     <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                        Konfigurasi Kolom ({presetType})
+                        {isCalendar
+                            ? "Konfigurasi Jadwal & Kalender Tugas"
+                            : isMessageBoard
+                            ? "Konfigurasi Message Board"
+                            : `Konfigurasi Kolom (${presetType})`}
                     </h3>
                     <button
                         onClick={onClose}
@@ -391,26 +407,30 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                 </div>
                             </>
                         ) : (
-                            /* STANDARD CHECKLIST / TODOLIST FORM FIELDS */
+                            /* STANDARD CHECKLIST / TODOLIST / CALENDAR FORM FIELDS */
                             <>
-                                {/* 1. Item Tugas / Kartu Pertama (dengan Kotak Centang) */}
+                                {/* 1. Item Tugas / Kartu Pertama */}
                                 <div>
                                     <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
-                                        Nama Tugas / Item Checklist
+                                        {isCalendar ? "Nama Tugas / Event Kalender" : "Nama Tugas / Item Checklist"}
                                     </label>
                                     <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 10, padding: "8px 12px" }}>
-                                        <div style={{
-                                            width: 18, height: 18, borderRadius: 4, border: `2px solid ${theme.main}`,
-                                            display: "flex", alignItems: "center", justifyContent: "center", background: theme.bg, flexShrink: 0
-                                        }}>
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={theme.main} strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
-                                        </div>
+                                        {isCalendar ? (
+                                            <Calendar style={{ width: 16, height: 16, color: theme.main, flexShrink: 0 }} />
+                                        ) : (
+                                            <div style={{
+                                                width: 18, height: 18, borderRadius: 4, border: `2px solid ${theme.main}`,
+                                                display: "flex", alignItems: "center", justifyContent: "center", background: theme.bg, flexShrink: 0
+                                            }}>
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={theme.main} strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                            </div>
+                                        )}
                                         <input
                                             required
                                             autoFocus
                                             value={presetSubTitle}
                                             onChange={(e) => setPresetSubTitle(e.target.value)}
-                                            placeholder="misal: Ayo gym, Kerjakan tugas, dll..."
+                                            placeholder={isCalendar ? "misal: Perencanaan Sprint / Peluncuran Proyek" : "misal: Ayo gym, Kerjakan tugas, dll..."}
                                             style={{
                                                 flex: 1, border: "none", outline: "none", fontSize: 14,
                                                 background: "transparent", color: "#0f172a",
@@ -419,21 +439,22 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                     </div>
                                 </div>
 
-                                {/* 2. Tanggal & Jam */}
+                                {/* 2. Tanggal & Jam Tenggat (Highlight untuk Kalender) */}
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                                     <div>
                                         <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
                                             <Calendar style={{ width: 13, height: 13, color: "#4f46e5" }} />
-                                            <span>Tanggal Selesai</span>
+                                            <span>Tanggal Selesai {isCalendar ? "(Tenggat Kalender)" : ""}</span>
                                         </label>
                                         <input
                                             type="date"
+                                            required={isCalendar}
                                             value={presetDueDate}
                                             onChange={(e) => setPresetDueDate(e.target.value)}
                                             style={{
                                                 width: "100%", padding: "10px 12px", borderRadius: 10, fontSize: 13,
-                                                border: "1px solid #cbd5e1", outline: "none",
-                                                background: "#f8fafc", color: "#0f172a",
+                                                border: isCalendar ? "1.5px solid #7c3aed" : "1px solid #cbd5e1", outline: "none",
+                                                background: isCalendar ? "#f5f3ff" : "#f8fafc", color: "#0f172a", fontWeight: 600,
                                             }}
                                         />
                                     </div>
@@ -487,7 +508,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                 <div>
                                     <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
                                         <FileText style={{ width: 13, height: 13, color: "#64748b" }} />
-                                        <span>Catatan / Instructions</span>
+                                        <span>{isCalendar ? "Catatan Jadwal / Instruksi Kalender" : "Catatan / Instructions"}</span>
                                     </label>
                                     <textarea
                                         rows={3}
@@ -538,7 +559,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                 display: "flex", alignItems: "center", gap: 6,
                             }}
                         >
-                            {saving ? "Membuat..." : isMessageBoard ? "Buat Postingan" : "Buat Papan Ini"}
+                            {saving ? "Membuat..." : isCalendar ? "Buat Jadwal Kalender" : isMessageBoard ? "Buat Postingan" : "Buat Papan Ini"}
                         </button>
                     </div>
                 </form>
@@ -546,4 +567,3 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
         </div>
     );
 }
-
