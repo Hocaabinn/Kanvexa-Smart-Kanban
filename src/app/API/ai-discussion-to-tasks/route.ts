@@ -1,0 +1,90 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+interface ColumnOption {
+  id: string;
+  name: string;
+}
+
+const SYSTEM_PROMPT = `Kamu adalah AI Assistant Manajemen Tugas untuk Kanvexa (Smart Kanban).
+Tugasmu adalah menganalisis teks diskusi/pengumuman dari Message Board tim dan mengurutkan/mengekstrak tugas-tugas konkret yang harus dikerjakan tim.
+
+User akan memberikan:
+1. Daftar Kolom Kanban yang tersedia saat ini (nama dan id).
+2. Teks Diskusi/Pengumuman.
+
+WAJIB balas HANYA dengan JSON valid berikut ini, tanpa teks tambahan di luar JSON:
+{
+  "tasks": [
+    {
+      "title": "Judul tugas yang actionable (diawali kata kerja)",
+      "description": "Konteks singkat/detail yang dipetik dari diskusi.",
+      "suggestedColumnId": "ID_KOLOM_YANG_PALING_COCOK"
+    }
+  ]
+}
+
+Aturan:
+- Hasilkan 2-6 tugas yang paling actionable dan jelas dari diskusi.
+- Judul tugas harus singkat dan padat (max 10-12 kata).
+- Pilih \`suggestedColumnId\` yang paling cocok dari daftar kolom yang disediakan user (misalnya kolom 'To Do' atau 'Backlog'). Jika ragu, gunakan id kolom pertama.`;
+
+export async function POST(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { postsContent, columns }: { postsContent: string; columns: ColumnOption[] } = await req.json();
+
+  if (!postsContent?.trim()) {
+    return NextResponse.json({ error: "Isi diskusi tidak boleh kosong" }, { status: 400 });
+  }
+
+  if (!columns || !Array.isArray(columns) || columns.length === 0) {
+    return NextResponse.json({ error: "Daftar kolom board tidak valid" }, { status: 400 });
+  }
+
+  const columnsFormatted = columns.map(c => `- ID: ${c.id}, Nama Kolom: "${c.name}"`).join("\n");
+  const userPrompt = `Daftar Kolom Board saat ini:\n${columnsFormatted}\n\nTeks Diskusi/Pengumuman:\n${postsContent.trim()}`;
+
+  try {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: "OPENROUTER_API_KEY belum dikonfigurasi" }, { status: 500 });
+    }
+
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+        "X-Title": "Kanvexa",
+      },
+      body: JSON.stringify({
+        model: "openrouter/free",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("OpenRouter API error (discussion-to-tasks):", errText);
+      return NextResponse.json({ error: "Layanan AI mengalami kendala temporer." }, { status: 502 });
+    }
+
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content ?? "";
+
+    const cleaned = raw.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+
+    return NextResponse.json(parsed);
+  } catch (err: any) {
+    console.error("AI Discussion to Tasks error:", err);
+    return NextResponse.json({ error: err?.message || "Gagal mengubah diskusi menjadi tugas." }, { status: 500 });
+  }
+}

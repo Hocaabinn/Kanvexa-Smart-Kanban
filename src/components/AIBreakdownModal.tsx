@@ -122,7 +122,7 @@ export default function AIBreakdownModal({ boardId, onClose, onDone }: Props) {
           alignItems: "center",
         }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-1)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ color: "var(--v)" }}>✦</span> Urai dengan AI
+            Urai dengan AI
           </h3>
           <button 
             onClick={onClose} 
@@ -372,7 +372,7 @@ export default function AIBreakdownModal({ boardId, onClose, onDone }: Props) {
                   position: "relative",
                 }}
               >
-                ✦ Urai Jadi Tugas
+                Urai Jadi Tugas
               </button>
             </div>
           </form>
