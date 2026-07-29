@@ -501,63 +501,111 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
             </div>
           </div>
 
-          {/* SECTION 1: Folders Grid (Visual Card Folder 3D Stack seperti di Gambar) */}
+          {/* SECTION 1: Folders Grid (Authentic 3D Stacked Folder Cards seperti di Gambar) */}
           <div>
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: "0 0 14px 0" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", margin: "0 0 16px 0" }}>
               Folders
             </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 18 }}>
               {[
-                { id: "f-1-1", name: "Onboarding", files: 15, sub: 3, color: "#6d28d9" },
-                { id: "f-1-2", name: "Integrations", files: 5, sub: 0, color: "#2563eb" },
-                { id: "f-1-3", name: "Technical Specs", files: 8, sub: 2, color: "#059669" },
-                { id: "f-2", name: "Team Interviews", files: 6, sub: 1, color: "#d97706" },
+                { id: "f-1-1", name: "Onboarding", files: 15 },
+                { id: "f-1-2", name: "Integrations", files: 5 },
+                { id: "f-1-3", name: "Technical Specs", files: 8 },
+                { id: "f-2", name: "Team Interviews", files: 6 },
               ].map((fItem) => (
                 <div
                   key={fItem.id}
                   onClick={() => setSelectedFolderId(fItem.id)}
                   style={{
-                    background: "linear-gradient(135deg, #ffffff 0%, #faf5ff 50%, #f3e8ff 100%)",
-                    borderRadius: 16,
-                    padding: 20,
-                    border: "1.5px solid #d8b4fe",
-                    boxShadow: "0 4px 14px rgba(147, 51, 234, 0.08)",
+                    background: "#f8fafc",
+                    borderRadius: 20,
+                    padding: "24px 20px 20px",
+                    border: "1px solid #e2e8f0",
                     cursor: "pointer",
-                    transition: "transform 0.15s ease, boxShadow 0.15s ease",
-                    position: "relative",
-                    overflow: "hidden",
+                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-3px)";
-                    e.currentTarget.style.boxShadow = "0 8px 20px rgba(147, 51, 234, 0.15)";
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.background = "#ffffff";
+                    e.currentTarget.style.borderColor = "#c084fc";
+                    e.currentTarget.style.boxShadow = "0 12px 25px rgba(109, 40, 217, 0.12)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 14px rgba(147, 51, 234, 0.08)";
+                    e.currentTarget.style.background = "#f8fafc";
+                    e.currentTarget.style.borderColor = "#e2e8f0";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 >
-                  {/* Visual Stacked Documents popping out from top (Identik dengan Gambar) */}
-                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 14, position: "relative", height: 75 }}>
-                    {/* Background document sheet 1 */}
-                    <div style={{ position: "absolute", top: 2, width: 75, height: 60, background: "#ffffff", borderRadius: 8, border: "1px solid #cbd5e1", transform: "rotate(-6deg)" }} />
-                    {/* Background document sheet 2 */}
-                    <div style={{ position: "absolute", top: 0, width: 75, height: 60, background: "#ffffff", borderRadius: 8, border: "1px solid #cbd5e1", transform: "rotate(6deg)" }} />
-                    {/* Front Folder Pocket */}
-                    <div style={{ position: "absolute", bottom: 0, width: "100%", height: 50, background: "linear-gradient(135deg, #475569 0%, #334155 100%)", borderRadius: 12, border: "1px solid #1e293b", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px" }}>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#ea4335", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 800 }}>PDF</div>
-                        <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#4285f4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 800 }}>G</div>
-                        <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 800 }}>N</div>
+                  {/* Authentic 3D Stacked Folder Graphic */}
+                  <div style={{ position: "relative", width: 140, height: 110, marginBottom: 12 }}>
+                    {/* Document paper 1 (Back angled) */}
+                    <div style={{
+                      position: "absolute", top: 6, left: 24, width: 88, height: 65,
+                      background: "#ffffff", borderRadius: 8, border: "1px solid #cbd5e1",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)", transform: "rotate(-5deg)",
+                      padding: 8, display: "flex", flexDirection: "column", gap: 4
+                    }}>
+                      <div style={{ fontSize: 7, fontWeight: 800, color: "#ea4335" }}>PDF</div>
+                      <div style={{ width: "70%", height: 3, background: "#cbd5e1", borderRadius: 2 }} />
+                      <div style={{ width: "90%", height: 2, background: "#e2e8f0", borderRadius: 2 }} />
+                    </div>
+
+                    {/* Document paper 2 (Front angled) */}
+                    <div style={{
+                      position: "absolute", top: 2, left: 28, width: 84, height: 65,
+                      background: "#ffffff", borderRadius: 8, border: "1px solid #cbd5e1",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)", transform: "rotate(4deg)",
+                      padding: 8, display: "flex", flexDirection: "column", gap: 4
+                    }}>
+                      <div style={{ width: "40%", height: 4, background: "#7c3aed", borderRadius: 2 }} />
+                      <div style={{ width: "80%", height: 2, background: "#e2e8f0", borderRadius: 2 }} />
+                      <div style={{ width: "60%", height: 2, background: "#e2e8f0", borderRadius: 2 }} />
+                    </div>
+
+                    {/* Folder Back Tab */}
+                    <div style={{
+                      position: "absolute", bottom: 0, left: 10, width: 120, height: 80,
+                      background: "#475569", borderRadius: 14,
+                    }}>
+                      <div style={{
+                        position: "absolute", top: -8, left: 0, width: 44, height: 12,
+                        background: "#475569", borderRadius: "6px 6px 0 0",
+                      }} />
+                    </div>
+
+                    {/* Folder Front Pocket Cover */}
+                    <div style={{
+                      position: "absolute", bottom: 0, left: 4, width: 132, height: 72,
+                      background: "linear-gradient(180deg, #475569 0%, #334155 100%)",
+                      borderRadius: 14, boxShadow: "0 10px 20px rgba(15, 23, 42, 0.25)",
+                      display: "flex", alignItems: "flex-end", padding: "10px 12px",
+                      borderTop: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}>
+                      {/* App Badges at bottom left */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
+                          <span style={{ fontSize: 9 }}>📐</span>
+                        </div>
+                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#18181b", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, border: "1px solid #3f3f46" }}>
+                          N
+                        </div>
+                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#0284c7", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800 }}>
+                          ☁️
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Folder Details */}
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", marginBottom: 2 }}>
+                  <div style={{ textAlign: "center", marginTop: 4 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", marginBottom: 2 }}>
                       {fItem.name}
                     </div>
-                    <div style={{ fontSize: 12, color: "#64748b", fontWeight: 500 }}>
+                    <div style={{ fontSize: 13, color: "#64748b", fontWeight: 500 }}>
                       {fItem.files} Files
                     </div>
                   </div>
