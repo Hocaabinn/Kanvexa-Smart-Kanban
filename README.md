@@ -1,4 +1,4 @@
-# Rencanai
+# Kanvexa
 
 Satu kalimat, langsung jadi rencana kerja. Kanban board kolaboratif dengan AI
 breakdown tugas otomatis.
