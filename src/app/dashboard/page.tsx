@@ -30,6 +30,8 @@ export default async function DashboardPage() {
     }
   }
 
+  console.log("DashboardPage server user email:", user?.email, "boards:", boards?.length, "invitations:", initialInvitations.length);
+
   return (
     <DashboardClient 
       userEmail={user?.email ?? "Guest"}

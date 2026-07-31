@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Bell, 
   X, 
@@ -67,9 +67,42 @@ function formatInviteTime(dateStr: string) {
 export function InboxNotificationModal({ userEmail, boards = [], databaseInvitations = [], onClose }: InboxProps) {
   const router = useRouter();
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [dbInvitations, setDbInvitations] = useState<DatabaseInvitation[]>(databaseInvitations);
+
+  // Fetch pending invitations dynamically
+  useEffect(() => {
+    async function fetchInvitations() {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !user.email) return;
+
+        const { data: invitations, error } = await supabase
+          .from("board_invitations")
+          .select("*")
+          .eq("status", "pending");
+
+        if (error) {
+          console.error("Gagal mengambil undangan di modal:", error.message);
+        } else if (invitations) {
+          const userEmailLower = user.email.toLowerCase();
+          const filtered = invitations.filter(
+            inv => inv.invited_email.toLowerCase() === userEmailLower
+          );
+          setDbInvitations(filtered);
+        }
+      } catch (e) {
+        console.error("Error fetching invitations in modal:", e);
+      }
+    }
+
+    fetchInvitations();
+  }, [userEmail]);
 
   // Convert database invitations to notification items
-  const dbNotifications = databaseInvitations.map(inv => ({
+  const dbNotifications = dbInvitations.map(inv => ({
     id: inv.id,
     type: "invite" as const,
     title: "Undangan Kolaborasi Tim",
@@ -83,7 +116,9 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
   }));
 
   // Initial notifications: merge database invitations with non-invite mock notifications
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
     const systemNotifications = [
       {
         id: "mock-activity",
@@ -127,13 +162,14 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
         const stored = localStorage.getItem("dismissed_notifications");
         if (stored) {
           const dismissedIds = JSON.parse(stored);
-          return allNotifs.filter(n => !dismissedIds.includes(n.id));
+          setNotifications(allNotifs.filter(n => !dismissedIds.includes(n.id)));
+          return;
         }
       } catch (e) {}
     }
 
-    return allNotifs;
-  });
+    setNotifications(allNotifs);
+  }, [dbInvitations, userEmail, boards]);
 
   const [activeTab, setActiveTab] = useState<"all" | "invites">("all");
 
