@@ -358,7 +358,7 @@ export default function BoardClient({
         flexShrink: 0,
         gap: 12,
         flexWrap: "wrap",
-      }}>
+      }} className="board-tab-bar">
         {/* View Switcher Tabs */}
         <div style={{
           display: "flex",
@@ -367,7 +367,9 @@ export default function BoardClient({
           padding: 4,
           borderRadius: 10,
           border: "1px solid var(--border)",
-        }}>
+          overflowX: "auto",
+          maxWidth: "100%",
+        }} className="board-tabs-scroll scrollbar-hide">
           <button
             onClick={() => setActiveTab("kanban")}
             style={{
@@ -384,10 +386,12 @@ export default function BoardClient({
               boxShadow: activeTab === "kanban" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
               cursor: "pointer",
               transition: "all 0.15s ease",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             <CheckSquare width={14} height={14} />
-            <span>Kanban Board</span>
+            <span className="tab-label">Kanban Board</span>
           </button>
 
           <button
@@ -406,10 +410,12 @@ export default function BoardClient({
               boxShadow: activeTab === "messageboard" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
               cursor: "pointer",
               transition: "all 0.15s ease",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             <MessageSquare width={14} height={14} />
-            <span>Message Board</span>
+            <span className="tab-label">Message Board</span>
             {posts.length > 0 && (
               <span style={{
                 background: activeTab === "messageboard" ? "var(--v)" : "#cbd5e1",
@@ -440,10 +446,12 @@ export default function BoardClient({
               boxShadow: activeTab === "calendar" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
               cursor: "pointer",
               transition: "all 0.15s ease",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             <Calendar width={14} height={14} />
-            <span>Kalender</span>
+            <span className="tab-label">Kalender</span>
           </button>
 
           <button
@@ -462,10 +470,12 @@ export default function BoardClient({
               boxShadow: activeTab === "docs" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
               cursor: "pointer",
               transition: "all 0.15s ease",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             <FileText width={14} height={14} />
-            <span>Docs & Files</span>
+            <span className="tab-label">Docs & Files</span>
           </button>
         </div>
 
@@ -479,6 +489,8 @@ export default function BoardClient({
               background: "var(--v)", color: "#fff", border: "none", cursor: "pointer",
               boxShadow: "0 2px 8px rgba(109,40,217,0.3)",
               transition: "opacity 0.15s",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.88"}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}
@@ -487,6 +499,20 @@ export default function BoardClient({
           </button>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .board-tab-bar {
+            padding: 10px 12px 0 !important;
+          }
+          .tab-label {
+            display: none;
+          }
+          .board-tabs-scroll {
+            -webkit-overflow-scrolling: touch;
+          }
+        }
+      `}</style>
 
       {/* Main Tab Content */}
       {activeTab === "messageboard" ? (

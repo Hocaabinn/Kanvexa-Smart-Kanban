@@ -57,7 +57,7 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
         borderBottom: "1px solid var(--border)",
         display: "flex", alignItems: "center", gap: 10, padding: "0 20px", height: 52,
         flexShrink: 0,
-      }}>
+      }} className="board-topbar">
         <Link href="/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6, color: "var(--text-2)", fontSize: 13 }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>
           Board
