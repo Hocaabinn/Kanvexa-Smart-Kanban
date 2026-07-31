@@ -20,9 +20,11 @@ import {
   LayoutTemplate,
   Clock,
   Menu,
-  X
+  X,
+  Bell
 } from "lucide-react";
 import { KanvexaIcon, KanvexaLogo } from "@/components/ui/KanvexaLogo";
+import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 
 interface Board {
   id: string;
@@ -45,6 +47,7 @@ interface SidebarProps {
   onDeleteAction: (boardId: string, e: React.MouseEvent) => void;
   isMobileOpen?: boolean;
   setIsMobileOpen?: (open: boolean) => void;
+  onInboxClick?: () => void;
 }
 
 function initials(email: string) {
@@ -66,7 +69,9 @@ export default function Sidebar({
   onDeleteAction,
   isMobileOpen = false,
   setIsMobileOpen,
+  onInboxClick,
 }: SidebarProps) {
+  const [showInboxModal, setShowInboxModal] = useState(false);
   const pathname = usePathname();
   const isDashboardActive = pathname === "/dashboard";
   const isTemplatesActive = pathname === "/Galeri-Template";
@@ -513,6 +518,63 @@ export default function Sidebar({
                 )}
               </div>
             </Link>
+
+            {/* Kotak Masuk (Inbox) */}
+            <div
+              onClick={() => {
+                if (onInboxClick) onInboxClick();
+                else setShowInboxModal(true);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                background: "transparent",
+                justifyContent: isSidebarCollapsed ? "center" : "flex-start",
+                position: "relative",
+              }}
+              className="sidebar-nav-item"
+              title="Kotak Masuk & Notifikasi"
+            >
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <Bell style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -2,
+                    right: -2,
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "#ef4444",
+                    border: "1.5px solid #ffffff",
+                  }}
+                />
+              </div>
+              {!isSidebarCollapsed && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1 }}>
+                  <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
+                    Kotak Masuk
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: "800",
+                      background: "rgba(109, 40, 217, 0.1)",
+                      color: "#6d28d9",
+                      padding: "1px 6px",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    2
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -891,6 +953,15 @@ export default function Sidebar({
         }
       `}</style>
     </aside>
+
+    {/* Inbox Modal triggered from sidebar */}
+    {showInboxModal && (
+      <InboxNotificationModal
+        userEmail={userEmail}
+        boards={boards.map((b) => ({ id: b.id, name: b.name }))}
+        onClose={() => setShowInboxModal(false)}
+      />
+    )}
     </>
   );
 }

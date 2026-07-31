@@ -31,10 +31,11 @@ export interface NotificationItem {
 
 interface InboxProps {
   userEmail: string;
+  boards?: { id: string; name: string }[];
   onClose: () => void;
 }
 
-export function InboxNotificationModal({ userEmail, onClose }: InboxProps) {
+export function InboxNotificationModal({ userEmail, boards = [], onClose }: InboxProps) {
   const router = useRouter();
 
   // Initial mock notifications tailored to user context
@@ -45,8 +46,8 @@ export function InboxNotificationModal({ userEmail, onClose }: InboxProps) {
       title: "Undangan Kolaborasi Tim",
       message: "mengundang Anda sebagai Editor ke papan proyek ini.",
       sender: "bintangwcproger@gmail.com",
-      boardName: "Peluncuran Produk / App",
-      boardId: "peluncuran-app",
+      boardName: boards[0]?.name || "Peluncuran Produk / App",
+      boardId: boards[0]?.id || "",
       role: "Editor",
       timestamp: "10 menit yang lalu",
       isRead: false,
@@ -92,9 +93,13 @@ export function InboxNotificationModal({ userEmail, onClose }: InboxProps) {
   const handleAcceptInvite = (notif: NotificationItem, e: React.MouseEvent) => {
     e.stopPropagation();
     markAsRead(notif.id);
+    onClose();
     if (notif.boardId) {
-      onClose();
       router.push(`/board/${notif.boardId}`);
+    } else if (boards.length > 0) {
+      router.push(`/board/${boards[0].id}`);
+    } else {
+      router.push(`/dashboard`);
     }
   };
 

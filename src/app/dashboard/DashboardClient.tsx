@@ -332,6 +332,7 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
           {showInbox && (
             <InboxNotificationModal
               userEmail={userEmail}
+              boards={sortedBoards.map(b => ({ id: b.id, name: b.name }))}
               onClose={() => setShowInbox(false)}
             />
           )}
