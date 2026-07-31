@@ -120,7 +120,19 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
       isRead: false,
     }] : [];
 
-    return [...dbNotifications, ...demoInvite, ...systemNotifications];
+    const allNotifs = [...dbNotifications, ...demoInvite, ...systemNotifications];
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("dismissed_notifications");
+        if (stored) {
+          const dismissedIds = JSON.parse(stored);
+          return allNotifs.filter(n => !dismissedIds.includes(n.id));
+        }
+      } catch (e) {}
+    }
+
+    return allNotifs;
   });
 
   const [activeTab, setActiveTab] = useState<"all" | "invites">("all");
@@ -141,6 +153,15 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
     e.stopPropagation();
     if (id.startsWith("demo-invite-") || id.startsWith("mock-")) {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("dismissed_notifications");
+          const dismissed = stored ? JSON.parse(stored) : [];
+          if (!dismissed.includes(id)) {
+            localStorage.setItem("dismissed_notifications", JSON.stringify([...dismissed, id]));
+          }
+        } catch (e) {}
+      }
       return;
     }
 
@@ -159,6 +180,15 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
     if (notif.id.startsWith("demo-invite-") || notif.id.startsWith("mock-")) {
       markAsRead(notif.id);
       onClose();
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("dismissed_notifications");
+          const dismissed = stored ? JSON.parse(stored) : [];
+          if (!dismissed.includes(notif.id)) {
+            localStorage.setItem("dismissed_notifications", JSON.stringify([...dismissed, notif.id]));
+          }
+        } catch (e) {}
+      }
       if (notif.boardId) {
         router.push(`/board/${notif.boardId}`);
       } else if (boards.length > 0) {
