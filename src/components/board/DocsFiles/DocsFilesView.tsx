@@ -504,12 +504,60 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
   };
 
   return (
-    <div style={{ padding: "20px 24px 40px", maxWidth: 1360, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+    <div className="docs-view-container" style={{ padding: "20px 24px 40px", maxWidth: 1360, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <style>{`
+        @media (max-width: 900px) {
+          .docs-columns-wrapper {
+            flex-direction: column !important;
+            gap: 20px !important;
+          }
+          .docs-sidebar-pane {
+            width: 100% !important;
+          }
+          .docs-folders-grid {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+          }
+          .docs-table-container {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          .docs-table-container table {
+            min-width: 650px !important;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .docs-view-container {
+            padding: 12px 16px 30px !important;
+          }
+          .docs-header-bar {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+          }
+          .docs-buttons-group {
+            width: 100% !important;
+            justify-content: flex-start !important;
+            gap: 8px !important;
+          }
+          .docs-buttons-group button {
+            flex: 1 !important;
+            padding: 8px 10px !important;
+            font-size: 12px !important;
+            justify-content: center !important;
+          }
+          .docs-folders-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+      
       {/* 2 Main Columns Layout: Left Knowledge Base Sidebar (280px), Right Explorer Area (Flex 1) */}
-      <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+      <div className="docs-columns-wrapper" style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
         
         {/* SISI KIRI: Knowledge Base Sidebar */}
         <div
+          className="docs-sidebar-pane"
           style={{
             width: 280,
             flexShrink: 0,
@@ -629,10 +677,10 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
         </div>
 
         {/* AREA UTAMA KANAN: Explorer Area */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
+        <div className="docs-explorer-pane" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
           
           {/* Header Action & Selection Bar */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div className="docs-header-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
                 <span>{currentFolder.name}</span>
@@ -640,7 +688,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
               </h2>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div className="docs-buttons-group" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <button
                 onClick={() => setShowAIModal(true)}
                 style={{
@@ -714,7 +762,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
             <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", margin: "0 0 16px 0" }}>
               Folders
             </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
+            <div className="docs-folders-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 16 }}>
               {getGridFolders(folders).map((fItem) => (
                 <div key={fItem.id} style={{ position: "relative", zIndex: 1 }}>
                   {/* Tombol Titik 3 */}
@@ -870,6 +918,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
               </div>
             ) : (
               <div
+                className="docs-table-container"
                 style={{
                   background: "#ffffff",
                   borderRadius: 16,
