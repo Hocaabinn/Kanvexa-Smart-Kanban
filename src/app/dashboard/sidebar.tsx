@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { 
   FolderKanban, 
   Plus, 
   LogOut, 
-  Kanban,
   Star,
   Pin,
   ChevronLeft,
@@ -15,8 +15,14 @@ import {
   MoreVertical,
   Trash2,
   Edit3,
-  Settings
+  Settings,
+  LayoutDashboard,
+  LayoutTemplate,
+  Clock,
+  Menu,
+  X
 } from "lucide-react";
+import { KanvexaIcon, KanvexaLogo } from "@/components/ui/KanvexaLogo";
 
 interface Board {
   id: string;
@@ -37,6 +43,8 @@ interface SidebarProps {
   onStarAction: (boardId: string, e: React.MouseEvent) => void;
   onRenameAction: (boardId: string, boardName: string, e: React.MouseEvent) => void;
   onDeleteAction: (boardId: string, e: React.MouseEvent) => void;
+  isMobileOpen?: boolean;
+  setIsMobileOpen?: (open: boolean) => void;
 }
 
 function initials(email: string) {
@@ -55,10 +63,17 @@ export default function Sidebar({
   onPinAction,
   onStarAction,
   onRenameAction,
-  onDeleteAction
+  onDeleteAction,
+  isMobileOpen = false,
+  setIsMobileOpen,
 }: SidebarProps) {
+  const pathname = usePathname();
+  const isDashboardActive = pathname === "/dashboard";
+  const isTemplatesActive = pathname === "/Galeri-Template";
+
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
   const [isFavoritesExpanded, setIsFavoritesExpanded] = useState(true);
+  const [isRecentsExpanded, setIsRecentsExpanded] = useState(false);
   const [activeMenuBoardId, setActiveMenuBoardId] = useState<string | null>(null);
 
   // Close 3-dots menu on window click
@@ -78,6 +93,11 @@ export default function Sidebar({
   // Filter starred boards
   const starredBoards = boards.filter(b => starredBoardIds.includes(b.id));
 
+  // Sort recent boards by created_at
+  const recentBoards = [...boards]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5);
+
   // Render a board item with its 3-dots actions menu
   const renderBoardItem = (b: Board) => {
     const isPinned = pinnedBoardIds.includes(b.id);
@@ -95,7 +115,7 @@ export default function Sidebar({
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            padding: "10px 12px",
+            padding: "9px 12px",
             borderRadius: "10px",
             cursor: "pointer",
             transition: "all 0.2s",
@@ -210,7 +230,7 @@ export default function Sidebar({
               className="dropdown-action-item"
             >
               <Pin style={{ width: "14px", height: "14px", color: isPinned ? "#10b981" : "#64748b", fill: isPinned ? "#10b981" : "none" }} />
-              <span>{isPinned ? "Lepas Pin" : "Pin Papan"}</span>
+              <span>{isPinned ? "Unpin dari Papan" : "Pin ke Papan"}</span>
             </button>
 
             {/* Rename Action */}
@@ -237,9 +257,6 @@ export default function Sidebar({
               <span>Ubah Nama</span>
             </button>
 
-            {/* Divider */}
-            <div style={{ borderTop: "1px solid #f1f5f9", margin: "4px 0" }} />
-
             {/* Delete Action */}
             <button
               onClick={(e) => { onDeleteAction(b.id, e); setActiveMenuBoardId(null); }}
@@ -249,8 +266,8 @@ export default function Sidebar({
                 gap: "8px",
                 padding: "8px 10px",
                 fontSize: "12px",
-                fontWeight: "700",
-                color: "#dc2626",
+                fontWeight: "600",
+                color: "#ef4444",
                 background: "none",
                 border: "none",
                 borderRadius: "6px",
@@ -258,9 +275,9 @@ export default function Sidebar({
                 textAlign: "left",
                 transition: "background-color 0.15s"
               }}
-              className="dropdown-action-delete"
+              className="dropdown-action-item-danger"
             >
-              <Trash2 style={{ width: "14px", height: "14px" }} />
+              <Trash2 style={{ width: "14px", height: "14px", color: "#ef4444" }} />
               <span>Hapus Papan</span>
             </button>
           </div>
@@ -269,21 +286,52 @@ export default function Sidebar({
     );
   };
 
+  // Close sidebar on route change (mobile)
+  const closeMobileSidebar = useCallback(() => {
+    if (setIsMobileOpen) setIsMobileOpen(false);
+  }, [setIsMobileOpen]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") closeMobileSidebar(); };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [isMobileOpen, closeMobileSidebar]);
+
   return (
-    <aside style={{
-      width: isSidebarCollapsed ? 78 : 270,
-      height: "100vh",
-      background: "#ffffff",
-      borderRight: "1px solid #e2e8f0",
-      display: "flex",
-      flexDirection: "column",
-      position: "sticky",
-      top: 0,
-      flexShrink: 0,
-      zIndex: 50,
-      transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-      overflow: "visible" // Required to let 3-dots menus overlay correctly
-    }}>
+    <>
+    {/* Mobile overlay backdrop */}
+    {isMobileOpen && (
+      <div
+        onClick={closeMobileSidebar}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(15, 23, 42, 0.4)",
+          backdropFilter: "blur(4px)",
+          zIndex: 998,
+        }}
+        className="sidebar-mobile-overlay"
+      />
+    )}
+    <aside
+      className={`sidebar-root ${isMobileOpen ? "sidebar-mobile-open" : ""}`}
+      style={{
+        width: isSidebarCollapsed ? "72px" : "260px",
+        height: "100vh",
+        background: "#ffffff",
+        borderRight: "1px solid #e2e8f0",
+        display: "flex",
+        flexDirection: "column",
+        position: "sticky",
+        top: 0,
+        flexShrink: 0,
+        zIndex: 999,
+        transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        overflow: "visible"
+      }}
+    >
       {/* 1. Logo Section & Sidebar Collapse Toggle */}
       <div style={{ 
         display: "flex", 
@@ -291,24 +339,21 @@ export default function Sidebar({
         justifyContent: isSidebarCollapsed ? "center" : "space-between", 
         padding: "24px 20px 16px" 
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "10px",
-            background: "var(--v)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 2px 8px rgba(109, 40, 217, 0.2)",
-            flexShrink: 0
-          }}>
-            <Kanban style={{ width: "16px", height: "16px", color: "#fff" }} />
-          </div>
-          {!isSidebarCollapsed && (
-            <span style={{ fontSize: "20px", fontWeight: "800", color: "var(--v)", letterSpacing: "-0.03em", whiteSpace: "nowrap" }}>
-              Kanvexa
-            </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {isSidebarCollapsed ? (
+            <img
+              src="/img/logo3.png"
+              alt="Kanvexa"
+              style={{
+                width: "32px",
+                height: "32px",
+                objectFit: "contain",
+                borderRadius: "8px",
+                flexShrink: 0
+              }}
+            />
+          ) : (
+            <KanvexaLogo src="/img/logo2-purple.png" imgClassName="h-8 w-auto object-contain" />
           )}
         </div>
 
@@ -361,7 +406,7 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* 2. "Board Baru" Button */}
+      {/* 2. "Papan Baru" Button */}
       <div style={{ padding: isSidebarCollapsed ? "8px 12px" : "8px 20px 16px" }}>
         <button
           onClick={onCreateBoardClick}
@@ -391,130 +436,291 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* 3. Daftar Dropdowns (Scrollable) */}
+      {/* 3. Navigation Sections (Scrollable) */}
       <div style={{ 
         flex: 1, 
         overflowY: "auto", 
         padding: "8px 12px 20px",
         display: "flex",
         flexDirection: "column",
-        gap: "16px"
+        gap: "20px"
       }} className="sidebar-scroll">
 
-        {/* 3A. FAVORIT DROPDOWN SECTION (Only visible if there is at least one starred board) */}
-        {starredBoards.length > 0 && (
-          <div>
-            <div 
-              onClick={() => {
-                if (!isSidebarCollapsed) {
-                  setIsFavoritesExpanded(!isFavoritesExpanded);
-                } else {
-                  setIsSidebarCollapsed(false);
-                  setIsFavoritesExpanded(true);
-                }
-              }}
-              style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: isSidebarCollapsed ? "center" : "space-between",
-                cursor: "pointer", 
-                padding: "0 12px 10px",
-                userSelect: "none"
-              }}
-              title={isSidebarCollapsed ? "Tampilkan Favorit" : "Tutup/Buka Favorit"}
-            >
-              {isSidebarCollapsed ? (
-                <Star style={{ width: "18px", height: "18px", color: "#d97706", fill: "#d97706" }} />
-              ) : (
-                <>
-                  <div style={{ 
-                    fontSize: "10px", 
-                    fontWeight: "800", 
-                    color: "#d97706", 
-                    letterSpacing: "0.06em", 
-                    textTransform: "uppercase",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px"
-                  }}>
-                    <Star style={{ width: "10px", height: "10px", fill: "#d97706" }} /> Favorit
-                  </div>
-                  <ChevronDown style={{ 
-                    width: "14px", 
-                    height: "14px", 
-                    color: "#d97706",
-                    transform: isFavoritesExpanded ? "none" : "rotate(-90deg)",
-                    transition: "transform 0.2s"
-                  }} />
-                </>
-              )}
-            </div>
-            
-            {(!isSidebarCollapsed && isFavoritesExpanded) && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                {starredBoards.map(renderBoardItem)}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* 3B. PROYEK DROPDOWN SECTION */}
+        {/* SECTION 1: UTAMA */}
         <div>
-          <div 
-            onClick={() => {
-              if (!isSidebarCollapsed) {
-                setIsProjectsExpanded(!isProjectsExpanded);
-              } else {
-                setIsSidebarCollapsed(false);
-                setIsProjectsExpanded(true);
-              }
-            }}
-            style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: isSidebarCollapsed ? "center" : "space-between",
-              cursor: "pointer", 
-              padding: "0 12px 10px",
-              userSelect: "none"
-            }}
-            title={isSidebarCollapsed ? "Tampilkan Proyek" : "Tutup/Buka Proyek"}
-          >
-            {isSidebarCollapsed ? (
-              <FolderKanban style={{ width: "18px", height: "18px", color: "#94a3b8" }} />
-            ) : (
-              <>
-                <div style={{ 
-                  fontSize: "10px", 
-                  fontWeight: "800", 
-                  color: "#94a3b8", 
-                  letterSpacing: "0.06em", 
-                  textTransform: "uppercase" 
-                }}>
-                  Proyek
-                </div>
-                <ChevronDown style={{ 
-                  width: "14px", 
-                  height: "14px", 
-                  color: "#94a3b8",
-                  transform: isProjectsExpanded ? "none" : "rotate(-90deg)",
-                  transition: "transform 0.2s"
-                }} />
-              </>
-            )}
-          </div>
-          
-          {(!isSidebarCollapsed && isProjectsExpanded) && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              {!boards.length ? (
-                <div style={{ padding: "12px", fontSize: "12px", color: "#94a3b8", textAlign: "center" }}>
-                  Belum ada proyek
-                </div>
-              ) : (
-                boards.map(renderBoardItem)
-              )}
+          {!isSidebarCollapsed && (
+            <div style={{ 
+              fontSize: "10px", 
+              fontWeight: "800", 
+              color: "#94a3b8", 
+              letterSpacing: "0.06em", 
+              textTransform: "uppercase",
+              padding: "0 12px 8px"
+            }}>
+              UTAMA
             </div>
           )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            {/* Dasbor Utama */}
+            <Link href="/dashboard" style={{ textDecoration: "none" }}>
+              <div 
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  background: isDashboardActive ? "#f1f5f9" : "transparent",
+                  justifyContent: isSidebarCollapsed ? "center" : "flex-start"
+                }}
+                className="sidebar-nav-item"
+                title="Dasbor Utama"
+              >
+                <LayoutDashboard style={{ width: "16px", height: "16px", color: isDashboardActive ? "var(--v)" : "#64748b", flexShrink: 0 }} />
+                {!isSidebarCollapsed && (
+                  <span style={{ fontSize: "13px", fontWeight: isDashboardActive ? "700" : "600", color: isDashboardActive ? "var(--v)" : "#334155" }}>
+                    Dasbor Utama
+                  </span>
+                )}
+              </div>
+            </Link>
+
+            {/* Galeri Template */}
+            <Link href="/Galeri-Template" style={{ textDecoration: "none" }}>
+              <div 
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  background: isTemplatesActive ? "#f1f5f9" : "transparent",
+                  justifyContent: isSidebarCollapsed ? "center" : "flex-start"
+                }}
+                className="sidebar-nav-item"
+                title="Galeri Template"
+              >
+                <LayoutTemplate style={{ width: "16px", height: "16px", color: isTemplatesActive ? "var(--v)" : "#64748b", flexShrink: 0 }} />
+                {!isSidebarCollapsed && (
+                  <span style={{ fontSize: "13px", fontWeight: isTemplatesActive ? "700" : "600", color: isTemplatesActive ? "var(--v)" : "#334155" }}>
+                    Galeri Template
+                  </span>
+                )}
+              </div>
+            </Link>
+          </div>
         </div>
+
+        {/* SECTION 2: RUANG KERJA */}
+        <div>
+          {!isSidebarCollapsed && (
+            <div style={{ 
+              fontSize: "10px", 
+              fontWeight: "800", 
+              color: "#94a3b8", 
+              letterSpacing: "0.06em", 
+              textTransform: "uppercase",
+              padding: "0 12px 8px"
+            }}>
+              RUANG KERJA
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {/* 1. Proyek Saya */}
+            <div>
+              <div 
+                onClick={() => {
+                  if (!isSidebarCollapsed) {
+                    setIsProjectsExpanded(!isProjectsExpanded);
+                  } else {
+                    setIsSidebarCollapsed(false);
+                    setIsProjectsExpanded(true);
+                  }
+                }}
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: isSidebarCollapsed ? "center" : "space-between",
+                  cursor: "pointer", 
+                  padding: "6px 12px",
+                  borderRadius: "8px",
+                  userSelect: "none"
+                }}
+                className="sidebar-group-header"
+                title={isSidebarCollapsed ? "Tampilkan Proyek Saya" : "Tutup/Buka Proyek Saya"}
+              >
+                {isSidebarCollapsed ? (
+                  <FolderKanban style={{ width: "18px", height: "18px", color: "#64748b" }} />
+                ) : (
+                  <>
+                    <div style={{ 
+                      fontSize: "13px", 
+                      fontWeight: "700", 
+                      color: "#334155", 
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}>
+                      <FolderKanban style={{ width: "16px", height: "16px", color: "#64748b" }} />
+                      <span>Proyek Saya</span>
+                    </div>
+                    <ChevronDown style={{ 
+                      width: "14px", 
+                      height: "14px", 
+                      color: "#94a3b8",
+                      transform: isProjectsExpanded ? "none" : "rotate(-90deg)",
+                      transition: "transform 0.2s"
+                    }} />
+                  </>
+                )}
+              </div>
+              
+              {(!isSidebarCollapsed && isProjectsExpanded) && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: "4px", paddingLeft: "8px" }}>
+                  {!boards.length ? (
+                    <div style={{ padding: "10px 12px", fontSize: "12px", color: "#94a3b8" }}>
+                      Belum ada proyek
+                    </div>
+                  ) : (
+                    boards.map(renderBoardItem)
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Papan Favorit */}
+            <div>
+              <div 
+                onClick={() => {
+                  if (!isSidebarCollapsed) {
+                    setIsFavoritesExpanded(!isFavoritesExpanded);
+                  } else {
+                    setIsSidebarCollapsed(false);
+                    setIsFavoritesExpanded(true);
+                  }
+                }}
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: isSidebarCollapsed ? "center" : "space-between",
+                  cursor: "pointer", 
+                  padding: "6px 12px",
+                  borderRadius: "8px",
+                  userSelect: "none"
+                }}
+                className="sidebar-group-header"
+                title={isSidebarCollapsed ? "Tampilkan Papan Favorit" : "Tutup/Buka Papan Favorit"}
+              >
+                {isSidebarCollapsed ? (
+                  <Star style={{ width: "18px", height: "18px", color: "#d97706", fill: "#d97706" }} />
+                ) : (
+                  <>
+                    <div style={{ 
+                      fontSize: "13px", 
+                      fontWeight: "700", 
+                      color: "#334155", 
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}>
+                      <Star style={{ width: "16px", height: "16px", color: "#d97706", fill: "#d97706" }} />
+                      <span>Papan Favorit</span>
+                    </div>
+                    <ChevronDown style={{ 
+                      width: "14px", 
+                      height: "14px", 
+                      color: "#94a3b8",
+                      transform: isFavoritesExpanded ? "none" : "rotate(-90deg)",
+                      transition: "transform 0.2s"
+                    }} />
+                  </>
+                )}
+              </div>
+              
+              {(!isSidebarCollapsed && isFavoritesExpanded) && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: "4px", paddingLeft: "8px" }}>
+                  {!starredBoards.length ? (
+                    <div style={{ padding: "10px 12px", fontSize: "12px", color: "#94a3b8" }}>
+                      Belum ada papan favorit
+                    </div>
+                  ) : (
+                    starredBoards.map(renderBoardItem)
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 3. Terakhir Dibuka */}
+            <div>
+              <div 
+                onClick={() => {
+                  if (!isSidebarCollapsed) {
+                    setIsRecentsExpanded(!isRecentsExpanded);
+                  } else {
+                    setIsSidebarCollapsed(false);
+                    setIsRecentsExpanded(true);
+                  }
+                }}
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: isSidebarCollapsed ? "center" : "space-between",
+                  cursor: "pointer", 
+                  padding: "6px 12px",
+                  borderRadius: "8px",
+                  userSelect: "none"
+                }}
+                className="sidebar-group-header"
+                title={isSidebarCollapsed ? "Tampilkan Terakhir Dibuka" : "Tutup/Buka Terakhir Dibuka"}
+              >
+                {isSidebarCollapsed ? (
+                  <Clock style={{ width: "18px", height: "18px", color: "#64748b" }} />
+                ) : (
+                  <>
+                    <div style={{ 
+                      fontSize: "13px", 
+                      fontWeight: "700", 
+                      color: "#334155", 
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}>
+                      <Clock style={{ width: "16px", height: "16px", color: "#64748b" }} />
+                      <span>Terakhir Dibuka</span>
+                    </div>
+                    <ChevronDown style={{ 
+                      width: "14px", 
+                      height: "14px", 
+                      color: "#94a3b8",
+                      transform: isRecentsExpanded ? "none" : "rotate(-90deg)",
+                      transition: "transform 0.2s"
+                    }} />
+                  </>
+                )}
+              </div>
+              
+              {(!isSidebarCollapsed && isRecentsExpanded) && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: "4px", paddingLeft: "8px" }}>
+                  {!recentBoards.length ? (
+                    <div style={{ padding: "10px 12px", fontSize: "12px", color: "#94a3b8" }}>
+                      Belum ada papan terakhir dibuka
+                    </div>
+                  ) : (
+                    recentBoards.map(renderBoardItem)
+                  )}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+
       </div>
 
       {/* 4. Avatar + Logout (Sticky Bottom) */}
@@ -550,15 +756,13 @@ export default function Sidebar({
             fontWeight: "700",
             boxShadow: "0 2px 6px rgba(109, 40, 217, 0.15)",
             flexShrink: 0
-          }}
-          title={userEmail}
-          >
+          }}>
             {initials(userEmail)}
           </div>
           {!isSidebarCollapsed && (
-            <div style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
               <span style={{ 
-                fontSize: "12px", 
+                fontSize: "13px", 
                 fontWeight: "700", 
                 color: "#1e293b", 
                 whiteSpace: "nowrap", 
@@ -567,7 +771,7 @@ export default function Sidebar({
               }}>
                 {userEmail.split("@")[0]}
               </span>
-              <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "500" }}>Aktif</span>
+              <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "500" }}>Aktif</span>
             </div>
           )}
         </div>
@@ -575,7 +779,7 @@ export default function Sidebar({
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <button
             type="button"
-            onClick={() => alert(`⚙️ Pengaturan / Settings App Kanvexa\n\n• User Login: ${userEmail}\n• Status Akun: Aktif\n• Versi App: v1.0.0 Pro`)}
+            onClick={() => alert(`Settings App Kanvexa\n\n• User Login: ${userEmail}\n• Status Akun: Aktif\n• Versi App: v1.0.0 Pro`)}
             title="Settings / Pengaturan"
             style={{
               background: "none",
@@ -621,59 +825,72 @@ export default function Sidebar({
       <style>{`
         .btn-toggle-sidebar:hover {
           background-color: #f1f5f9;
-          color: #475569 !important;
+          color: #334155;
         }
         .btn-sidebar-create:hover {
-          background-color: #5b21b6 !important;
-          box-shadow: 0 6px 16px rgba(109, 40, 217, 0.35) !important;
+          background: var(--v-mid) !important;
           transform: translateY(-1px);
         }
+        .sidebar-board-item:hover {
+          background-color: #f8fafc;
+        }
         .sidebar-item-container:hover .btn-item-more {
-          opacity: 1 !important;
-          visibility: visible !important;
+          opacity: 1;
         }
         .btn-item-more {
           opacity: 0;
-          visibility: hidden;
-        }
-        .sidebar-board-item:hover {
-          background-color: #f1f5f9;
         }
         .btn-item-more:hover {
-          background-color: #e2e8f0;
-          color: #334155 !important;
+          background-color: #f1f5f9;
+          color: #334155;
         }
         .dropdown-action-item:hover {
-          background-color: #f1f5f9 !important;
-          color: #1e293b !important;
+          background-color: #f1f5f9;
+          color: #1e293b;
         }
-        .dropdown-action-delete:hover {
-          background-color: #fef2f2 !important;
-          color: #dc2626 !important;
+        .dropdown-action-item-danger:hover {
+          background-color: #fef2f2;
+          color: #dc2626;
         }
-        .btn-sidebar-logout:hover {
-          background-color: #fef2f2 !important;
-          color: #dc2626 !important;
+        .btn-sidebar-settings:hover, .btn-sidebar-logout:hover {
+          background-color: #e2e8f0;
+          color: #334155;
         }
-        .sidebar-settings-item:hover {
-          background-color: #f1f5f9 !important;
-          color: var(--v) !important;
+        .sidebar-group-header:hover, .sidebar-nav-item:hover {
+          background-color: #f8fafc;
         }
-        .sidebar-settings-item:hover svg {
-          color: var(--v) !important;
-        }
-        .btn-sidebar-settings:hover {
-          background-color: #f1f5f9 !important;
-          color: var(--v) !important;
-        }
+        /* Custom thin scrollbar */
         .sidebar-scroll::-webkit-scrollbar {
           width: 4px;
         }
+        .sidebar-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
         .sidebar-scroll::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
+          background: #e2e8f0;
           border-radius: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+          background: #cbd5e1;
+        }
+
+        /* Mobile Responsive Sidebar */
+        @media (max-width: 767px) {
+          .sidebar-root {
+            position: fixed !important;
+            left: 0;
+            top: 0;
+            width: 280px !important;
+            transform: translateX(-100%);
+            box-shadow: none;
+          }
+          .sidebar-root.sidebar-mobile-open {
+            transform: translateX(0);
+            box-shadow: 8px 0 30px rgba(0,0,0,0.12);
+          }
         }
       `}</style>
     </aside>
+    </>
   );
 }
