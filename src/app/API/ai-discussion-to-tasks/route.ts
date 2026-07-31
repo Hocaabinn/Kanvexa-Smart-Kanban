@@ -70,36 +70,55 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "OPENROUTER_API_KEY belum dikonfigurasi" }, { status: 500 });
     }
 
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-        "X-Title": "Kanvexa",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: 2000,
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-      }),
-    });
+    const MODELS = [
+      "meta-llama/llama-3.3-70b-instruct",
+      "google/gemini-2.5-flash",
+      "qwen/qwen-2.5-72b-instruct"
+    ];
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("OpenRouter API error (discussion-to-tasks):", errText);
-      return NextResponse.json({ error: "Layanan AI mengalami kendala temporer." }, { status: 502 });
+    let parsed = null;
+
+    for (const model of MODELS) {
+      try {
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+            "X-Title": "Kanvexa",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: userPrompt },
+            ],
+            max_tokens: 1500,
+            temperature: 0.2,
+            response_format: { type: "json_object" },
+          }),
+        });
+
+        if (!res.ok) continue;
+
+        const data = await res.json();
+        const raw = data.choices?.[0]?.message?.content ?? "";
+        const finishReason = data.choices?.[0]?.finish_reason;
+
+        if (finishReason === "error" || !raw.trim()) continue;
+
+        parsed = safeParseJson(raw);
+        if (parsed && typeof parsed === "object") break;
+      } catch (e) {
+        continue;
+      }
     }
 
-    const data = await res.json();
-    const raw = data.choices?.[0]?.message?.content ?? "";
+    if (!parsed) {
+      return NextResponse.json({ error: "Layanan AI mengalami kendala temporer. Coba beberapa saat lagi." }, { status: 502 });
+    }
 
-    const parsed = safeParseJson(raw);
     return NextResponse.json(parsed);
   } catch (err: any) {
     console.error("AI Discussion to Tasks error:", err);

@@ -89,38 +89,55 @@ Prompt Pengguna: ${prompt || "Tidak ada prompt tambahan"}
 Isi Dokumen Saat Ini / Konteks:
 ${currentContent || "Tidak ada konteks dokumen"}`;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-        "X-Title": "Kanvexa AI Docs",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userMessage },
-        ],
-        max_tokens: 2000,
-        temperature: 0.3,
-        response_format: { type: "json_object" },
-      }),
-    });
+    const MODELS = [
+      "meta-llama/llama-3.3-70b-instruct",
+      "google/gemini-2.5-flash",
+      "qwen/qwen-2.5-72b-instruct"
+    ];
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("OpenRouter Error:", errText);
-      throw new Error("Gagal menghubungi layanan AI.");
+    let parsed = null;
+
+    for (const model of MODELS) {
+      try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+            "X-Title": "Kanvexa AI Docs",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: userMessage },
+            ],
+            max_tokens: 1500,
+            temperature: 0.3,
+            response_format: { type: "json_object" },
+          }),
+        });
+
+        if (!response.ok) continue;
+
+        const resJson = await response.json();
+        const rawContent = resJson.choices?.[0]?.message?.content || "";
+        const finishReason = resJson.choices?.[0]?.finish_reason;
+
+        if (finishReason === "error" || !rawContent.trim()) continue;
+
+        const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        parsed = JSON.parse(cleaned);
+        if (parsed && typeof parsed === "object") break;
+      } catch (e) {
+        continue;
+      }
     }
 
-    const resJson = await response.json();
-    const rawContent = resJson.choices?.[0]?.message?.content || "";
-
-    // Clean JSON block if wrapped in markdown
-    const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+    if (!parsed) {
+      throw new Error("Gagal memproses dokumen dengan AI.");
+    }
 
     return NextResponse.json(parsed);
   } catch (err: any) {
