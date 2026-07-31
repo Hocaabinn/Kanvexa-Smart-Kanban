@@ -50,8 +50,18 @@ export default function MessageBoardView({
   // Calculate Top Contributors
   const contributorMap: Record<string, { email: string; postCount: number; commentCount: number }> = {};
 
+  // Always ensure current logged-in user is in the list
+  if (userEmail) {
+    const cleanEmail = userEmail.toLowerCase().trim();
+    contributorMap[cleanEmail] = { email: cleanEmail, postCount: 0, commentCount: 0 };
+  }
+
+  // Always ensure the owner/sender is in the list
+  const ownerEmail = "bintangwcproger@gmail.com";
+  contributorMap[ownerEmail] = { email: ownerEmail, postCount: 0, commentCount: 0 };
+
   posts.forEach((p) => {
-    const email = p.author_email || "Anonim";
+    const email = (p.author_email || "Anonim").toLowerCase().trim();
     if (!contributorMap[email]) {
       contributorMap[email] = { email, postCount: 0, commentCount: 0 };
     }
@@ -59,7 +69,7 @@ export default function MessageBoardView({
   });
 
   comments.forEach((c) => {
-    const email = c.author_email || "Anonim";
+    const email = (c.author_email || "Anonim").toLowerCase().trim();
     if (!contributorMap[email]) {
       contributorMap[email] = { email, postCount: 0, commentCount: 0 };
     }
