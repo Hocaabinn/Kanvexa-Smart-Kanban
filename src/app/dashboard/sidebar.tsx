@@ -30,6 +30,7 @@ interface Board {
   id: string;
   name: string;
   created_at: string;
+  owner_email?: string;
 }
 
 interface SidebarProps {
