@@ -155,10 +155,16 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
       isRead: false,
     }] : [];
 
-    const allNotifs = [...dbNotifications, ...demoInvite, ...systemNotifications];
+    let allNotifs = [...dbNotifications, ...demoInvite, ...systemNotifications];
 
     if (typeof window !== "undefined") {
       try {
+        const readStored = localStorage.getItem("read_notifications");
+        if (readStored) {
+          const readIds = JSON.parse(readStored);
+          allNotifs = allNotifs.map(n => readIds.includes(n.id) ? { ...n, isRead: true } : n);
+        }
+
         const stored = localStorage.getItem("dismissed_notifications");
         if (stored) {
           const dismissedIds = JSON.parse(stored);
@@ -176,34 +182,59 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({ ...n, isRead: true }));
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("read_notifications");
+          const readIds = stored ? JSON.parse(stored) : [];
+          const allIds = updated.map(n => n.id);
+          const newReadIds = Array.from(new Set([...readIds, ...allIds]));
+          localStorage.setItem("read_notifications", JSON.stringify(newReadIds));
+        } catch (e) {}
+      }
+      return updated;
+    });
   };
 
   const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    setNotifications((prev) => {
+      const updated = prev.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("read_notifications");
+          const readIds = stored ? JSON.parse(stored) : [];
+          if (!readIds.includes(id)) {
+            localStorage.setItem("read_notifications", JSON.stringify([...readIds, id]));
+          }
+        } catch (e) {}
+      }
+      return updated;
+    });
   };
 
   const deleteNotification = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Add to dismissed in localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("dismissed_notifications");
+        const dismissed = stored ? JSON.parse(stored) : [];
+        if (!dismissed.includes(id)) {
+          localStorage.setItem("dismissed_notifications", JSON.stringify([...dismissed, id]));
+        }
+      } catch (e) {}
+    }
+
     if (id.startsWith("demo-invite-") || id.startsWith("mock-")) {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-      if (typeof window !== "undefined") {
-        try {
-          const stored = localStorage.getItem("dismissed_notifications");
-          const dismissed = stored ? JSON.parse(stored) : [];
-          if (!dismissed.includes(id)) {
-            localStorage.setItem("dismissed_notifications", JSON.stringify([...dismissed, id]));
-          }
-        } catch (e) {}
-      }
       return;
     }
 
     try {
       await rejectBoardInvitation(id);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setDbInvitations((prev) => prev.filter((inv) => inv.id !== id));
     } catch (err: any) {
       alert("Gagal menolak undangan: " + err.message);
     }
@@ -213,18 +244,26 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
     e.stopPropagation();
     if (processingId) return;
 
+    // Add to dismissed and read in localStorage so it doesn't show up again
+    if (typeof window !== "undefined") {
+      try {
+        const dismissedStored = localStorage.getItem("dismissed_notifications");
+        const dismissed = dismissedStored ? JSON.parse(dismissedStored) : [];
+        if (!dismissed.includes(notif.id)) {
+          localStorage.setItem("dismissed_notifications", JSON.stringify([...dismissed, notif.id]));
+        }
+        
+        const readStored = localStorage.getItem("read_notifications");
+        const readIds = readStored ? JSON.parse(readStored) : [];
+        if (!readIds.includes(notif.id)) {
+          localStorage.setItem("read_notifications", JSON.stringify([...readIds, notif.id]));
+        }
+      } catch (e) {}
+    }
+
     if (notif.id.startsWith("demo-invite-") || notif.id.startsWith("mock-")) {
       markAsRead(notif.id);
       onClose();
-      if (typeof window !== "undefined") {
-        try {
-          const stored = localStorage.getItem("dismissed_notifications");
-          const dismissed = stored ? JSON.parse(stored) : [];
-          if (!dismissed.includes(notif.id)) {
-            localStorage.setItem("dismissed_notifications", JSON.stringify([...dismissed, notif.id]));
-          }
-        } catch (e) {}
-      }
       if (notif.boardId) {
         router.push(`/board/${notif.boardId}`);
       } else if (boards.length > 0) {
@@ -238,7 +277,7 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
     setProcessingId(notif.id);
     try {
       const boardId = await acceptBoardInvitation(notif.id);
-      markAsRead(notif.id);
+      setDbInvitations((prev) => prev.filter((inv) => inv.id !== notif.id));
       onClose();
       router.push(`/board/${boardId}`);
     } catch (err: any) {

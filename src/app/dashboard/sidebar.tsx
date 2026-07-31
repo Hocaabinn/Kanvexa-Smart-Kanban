@@ -81,6 +81,63 @@ export default function Sidebar({
   const [isFavoritesExpanded, setIsFavoritesExpanded] = useState(true);
   const [isRecentsExpanded, setIsRecentsExpanded] = useState(false);
   const [activeMenuBoardId, setActiveMenuBoardId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !user.email) return;
+
+      const { data: invitations } = await supabase
+        .from("board_invitations")
+        .select("id, invited_email, status")
+        .eq("status", "pending");
+
+      let realCount = 0;
+      if (invitations) {
+        const userEmailLower = user.email.toLowerCase();
+        const filtered = invitations.filter(
+          inv => inv.invited_email.toLowerCase() === userEmailLower
+        );
+        realCount = filtered.length;
+      }
+
+      let mockUnread = 1; // mock-activity is unread by default
+
+      if (typeof window !== "undefined") {
+        try {
+          const dismissed = localStorage.getItem("dismissed_notifications");
+          const read = localStorage.getItem("read_notifications");
+          
+          const dismissedIds = dismissed ? JSON.parse(dismissed) : [];
+          const readIds = read ? JSON.parse(read) : [];
+
+          if (dismissedIds.includes("mock-activity") || readIds.includes("mock-activity")) {
+            mockUnread = 0;
+          }
+
+          if (invitations) {
+            const userEmailLower = user.email.toLowerCase();
+            const filteredUnread = invitations.filter(
+              inv => inv.invited_email.toLowerCase() === userEmailLower && !readIds.includes(inv.id) && !dismissedIds.includes(inv.id)
+            );
+            realCount = filteredUnread.length;
+          }
+        } catch (e) {}
+      }
+
+      setUnreadCount(realCount + mockUnread);
+    } catch (err) {
+      console.error("Error fetching unread count:", err);
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
 
   // Close 3-dots menu on window click
   useEffect(() => {
@@ -543,36 +600,40 @@ export default function Sidebar({
             >
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <Inbox style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
-                <span
-                  style={{
-                    position: "absolute",
-                    top: -2,
-                    right: -2,
-                    width: 7,
-                    height: 7,
-                    borderRadius: "50%",
-                    background: "#ef4444",
-                    border: "1.5px solid #ffffff",
-                  }}
-                />
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: -2,
+                      right: -2,
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: "#ef4444",
+                      border: "1.5px solid #ffffff",
+                    }}
+                  />
+                )}
               </div>
               {!isSidebarCollapsed && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1 }}>
                   <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
                     Kotak Masuk
                   </span>
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontWeight: "800",
-                      background: "rgba(109, 40, 217, 0.1)",
-                      color: "#6d28d9",
-                      padding: "1px 6px",
-                      borderRadius: "10px",
-                    }}
-                  >
-                    2
-                  </span>
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        fontSize: "10px",
+                        fontWeight: "800",
+                        background: "rgba(109, 40, 217, 0.1)",
+                        color: "#6d28d9",
+                        padding: "1px 6px",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      {unreadCount}
+                    </span>
+                  )}
                 </div>
               )}
             </div>

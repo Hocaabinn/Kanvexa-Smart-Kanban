@@ -70,6 +70,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations);
+  const [inboxUpdateTrigger, setInboxUpdateTrigger] = useState(0);
 
   // Rename & Delete state
   const [boardToRename, setBoardToRename] = useState<{ id: string; name: string } | null>(null);
@@ -198,6 +199,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
       {/* Sidebar Component */}
       <Sidebar 
+        key={inboxUpdateTrigger}
         userEmail={userEmail}
         boards={sortedBoards}
         pinnedBoardIds={pinnedBoardIds}
@@ -212,6 +214,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
         onDeleteAction={openDeleteModal}
         isMobileOpen={isMobileOpen}
         setIsMobileOpen={setIsMobileOpen}
+        onInboxClick={() => setShowInbox(true)}
       />
 
       {/* Main Content Pane */}
@@ -308,6 +311,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
               databaseInvitations={invitations}
               onClose={() => {
                 setShowInbox(false);
+                setInboxUpdateTrigger(prev => prev + 1);
                 router.refresh();
               }}
             />
