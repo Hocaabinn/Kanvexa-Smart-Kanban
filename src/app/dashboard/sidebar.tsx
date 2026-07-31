@@ -21,7 +21,7 @@ import {
   Clock,
   Menu,
   X,
-  Bell
+  Inbox
 } from "lucide-react";
 import { KanvexaIcon, KanvexaLogo } from "@/components/ui/KanvexaLogo";
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
@@ -541,7 +541,7 @@ export default function Sidebar({
               title="Kotak Masuk & Notifikasi"
             >
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                <Bell style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
+                <Inbox style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
                 <span
                   style={{
                     position: "absolute",

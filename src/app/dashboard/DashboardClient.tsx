@@ -19,8 +19,7 @@ import {
   Lightbulb,
   Target,
   LayoutTemplate,
-  Menu,
-  Bell
+  Menu
 } from "lucide-react";
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 
@@ -299,46 +298,6 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                 }
               </p>
             </div>
-
-            {/* Inbox Bell Button */}
-            <button
-              onClick={() => setShowInbox(true)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 14px",
-                borderRadius: 12,
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
-                color: "#334155",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                transition: "all 0.15s ease",
-                position: "relative",
-                flexShrink: 0,
-              }}
-              title="Kotak Masuk & Notifikasi"
-            >
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                <Bell width={18} height={18} style={{ color: "#6d28d9" }} />
-                <span
-                  style={{
-                    position: "absolute",
-                    top: -4,
-                    right: -4,
-                    width: 9,
-                    height: 9,
-                    borderRadius: "50%",
-                    background: "#ef4444",
-                    border: "2px solid #ffffff",
-                  }}
-                />
-              </div>
-              <span className="hidden sm:inline">Kotak Masuk</span>
-            </button>
           </div>
 
           {/* Inbox Modal */}
