@@ -23,12 +23,65 @@ export async function createBoard(formData: FormData) {
     throw new Error(error.message);
   }
 
-  // Seed three default columns so a brand new board isn't empty.
-  await supabase.from("board_columns").insert([
-    { board_id: boardId, name: "To do", position: 0 },
-    { board_id: boardId, name: "In progress", position: 1 },
-    { board_id: boardId, name: "Done", position: 2 },
-  ]);
+  // Seed columns and cards depending on selected templates
+  let columnsToInsert: { name: string; position: number; cards?: string[] }[] = [];
+
+  if (name === "Persiapan Seminar & Skripsi") {
+    columnsToInsert = [
+      { name: "Ide & Referensi", position: 0, cards: ["Mencari 5 jurnal pendukung", "Pilih topik utama skripsi"] },
+      { name: "Checklist Dokumen", position: 1, cards: ["Draft Proposal Bab 1-3", "Form persetujuan dosen pembimbing"] },
+      { name: "Revisi Dosen", position: 2, cards: ["Revisi abstrak Bahasa Inggris", "Perbaikan metodologi penelitian"] },
+      { name: "Selesai", position: 3, cards: ["Mengisi form pendaftaran seminar proposal"] },
+    ];
+  } else if (name === "Manajemen Rapat Organisasi / OSIS") {
+    columnsToInsert = [
+      { name: "Agenda Rapat", position: 0, cards: ["Penyusunan Proposal Anggaran", "Rencana tanggal rapat bulanan"] },
+      { name: "Dalam Pembahasan", position: 1, cards: ["Pembagian Divisi Acara & Humas", "Evaluasi proker bulan lalu"] },
+      { name: "Tindak Lanjut (Action Items)", position: 2, cards: ["Desain Spanduk & Publikasi", "Hubungi narasumber luar"] },
+      { name: "Selesai", position: 3, cards: ["Booking Ruang Aula Sekolah"] },
+    ];
+  } else if (name === "Mindmap Ide & Brainstorming") {
+    columnsToInsert = [
+      { name: "Brain Dump / Ide Acak", position: 0, cards: ["Membuat sistem filter kategori", "Integrasi payment gateway"] },
+      { name: "Penyaringan Ide", position: 1, cards: ["Ide A: Gunakan AI autocomplete", "Ide B: Fitur template seret & taruh"] },
+      { name: "Analisis Kelayakan", position: 2, cards: ["Analisis biaya integrasi API", "Riset minat pengguna target"] },
+      { name: "Siap Eksekusi", position: 3, cards: ["Desain wireframe Figma", "Buat repositori GitHub baru"] },
+    ];
+  } else if (name === "Papan Peluncuran Proyek (Sprint 1 Minggu)") {
+    columnsToInsert = [
+      { name: "Backlog", position: 0, cards: ["Setup environment development", "Rancang skema database PostgreSQL"] },
+      { name: "Sedang Dikerjakan", position: 1, cards: ["Implementasi login & register", "Slicing mockup landing page"] },
+      { name: "Uji Coba (Testing)", position: 2, cards: ["Unit testing auth controller", "Integrasi testing flow order"] },
+      { name: "Selesai", position: 3, cards: ["Deployment ke hosting Vercel"] },
+    ];
+  } else {
+    // Default fallback columns
+    columnsToInsert = [
+      { name: "To do", position: 0 },
+      { name: "In progress", position: 1 },
+      { name: "Done", position: 2 },
+    ];
+  }
+
+  // Insert columns and then cards
+  for (const col of columnsToInsert) {
+    const { data: insertedCol, error: colErr } = await supabase
+      .from("board_columns")
+      .insert({ board_id: boardId, name: col.name, position: col.position })
+      .select("id")
+      .single();
+    
+    if (!colErr && insertedCol && col.cards && col.cards.length > 0) {
+      const cardsToInsert = col.cards.map((title, index) => ({
+        board_id: boardId,
+        column_id: insertedCol.id,
+        title: title,
+        description: `Deskripsi otomatis untuk tugas: ${title}`,
+        position: index
+      }));
+      await supabase.from("cards").insert(cardsToInsert);
+    }
+  }
 
   revalidatePath("/dashboard");
   redirect(`/board/${boardId}`);

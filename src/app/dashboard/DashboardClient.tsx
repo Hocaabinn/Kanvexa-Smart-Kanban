@@ -485,22 +485,6 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       tagBg: "#fdf2f8"
                     }
                   ]
-                },
-                {
-                  category: "3. Personal & Career",
-                  icon: Target,
-                  color: "#059669",
-                  bg: "#ecfdf5",
-                  templates: [
-                    {
-                      title: "Rencana Aksi Mingguan (Weekly Planner)",
-                      desc: "Pemetaan target 7 hari ke depan agar fokus pada prioritas utama.",
-                      tags: ["Personal"],
-                      prompt: "Rencana Aksi Mingguan (Weekly Planner)",
-                      tagColor: "#059669",
-                      tagBg: "#ecfdf5"
-                    }
-                  ]
                 }
               ].map((cat, catIdx) => {
                 const CategoryIcon = cat.icon;
