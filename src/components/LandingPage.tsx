@@ -1569,7 +1569,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
             <div className="flex items-center">
-              <KanvexaLogo useVector iconClassName="h-7 w-7 text-white" textClassName="text-2xl font-extrabold tracking-tight text-white" />
+              <KanvexaLogo src="/img/logo2-transparent.png" imgClassName="h-8 w-auto object-contain" />
             </div>
             <p className="text-sm text-gray-200 mt-2 max-w-xs font-body font-normal">
               Otomatiskan pekerjaan administratif dengan AI yang mampu memahami, memecah, dan menyusun tugas secara presisi.
