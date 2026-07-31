@@ -85,12 +85,11 @@ export default function Sidebar({
 
   const fetchUnreadCount = useCallback(async () => {
     try {
+      if (!userEmail || userEmail === "Guest") return;
+
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !user.email) return;
-
       const { data: invitations } = await supabase
         .from("board_invitations")
         .select("id, invited_email, status")
@@ -98,7 +97,7 @@ export default function Sidebar({
 
       let realCount = 0;
       if (invitations) {
-        const userEmailLower = user.email.toLowerCase();
+        const userEmailLower = userEmail.toLowerCase();
         const filtered = invitations.filter(
           inv => inv.invited_email.toLowerCase() === userEmailLower
         );
@@ -120,7 +119,7 @@ export default function Sidebar({
           }
 
           if (invitations) {
-            const userEmailLower = user.email.toLowerCase();
+            const userEmailLower = userEmail.toLowerCase();
             const filteredUnread = invitations.filter(
               inv => inv.invited_email.toLowerCase() === userEmailLower && !readIds.includes(inv.id) && !dismissedIds.includes(inv.id)
             );
