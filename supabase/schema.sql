@@ -252,3 +252,53 @@ alter publication supabase_realtime add table board_columns;
 alter publication supabase_realtime add table cards;
 alter publication supabase_realtime add table board_posts;
 alter publication supabase_realtime add table board_post_comments;
+
+-- ============================================================
+-- Board Invitations for Collaboration
+-- ============================================================
+
+-- Tambahkan kolom owner_email ke tabel boards
+alter table boards add column if not exists owner_email text;
+
+-- Buat tabel board_invitations
+create table if not exists board_invitations (
+  id uuid primary key default gen_random_uuid(),
+  board_id uuid not null references boards(id) on delete cascade,
+  board_name text not null,
+  invited_email text not null,
+  role text not null default 'member' check (role in ('admin', 'member', 'viewer')),
+  invited_by_email text not null,
+  status text not null check (status in ('pending', 'accepted', 'rejected')) default 'pending',
+  created_at timestamptz not null default now()
+);
+
+-- Aktifkan RLS pada board_invitations
+alter table board_invitations enable row level security;
+
+-- Kebijakan RLS untuk board_invitations
+drop policy if exists "board_invitations_select" on board_invitations;
+create policy "board_invitations_select" on board_invitations for select
+  using (invited_email = auth.jwt()->>'email' or invited_by_email = auth.jwt()->>'email');
+
+drop policy if exists "board_invitations_insert" on board_invitations;
+create policy "board_invitations_insert" on board_invitations for insert
+  with check (invited_by_email = auth.jwt()->>'email');
+
+drop policy if exists "board_invitations_update" on board_invitations;
+create policy "board_invitations_update" on board_invitations for update
+  using (invited_email = auth.jwt()->>'email' or invited_by_email = auth.jwt()->>'email');
+
+-- Perbarui kebijakan insert pada board_members agar penerima undangan bisa mendaftar sendiri setelah menyetujui
+drop policy if exists "board_members_insert" on board_members;
+create policy "board_members_insert" on board_members for insert
+  with check (
+    public.is_board_admin(board_id)
+    or
+    exists (
+      select 1 from board_invitations
+      where board_invitations.board_id = board_members.board_id
+        and board_invitations.invited_email = auth.jwt()->>'email'
+        and board_invitations.status = 'accepted'
+    )
+  );
+

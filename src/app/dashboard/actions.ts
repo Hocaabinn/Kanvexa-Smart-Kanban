@@ -16,7 +16,7 @@ export async function createBoard(formData: FormData) {
   const boardId = crypto.randomUUID();
   const { error } = await supabase
     .from("boards")
-    .insert({ id: boardId, name, created_by: userData.user.id });
+    .insert({ id: boardId, name, created_by: userData.user.id, owner_email: userData.user.email });
 
   if (error) {
     // In a real app, surface this to the UI instead of throwing.
@@ -56,4 +56,77 @@ export async function renameBoard(boardId: string, newName: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard");
 }
+
+export async function acceptBoardInvitation(invitationId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data: inv, error: fetchErr } = await supabase
+    .from("board_invitations")
+    .select("*")
+    .eq("id", invitationId)
+    .single();
+
+  if (fetchErr || !inv) {
+    throw new Error("Undangan tidak ditemukan.");
+  }
+
+  if (inv.invited_email.toLowerCase() !== user.email?.toLowerCase()) {
+    throw new Error("Anda tidak berhak menerima undangan ini.");
+  }
+
+  const { error: updateErr } = await supabase
+    .from("board_invitations")
+    .update({ status: "accepted" })
+    .eq("id", invitationId);
+
+  if (updateErr) throw new Error(updateErr.message);
+
+  const { error: memberErr } = await supabase
+    .from("board_members")
+    .insert({
+      board_id: inv.board_id,
+      user_id: user.id,
+      role: inv.role
+    });
+
+  if (memberErr && !memberErr.message.includes("duplicate key")) {
+    console.error("Gagal menambahkan ke board_members:", memberErr.message);
+    throw new Error(memberErr.message);
+  }
+
+  revalidatePath("/dashboard");
+  return inv.board_id;
+}
+
+export async function rejectBoardInvitation(invitationId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data: inv, error: fetchErr } = await supabase
+    .from("board_invitations")
+    .select("*")
+    .eq("id", invitationId)
+    .single();
+
+  if (fetchErr || !inv) {
+    throw new Error("Undangan tidak ditemukan.");
+  }
+
+  if (inv.invited_email.toLowerCase() !== user.email?.toLowerCase()) {
+    throw new Error("Anda tidak berhak menolak undangan ini.");
+  }
+
+  const { error: updateErr } = await supabase
+    .from("board_invitations")
+    .update({ status: "rejected" })
+    .eq("id", invitationId);
+
+  if (updateErr) throw new Error(updateErr.message);
+
+  revalidatePath("/dashboard");
+}
+
 

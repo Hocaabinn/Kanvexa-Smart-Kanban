@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { acceptBoardInvitation, rejectBoardInvitation } from "@/app/dashboard/actions";
 
 export interface NotificationItem {
   id: string;
@@ -29,57 +30,98 @@ export interface NotificationItem {
   isRead: boolean;
 }
 
+interface DatabaseInvitation {
+  id: string;
+  board_id: string;
+  board_name: string;
+  invited_email: string;
+  invited_by_email: string;
+  role: string;
+  created_at: string;
+}
+
 interface InboxProps {
   userEmail: string;
   boards?: { id: string; name: string }[];
+  databaseInvitations?: DatabaseInvitation[];
   onClose: () => void;
 }
 
-export function InboxNotificationModal({ userEmail, boards = [], onClose }: InboxProps) {
+function formatInviteTime(dateStr: string) {
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    if (diffMins < 1) return "Baru saja";
+    if (diffMins < 60) return `${diffMins} menit yang lalu`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} jam yang lalu`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} hari yang lalu`;
+  } catch (e) {
+    return "Baru saja";
+  }
+}
+
+export function InboxNotificationModal({ userEmail, boards = [], databaseInvitations = [], onClose }: InboxProps) {
   const router = useRouter();
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // Find OSIS / Rapat / Organisasi board or fallback to matching board
-  const inviteBoard = boards.find(b => 
-    b.name.toLowerCase().includes("rapat") || 
-    b.name.toLowerCase().includes("osis") || 
-    b.name.toLowerCase().includes("organisasi")
-  ) || boards.find(b => b.name.toLowerCase().includes("skripsi") || b.name.toLowerCase().includes("seminar")) || boards[0];
+  // Convert database invitations to notification items
+  const dbNotifications = databaseInvitations.map(inv => ({
+    id: inv.id,
+    type: "invite" as const,
+    title: "Undangan Kolaborasi Tim",
+    message: `mengundang Anda sebagai ${inv.role === "admin" ? "Admin" : inv.role === "viewer" ? "Pengamat" : "Editor"} ke papan "${inv.board_name}".`,
+    sender: inv.invited_by_email,
+    boardName: inv.board_name,
+    boardId: inv.board_id,
+    role: inv.role,
+    timestamp: formatInviteTime(inv.created_at),
+    isRead: false,
+  }));
 
-  const inviteBoardName = inviteBoard?.name || "Manajemen Rapat Organisasi / OSIS";
-  const inviteBoardId = inviteBoard?.id || "";
+  // Initial notifications: merge database invitations with non-invite mock notifications
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
+    const systemNotifications = [
+      {
+        id: "mock-activity",
+        type: "activity" as const,
+        title: "Papan Baru Dibuat",
+        message: "Template 'Persiapan Seminar & Skripsi' berhasil ditambahkan ke Ruang Kerja Anda.",
+        boardName: "Persiapan Seminar & Skripsi",
+        timestamp: "1 jam yang lalu",
+        isRead: false,
+      },
+      {
+        id: "mock-system",
+        type: "system" as const,
+        title: "Selamat Datang di Kanvexa AI!",
+        message: "Workspace kolaboratif Anda siap digunakan. Manfaatkan fitur Urai dengan AI untuk memecah proyek secara otomatis.",
+        timestamp: "Baru saja",
+        isRead: true,
+      },
+    ];
 
-  // Initial mock notifications tailored to user context
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: "1",
-      type: "invite",
+    const hasRealInvites = dbNotifications.length > 0;
+    const shouldAddDemoInvite = !hasRealInvites && userEmail.toLowerCase() === "binnkoseiji@gmail.com";
+
+    const demoInvite = shouldAddDemoInvite ? [{
+      id: "demo-invite-1",
+      type: "invite" as const,
       title: "Undangan Kolaborasi Tim",
-      message: `mengundang Anda sebagai Editor ke papan "${inviteBoardName}".`,
+      message: `mengundang Anda sebagai Editor ke papan "Manajemen Rapat Organisasi / OSIS".`,
       sender: "bintangwcproger@gmail.com",
-      boardName: inviteBoardName,
-      boardId: inviteBoardId,
-      role: "Editor",
+      boardName: "Manajemen Rapat Organisasi / OSIS",
+      boardId: boards[0]?.id || "",
+      role: "member",
       timestamp: "10 menit yang lalu",
       isRead: false,
-    },
-    {
-      id: "2",
-      type: "activity",
-      title: "Papan Baru Dibuat",
-      message: "Template 'Persiapan Seminar & Skripsi' berhasil ditambahkan ke Ruang Kerja Anda.",
-      boardName: "Persiapan Seminar & Skripsi",
-      timestamp: "1 jam yang lalu",
-      isRead: false,
-    },
-    {
-      id: "3",
-      type: "system",
-      title: "Selamat Datang di Kanvexa AI!",
-      message: "Workspace kolaboratif Anda siap digunakan. Manfaatkan fitur Urai dengan AI untuk memecah proyek secara otomatis.",
-      timestamp: "Baru saja",
-      isRead: true,
-    },
-  ]);
+    }] : [];
+
+    return [...dbNotifications, ...demoInvite, ...systemNotifications];
+  });
 
   const [activeTab, setActiveTab] = useState<"all" | "invites">("all");
 
@@ -95,21 +137,48 @@ export function InboxNotificationModal({ userEmail, boards = [], onClose }: Inbo
     );
   };
 
-  const deleteNotification = (id: string, e: React.MouseEvent) => {
+  const deleteNotification = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (id.startsWith("demo-invite-") || id.startsWith("mock-")) {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      return;
+    }
+
+    try {
+      await rejectBoardInvitation(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch (err: any) {
+      alert("Gagal menolak undangan: " + err.message);
+    }
   };
 
-  const handleAcceptInvite = (notif: NotificationItem, e: React.MouseEvent) => {
+  const handleAcceptInvite = async (notif: NotificationItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    markAsRead(notif.id);
-    onClose();
-    if (notif.boardId) {
-      router.push(`/board/${notif.boardId}`);
-    } else if (boards.length > 0) {
-      router.push(`/board/${boards[0].id}`);
-    } else {
-      router.push(`/dashboard`);
+    if (processingId) return;
+
+    if (notif.id.startsWith("demo-invite-") || notif.id.startsWith("mock-")) {
+      markAsRead(notif.id);
+      onClose();
+      if (notif.boardId) {
+        router.push(`/board/${notif.boardId}`);
+      } else if (boards.length > 0) {
+        router.push(`/board/${boards[0].id}`);
+      } else {
+        router.push(`/dashboard`);
+      }
+      return;
+    }
+
+    setProcessingId(notif.id);
+    try {
+      const boardId = await acceptBoardInvitation(notif.id);
+      markAsRead(notif.id);
+      onClose();
+      router.push(`/board/${boardId}`);
+    } catch (err: any) {
+      alert("Gagal menerima undangan: " + err.message);
+    } finally {
+      setProcessingId(null);
     }
   };
 

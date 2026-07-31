@@ -377,15 +377,29 @@ export async function inviteBoardMember(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  // Attempt inserting into board_members table if table exists
-  try {
-    await supabase.from("board_members").insert({
+  const { data: board, error: boardErr } = await supabase
+    .from("boards")
+    .select("name")
+    .eq("id", boardId)
+    .single();
+
+  if (boardErr || !board) {
+    throw new Error("Papan tidak ditemukan.");
+  }
+
+  const { error: inviteErr } = await supabase
+    .from("board_invitations")
+    .insert({
       board_id: boardId,
-      user_id: user.id, // For demo/testing invitation
+      board_name: board.name,
+      invited_email: email.trim(),
       role: role,
+      invited_by_email: user.email || "Kolaborator",
+      status: "pending"
     });
-  } catch (e) {
-    console.log("board_members insert handled:", e);
+
+  if (inviteErr) {
+    throw new Error(inviteErr.message);
   }
 
   revalidatePath(`/board/${boardId}`);

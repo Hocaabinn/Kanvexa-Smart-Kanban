@@ -28,11 +28,23 @@ interface Board {
   id: string;
   name: string;
   created_at: string;
+  owner_email?: string;
+}
+
+interface Invitation {
+  id: string;
+  board_id: string;
+  board_name: string;
+  invited_email: string;
+  invited_by_email: string;
+  role: string;
+  created_at: string;
 }
 
 interface Props {
   userEmail: string;
   initialBoards: Board[];
+  initialInvitations?: Invitation[];
   createBoardAction: (formData: FormData) => Promise<void>;
   activeView?: "dashboard" | "templates";
 }
@@ -48,7 +60,7 @@ function getRelativeTime(dateStr: string) {
   return `${diffDays} hari yang lalu`;
 }
 
-export default function DashboardClient({ userEmail, initialBoards, createBoardAction, activeView = "dashboard" }: Props) {
+export default function DashboardClient({ userEmail, initialBoards, initialInvitations = [], createBoardAction, activeView = "dashboard" }: Props) {
   const router = useRouter();
 
   const [pinnedBoardIds, setPinnedBoardIds] = useState<string[]>([]);
@@ -58,6 +70,7 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
+  const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations);
 
   // Rename & Delete state
   const [boardToRename, setBoardToRename] = useState<{ id: string; name: string } | null>(null);
@@ -333,7 +346,11 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
             <InboxNotificationModal
               userEmail={userEmail}
               boards={sortedBoards.map(b => ({ id: b.id, name: b.name }))}
-              onClose={() => setShowInbox(false)}
+              databaseInvitations={invitations}
+              onClose={() => {
+                setShowInbox(false);
+                router.refresh();
+              }}
             />
           )}
 
@@ -413,7 +430,7 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
                     <Link key={board.id} href={`/board/${board.id}`} style={{ textDecoration: "none" }}>
                       <AnimatedFolder
                         title={board.name}
-                        subtitle={`Kanvexa • ${dateFormatted}`}
+                        subtitle={`${board.owner_email || "Kanvexa"} • ${dateFormatted}`}
                         isPinned={isPinned}
                         isStarred={isStarred}
                         showOpenButton={true}
