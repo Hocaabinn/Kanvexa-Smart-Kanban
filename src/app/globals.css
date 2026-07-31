@@ -146,4 +146,16 @@ body {
   animation: accordion-up 0.2s cubic-bezier(0.87, 0, 0.13, 1);
 }
 
+/* Mobile Responsive Adjustments */
+@media (max-width: 767px) {
+  .board-topbar {
+    padding: 0 12px !important;
+    gap: 8px !important;
+  }
+}
 
+@media (max-width: 480px) {
+  .board-topbar {
+    height: 46px !important;
+  }
+}

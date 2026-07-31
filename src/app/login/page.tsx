@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
 
 const images = [
   "https://res.cloudinary.com/harshitproject/image/upload/v1782138638/midjourney-image-one.png",
@@ -77,10 +78,9 @@ export default function LoginPage() {
             {/* Logo Header */}
             <Link
               href="/"
-              className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-white transition-opacity hover:opacity-90 drop-shadow-sm"
+              className="flex items-center transition-opacity hover:opacity-90 drop-shadow-sm"
             >
-              <KanvexaLogo className="size-7 text-white" />
-              Kanvexa
+              <KanvexaLogo src="/img/logo2-transparent.png" imgClassName="h-10 w-auto object-contain" />
             </Link>
 
             {/* Carousel Tiles */}
@@ -291,28 +291,5 @@ function FieldInput({
         />
       </div>
     </div>
-  );
-}
-
-function KanvexaLogo({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 32 32"
-      className={className}
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M5 25.5c5.4-3.3 9-9.7 9.8-18.8 5.2 5.5 8 11.8 8.8 18.8H5Z"
-        stroke="currentColor"
-        strokeWidth="2.2"
-      />
-      <path
-        d="M8 23.5h18M10.5 20.5h12.8M12.7 17.5h8.6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }

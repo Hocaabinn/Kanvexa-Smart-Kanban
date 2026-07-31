@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
 import { motion, useMotionValue, useSpring, useScroll, useTransform } from "framer-motion";
 import {
   Play,
@@ -767,6 +768,7 @@ export default function LandingPage() {
   };
   const [activeSection, setActiveSection] = useState("home");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   /* Locomotive Scroll Parallax Effects */
   const heroRef = useRef<HTMLDivElement>(null);
@@ -905,8 +907,8 @@ export default function LandingPage() {
           className="flex items-center justify-between font-body w-full"
           animate={{
             maxWidth: isScrolled ? 760 : 9999,
-            paddingLeft: isScrolled ? 24 : 80,
-            paddingRight: isScrolled ? 24 : 80,
+            paddingLeft: isScrolled ? 24 : (typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 80),
+            paddingRight: isScrolled ? 24 : (typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 80),
             paddingTop: isScrolled ? 10 : 20,
             paddingBottom: isScrolled ? 10 : 20,
             borderRadius: isScrolled ? 9999 : 0,
@@ -922,9 +924,9 @@ export default function LandingPage() {
         >
           <span
             onClick={(e) => handleScroll(e as any, "home")}
-            className="text-xl font-semibold tracking-tight text-foreground flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition-opacity"
+            className="cursor-pointer hover:opacity-90 transition-opacity"
           >
-            ✦ Kanvexa
+            <KanvexaLogo src="/img/logo2-purple.png" imgClassName="h-7 w-auto object-contain" />
           </span>
           <div className="hidden md:flex items-center gap-6">
             {[
@@ -954,10 +956,60 @@ export default function LandingPage() {
               </a>
             ))}
           </div>
-          <Link href="/signup">
-            <LiquidMetalButton label="Get Started" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/signup" className="hidden md:block">
+              <LiquidMetalButton label="Get Started" />
+            </Link>
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-border/60 bg-background/60 backdrop-blur-sm text-foreground"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              )}
+            </button>
+          </div>
         </motion.nav>
+
+        {/* Mobile nav dropdown */}
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="md:hidden mx-4 mt-2 rounded-2xl border border-border/60 bg-background/95 backdrop-blur-2xl shadow-xl p-5 flex flex-col gap-2"
+          >
+            {[
+              { name: "Home", id: "home" },
+              { name: "About", id: "about" },
+              { name: "Pricing", id: "pricing" },
+              { name: "FAQ", id: "faq" },
+              { name: "Contact", id: "contact" },
+            ].map((link) => (
+              <a
+                key={link.id}
+                href={`#${link.id}`}
+                onClick={(e) => { handleScroll(e, link.id); setMobileMenuOpen(false); }}
+                className={`block text-base font-medium py-2.5 px-3 rounded-xl transition-all ${activeSection === link.id
+                    ? "text-primary bg-primary/5 font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+              >
+                {link.name}
+              </a>
+            ))}
+            <div className="mt-2 pt-3 border-t border-border/50">
+              <Link href="/signup" className="block" onClick={() => setMobileMenuOpen(false)}>
+                <LiquidMetalButton label="Get Started" />
+              </Link>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* ===================== HERO ===================== */}
@@ -1516,9 +1568,9 @@ export default function LandingPage() {
       <footer className="relative z-10 px-6 md:px-12 lg:px-20 py-12 border-t border-gray-600/40 bg-[#757575] text-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
-            <span className="text-lg font-semibold tracking-tight text-white flex items-center gap-1.5 font-display">
-              ✦ Kanvexa
-            </span>
+            <div className="flex items-center">
+              <KanvexaLogo useVector iconClassName="h-7 w-7 text-white" textClassName="text-2xl font-extrabold tracking-tight text-white" />
+            </div>
             <p className="text-sm text-gray-200 mt-2 max-w-xs font-body font-normal">
               Otomatiskan pekerjaan administratif dengan AI yang mampu memahami, memecah, dan menyusun tugas secara presisi.
             </p>
