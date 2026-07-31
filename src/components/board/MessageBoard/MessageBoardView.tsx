@@ -50,15 +50,11 @@ export default function MessageBoardView({
   // Calculate Top Contributors
   const contributorMap: Record<string, { email: string; postCount: number; commentCount: number }> = {};
 
-  // Always ensure current logged-in user is in the list
-  if (userEmail) {
-    const cleanEmail = userEmail.toLowerCase().trim();
-    contributorMap[cleanEmail] = { email: cleanEmail, postCount: 0, commentCount: 0 };
-  }
-
-  // Always ensure the owner/sender is in the list
-  const ownerEmail = "bintangwcproger@gmail.com";
-  contributorMap[ownerEmail] = { email: ownerEmail, postCount: 0, commentCount: 0 };
+  // Always ensure both members are in the list for everyone
+  const defaultEmails = ["bintangwcproger@gmail.com", "binnkoseiji@gmail.com"];
+  defaultEmails.forEach(email => {
+    contributorMap[email] = { email, postCount: 0, commentCount: 0 };
+  });
 
   posts.forEach((p) => {
     const email = (p.author_email || "Anonim").toLowerCase().trim();

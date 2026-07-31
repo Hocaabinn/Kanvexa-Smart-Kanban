@@ -558,19 +558,79 @@ export default function BoardClient({
           className="scrollbar-hide"
           suppressHydrationWarning
         >
-          {sortedCols.map((col, i) => (
-            <TodoListColumn
-              key={col.id}
-              id={col.id}
-              boardId={boardId}
-              userEmail={userEmail}
-              name={col.name}
-              accentColor={colColor(i, col.name)}
-              cards={cardsForCol(col.id)}
-              isAdmin={isAdmin}
-              canEdit={canEdit}
-            />
-          ))}
+          {sortedCols.length === 0 ? (
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              maxWidth: 440,
+              margin: "60px auto",
+              padding: "40px 24px",
+              background: "rgba(255,255,255,0.75)",
+              backdropFilter: "blur(12px)",
+              borderRadius: 20,
+              border: "1px dashed var(--border-strong)",
+              textAlign: "center",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.02)",
+            }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: "rgba(109, 40, 217, 0.08)",
+                color: "var(--v)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}>
+                <CheckSquare width={24} height={24} />
+              </div>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: "var(--text-1)", margin: "0 0 6px 0" }}>
+                Papan Baru Siap Dipakai
+              </h3>
+              <p style={{ fontSize: 12, color: "var(--text-2)", margin: "0 0 20px 0", lineHeight: 1.6 }}>
+                Papan ini belum memiliki kolom tugas. Klik tombol di sebelah kanan untuk membuat kolom pertama Anda, atau gunakan template cepat!
+              </p>
+              {canEdit && !addingCol && (
+                <button
+                  onClick={() => setAddingCol(true)}
+                  style={{
+                    padding: "8px 18px",
+                    borderRadius: 10,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    background: "var(--v)",
+                    color: "#ffffff",
+                    border: "none",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(109, 40, 217, 0.2)",
+                    transition: "opacity 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                >
+                  + Tambah Kolom
+                </button>
+              )}
+            </div>
+          ) : (
+            sortedCols.map((col, i) => (
+              <TodoListColumn
+                key={col.id}
+                id={col.id}
+                boardId={boardId}
+                userEmail={userEmail}
+                name={col.name}
+                accentColor={colColor(i, col.name)}
+                cards={cardsForCol(col.id)}
+                isAdmin={isAdmin}
+                canEdit={canEdit}
+              />
+            ))
+          )}
 
           {/* Add column */}
           {isAdmin && (
