@@ -19,8 +19,10 @@ import {
   Lightbulb,
   Target,
   LayoutTemplate,
-  Menu
+  Menu,
+  Bell
 } from "lucide-react";
+import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 
 interface Board {
   id: string;
@@ -55,6 +57,7 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [showInbox, setShowInbox] = useState(false);
 
   // Rename & Delete state
   const [boardToRename, setBoardToRename] = useState<{ id: string; name: string } | null>(null);
@@ -270,18 +273,68 @@ export default function DashboardClient({ userEmail, initialBoards, createBoardA
         )}
 
         <main style={{ maxWidth: 1080, margin: "0 auto", padding: "48px 2rem 80px" }} className="dashboard-main-content">
-          {/* HEADING */}
-          <div style={{ marginBottom: 36 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: "#0f172a", margin: "0 0 6px" }}>
-              {activeView === "templates" ? "Galeri Template" : "Dasbor Utama"}
-            </h1>
-            <p style={{ fontSize: 14, color: "#64748b", margin: 0, fontWeight: 500 }}>
-              {activeView === "templates" 
-                ? "Pilih template yang sudah disesuaikan dengan kebutuhan akademik, organisasi, hingga produktivitas kerja Anda."
-                : <>Selamat datang kembali, <strong style={{ color: "#334155" }}>{userEmail}</strong></>
-              }
-            </p>
+          {/* HEADING & INBOX HEADER */}
+          <div style={{ marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+            <div>
+              <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: "#0f172a", margin: "0 0 6px" }}>
+                {activeView === "templates" ? "Galeri Template" : "Dasbor Utama"}
+              </h1>
+              <p style={{ fontSize: 14, color: "#64748b", margin: 0, fontWeight: 500 }}>
+                {activeView === "templates" 
+                  ? "Pilih template yang sudah disesuaikan dengan kebutuhan akademik, organisasi, hingga produktivitas kerja Anda."
+                  : <>Selamat datang kembali, <strong style={{ color: "#334155" }}>{userEmail}</strong></>
+                }
+              </p>
+            </div>
+
+            {/* Inbox Bell Button */}
+            <button
+              onClick={() => setShowInbox(true)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 14px",
+                borderRadius: 12,
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                color: "#334155",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                transition: "all 0.15s ease",
+                position: "relative",
+                flexShrink: 0,
+              }}
+              title="Kotak Masuk & Notifikasi"
+            >
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <Bell width={18} height={18} style={{ color: "#6d28d9" }} />
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -4,
+                    width: 9,
+                    height: 9,
+                    borderRadius: "50%",
+                    background: "#ef4444",
+                    border: "2px solid #ffffff",
+                  }}
+                />
+              </div>
+              <span className="hidden sm:inline">Kotak Masuk</span>
+            </button>
           </div>
+
+          {/* Inbox Modal */}
+          {showInbox && (
+            <InboxNotificationModal
+              userEmail={userEmail}
+              onClose={() => setShowInbox(false)}
+            />
+          )}
 
           {/* BOARD GRID OR EMPTY STATE (ONLY ON DASHBOARD VIEW) */}
           {activeView === "dashboard" && (
