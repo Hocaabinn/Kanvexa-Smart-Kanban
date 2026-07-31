@@ -11,20 +11,23 @@ export default async function DashboardPage() {
     .select("id, name, created_at, owner_email")
     .order("created_at", { ascending: false });
 
-  let initialInvitations = [];
-  try {
-    if (user && user.email) {
-      const { data: invitations } = await supabase
-        .from("board_invitations")
-        .select("*")
-        .eq("invited_email", user.email)
-        .eq("status", "pending");
-      if (invitations) {
-        initialInvitations = invitations;
-      }
+  // Fetch pending invitations for the currently logged-in user
+  let initialInvitations: any[] = [];
+  if (user && user.email) {
+    const userEmailLower = user.email.toLowerCase();
+    const { data: invitations, error: invErr } = await supabase
+      .from("board_invitations")
+      .select("*")
+      .eq("status", "pending");
+
+    if (invErr) {
+      console.error("Error fetching board_invitations:", invErr.message);
+    } else if (invitations) {
+      // Filter client-side by email (case-insensitive) since RLS is uid-based
+      initialInvitations = invitations.filter(
+        inv => inv.invited_email.toLowerCase() === userEmailLower
+      );
     }
-  } catch (err) {
-    console.error("Gagal memuat undangan, mungkin tabel board_invitations belum dibuat:", err);
   }
 
   return (

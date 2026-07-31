@@ -39,8 +39,8 @@ export default function ShareBoardModal({ boardId, userEmail, onClose }: Props) 
       setInviteSuccess(`Undangan berhasil dikirim ke ${inviteEmail.trim()} sebagai ${inviteRole}!`);
       setInviteEmail("");
     } catch (err: any) {
-      setInviteSuccess(`Undangan berhasil dikirim ke ${inviteEmail.trim()} sebagai ${inviteRole}!`);
-      setInviteEmail("");
+      console.error("Invite error:", err);
+      setInviteError(`Gagal mengirim undangan: ${err.message || "Terjadi kesalahan."}`);
     } finally {
       setInviting(false);
     }

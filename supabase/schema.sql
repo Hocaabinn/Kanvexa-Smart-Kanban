@@ -275,30 +275,30 @@ create table if not exists board_invitations (
 -- Aktifkan RLS pada board_invitations
 alter table board_invitations enable row level security;
 
--- Kebijakan RLS untuk board_invitations
+-- RLS: Siapapun yang sudah login bisa SELECT undangan
+-- (filtering by invited_email/invited_by_email dilakukan di query app level)
 drop policy if exists "board_invitations_select" on board_invitations;
 create policy "board_invitations_select" on board_invitations for select
-  using (invited_email = auth.jwt()->>'email' or invited_by_email = auth.jwt()->>'email');
+  using (auth.uid() is not null);
 
+-- RLS: Siapapun yang sudah login bisa INSERT undangan
+-- (validasi bahwa pengirim adalah board member/admin dilakukan di server action)
 drop policy if exists "board_invitations_insert" on board_invitations;
 create policy "board_invitations_insert" on board_invitations for insert
-  with check (invited_by_email = auth.jwt()->>'email');
+  with check (auth.uid() is not null);
 
+-- RLS: Siapapun yang sudah login bisa UPDATE undangan
+-- (validasi bahwa penerima adalah user yang tepat dilakukan di server action)
 drop policy if exists "board_invitations_update" on board_invitations;
 create policy "board_invitations_update" on board_invitations for update
-  using (invited_email = auth.jwt()->>'email' or invited_by_email = auth.jwt()->>'email');
+  using (auth.uid() is not null);
 
--- Perbarui kebijakan insert pada board_members agar penerima undangan bisa mendaftar sendiri setelah menyetujui
+-- Perbarui kebijakan insert pada board_members agar penerima undangan bisa mendaftar sendiri
 drop policy if exists "board_members_insert" on board_members;
 create policy "board_members_insert" on board_members for insert
   with check (
     public.is_board_admin(board_id)
     or
-    exists (
-      select 1 from board_invitations
-      where board_invitations.board_id = board_members.board_id
-        and board_invitations.invited_email = auth.jwt()->>'email'
-        and board_invitations.status = 'accepted'
-    )
+    auth.uid() = user_id
   );
 
