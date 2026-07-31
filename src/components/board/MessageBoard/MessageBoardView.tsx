@@ -50,9 +50,18 @@ export default function MessageBoardView({
   // Calculate Top Contributors
   const contributorMap: Record<string, { email: string; postCount: number; commentCount: number }> = {};
 
-  // Always ensure both members are in the list for everyone
-  const defaultEmails = ["bintangwcproger@gmail.com", "binnkoseiji@gmail.com"];
-  defaultEmails.forEach(email => {
+  // Seed all known members into the map so they always appear
+  const knownEmails = new Set<string>();
+  // The currently-logged-in user
+  if (userEmail) knownEmails.add(userEmail.toLowerCase().trim());
+  // Hardcoded collaborators for this board (both board participants)
+  knownEmails.add("bintangwcproger@gmail.com");
+  knownEmails.add("binnkoseiji@gmail.com");
+  // Also pull unique authors from posts and comments
+  posts.forEach(p => { if (p.author_email) knownEmails.add(p.author_email.toLowerCase().trim()); });
+  comments.forEach(c => { if (c.author_email) knownEmails.add(c.author_email.toLowerCase().trim()); });
+
+  knownEmails.forEach(email => {
     contributorMap[email] = { email, postCount: 0, commentCount: 0 };
   });
 
