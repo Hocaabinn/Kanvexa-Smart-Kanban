@@ -38,16 +38,26 @@ interface InboxProps {
 export function InboxNotificationModal({ userEmail, boards = [], onClose }: InboxProps) {
   const router = useRouter();
 
+  // Find OSIS / Rapat / Organisasi board or fallback to matching board
+  const inviteBoard = boards.find(b => 
+    b.name.toLowerCase().includes("rapat") || 
+    b.name.toLowerCase().includes("osis") || 
+    b.name.toLowerCase().includes("organisasi")
+  ) || boards.find(b => b.name.toLowerCase().includes("skripsi") || b.name.toLowerCase().includes("seminar")) || boards[0];
+
+  const inviteBoardName = inviteBoard?.name || "Manajemen Rapat Organisasi / OSIS";
+  const inviteBoardId = inviteBoard?.id || "";
+
   // Initial mock notifications tailored to user context
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
       id: "1",
       type: "invite",
       title: "Undangan Kolaborasi Tim",
-      message: "mengundang Anda sebagai Editor ke papan proyek ini.",
+      message: `mengundang Anda sebagai Editor ke papan "${inviteBoardName}".`,
       sender: "bintangwcproger@gmail.com",
-      boardName: boards[0]?.name || "Peluncuran Produk / App",
-      boardId: boards[0]?.id || "",
+      boardName: inviteBoardName,
+      boardId: inviteBoardId,
       role: "Editor",
       timestamp: "10 menit yang lalu",
       isRead: false,
