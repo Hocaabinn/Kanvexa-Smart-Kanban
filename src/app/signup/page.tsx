@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
 
@@ -79,22 +79,20 @@ export default function SignupPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-900">
         <div className="w-full max-w-[440px] text-center rounded-2xl bg-white p-8 shadow-xl border border-violet-100">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 text-3xl shadow-inner">
-            ✉️
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shadow-inner">
+            <CheckCircle2 className="h-9 w-9" />
           </div>
           <h1 className="mb-3 text-2xl font-bold tracking-tight text-slate-900">
-            Cek email kamu
+            Akun Berhasil Dibuat!
           </h1>
           <p className="mb-6 text-sm text-slate-600 leading-relaxed">
-            Link konfirmasi sudah dikirim ke{" "}
-            <strong className="text-violet-600">{email}</strong>.
-            Klik link tersebut untuk mengaktifkan akun Anda.
+            Selamat, akun Anda dengan email <strong className="text-violet-600">{email}</strong> telah berhasil didaftarkan. Silakan masuk untuk mulai menggunakan Kanvexa.
           </p>
           <Link
             href="/login"
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-violet-600 hover:text-violet-700 hover:underline"
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-lg shadow-violet-500/25 transition-all hover:bg-violet-700 active:scale-[0.99]"
           >
-            Kembali ke halaman masuk →
+            Masuk Sekarang
           </Link>
         </div>
       </div>
