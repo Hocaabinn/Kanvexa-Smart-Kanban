@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut, deleteBoard, renameBoard } from "./actions";
@@ -187,13 +187,15 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   };
 
   // Sort boards: Pinned first, then by created_at (which is the initial order)
-  const sortedBoards = [...initialBoards].sort((a, b) => {
-    const aPinned = pinnedBoardIds.includes(a.id);
-    const bPinned = pinnedBoardIds.includes(b.id);
-    if (aPinned && !bPinned) return -1;
-    if (!aPinned && bPinned) return 1;
-    return 0;
-  });
+  const sortedBoards = useMemo(() => {
+    return [...initialBoards].sort((a, b) => {
+      const aPinned = pinnedBoardIds.includes(a.id);
+      const bPinned = pinnedBoardIds.includes(b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
+  }, [initialBoards, pinnedBoardIds]);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
@@ -398,9 +400,9 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                         isStarred={isStarred}
                         showOpenButton={true}
                         projects={[
-                          { id: `${board.id}-1`, image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop", title: "Kanban Board" },
-                          { id: `${board.id}-2`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=600&auto=format&fit=crop", title: "Docs & Files" },
-                          { id: `${board.id}-3`, image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop", title: "Calendar View" },
+                          { id: `${board.id}-1`, image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=60&w=150&auto=format&fit=crop", title: "Kanban Board" },
+                          { id: `${board.id}-2`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=60&w=150&auto=format&fit=crop", title: "Docs & Files" },
+                          { id: `${board.id}-3`, image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=60&w=150&auto=format&fit=crop", title: "Calendar View" },
                         ]}
                       />
                     </Link>

@@ -181,24 +181,24 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
 
     const defaultProjectsMap: Record<string, any[]> = {
       "f-1-1": [
-        { id: "ob-1", image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop", title: "Onboarding Guide" },
-        { id: "ob-2", image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=80&w=600&auto=format&fit=crop", title: "Welcome Deck" },
-        { id: "ob-3", image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=600&auto=format&fit=crop", title: "Design System" },
+        { id: "ob-1", image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=60&w=150&auto=format&fit=crop", title: "Onboarding Guide" },
+        { id: "ob-2", image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=60&w=150&auto=format&fit=crop", title: "Welcome Deck" },
+        { id: "ob-3", image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=60&w=150&auto=format&fit=crop", title: "Design System" },
       ],
       "f-1-2": [
-        { id: "it-1", image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=600&auto=format&fit=crop", title: "API Docs" },
-        { id: "it-2", image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop", title: "Webhook Specs" },
-        { id: "it-3", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop", title: "Auth Protocol" },
+        { id: "it-1", image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=60&w=150&auto=format&fit=crop", title: "API Docs" },
+        { id: "it-2", image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=60&w=150&auto=format&fit=crop", title: "Webhook Specs" },
+        { id: "it-3", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=60&w=150&auto=format&fit=crop", title: "Auth Protocol" },
       ],
       "f-1-3": [
-        { id: "ts-1", image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600&auto=format&fit=crop", title: "Architecture" },
-        { id: "ts-2", image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop", title: "Database Schema" },
-        { id: "ts-3", image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?q=80&w=600&auto=format&fit=crop", title: "Vercel Setup" },
+        { id: "ts-1", image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=60&w=150&auto=format&fit=crop", title: "Architecture" },
+        { id: "ts-2", image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=60&w=150&auto=format&fit=crop", title: "Database Schema" },
+        { id: "ts-3", image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?q=60&w=150&auto=format&fit=crop", title: "Vercel Setup" },
       ],
       "f-2": [
-        { id: "ti-1", image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop", title: "User Research" },
-        { id: "ti-2", image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop", title: "Interview Notes" },
-        { id: "ti-3", image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop", title: "Persona Specs" },
+        { id: "ti-1", image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=60&w=150&auto=format&fit=crop", title: "User Research" },
+        { id: "ti-2", image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=60&w=150&auto=format&fit=crop", title: "Interview Notes" },
+        { id: "ti-3", image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=60&w=150&auto=format&fit=crop", title: "Persona Specs" },
       ],
     };
 
@@ -213,9 +213,9 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
             name: item.name,
             files: `${count} Files`,
             projects: defaultProjectsMap[item.id] || [
-              { id: `${item.id}-1`, image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 1` },
-              { id: `${item.id}-2`, image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 2` },
-              { id: `${item.id}-3`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 3` },
+              { id: `${item.id}-1`, image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=60&w=150&auto=format&fit=crop", title: `${item.name} Doc 1` },
+              { id: `${item.id}-2`, image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=60&w=150&auto=format&fit=crop", title: `${item.name} Doc 2` },
+              { id: `${item.id}-3`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=60&w=150&auto=format&fit=crop", title: `${item.name} Doc 3` },
             ],
           });
         }
@@ -232,9 +232,9 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
           name: item.name,
           files: `${count} Files`,
           projects: defaultProjectsMap[item.id] || [
-            { id: `${item.id}-1`, image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 1` },
-            { id: `${item.id}-2`, image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 2` },
-            { id: `${item.id}-3`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=600&auto=format&fit=crop", title: `${item.name} Doc 3` },
+            { id: `${item.id}-1`, image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=60&w=150&auto=format&fit=crop", title: `${item.name} Doc 1` },
+            { id: `${item.id}-2`, image: "https://images.unsplash.com/photo-1542744094-3a317272018a?q=60&w=150&auto=format&fit=crop", title: `${item.name} Doc 2` },
+            { id: `${item.id}-3`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=60&w=150&auto=format&fit=crop", title: `${item.name} Doc 3` },
           ],
         });
       }

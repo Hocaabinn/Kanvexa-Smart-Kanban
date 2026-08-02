@@ -22,6 +22,10 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
   // File upload state
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [xhrRef, setXhrRef] = useState<XMLHttpRequest | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,40 +41,79 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
 
     setFileError(null);
     setFile(selectedFile);
+    setUploading(true);
+    setUploadProgress(0);
+
+    const xhr = new XMLHttpRequest();
+    setXhrRef(xhr);
+
+    xhr.open("POST", "/API/upload");
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percent);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          setUploadedUrl(data.url);
+          setUploading(false);
+        } catch (err) {
+          setFileError("Respon server tidak valid.");
+          setUploading(false);
+          setFile(null);
+        }
+      } else {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          setFileError(data.error || "Gagal mengunggah berkas.");
+        } catch (err) {
+          setFileError("Gagal mengunggah berkas.");
+        }
+        setUploading(false);
+        setFile(null);
+      }
+    };
+
+    xhr.onerror = () => {
+      setFileError("Koneksi jaringan bermasalah.");
+      setUploading(false);
+      setFile(null);
+    };
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    formData.append("boardId", boardId);
+
+    xhr.send(formData);
+  };
+
+  const handleCancelFile = () => {
+    if (xhrRef) {
+      xhrRef.abort();
+      setXhrRef(null);
+    }
+    setFile(null);
+    setUploading(false);
+    setUploadProgress(0);
+    setUploadedUrl(null);
+    setFileError(null);
   };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !content.trim() || fileError) return;
+    if (!title.trim() || !content.trim() || fileError || uploading) return;
 
     setSubmitting(true);
-    let fileUrl: string | null = null;
-    let fileName: string | null = null;
-    let fileSize: number | null = null;
+    let fileUrl: string | null = uploadedUrl;
+    let fileName: string | null = file ? file.name : null;
+    let fileSize: number | null = file ? file.size : null;
 
     try {
-      if (file) {
-        fileName = file.name;
-        fileSize = file.size;
-
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("boardId", boardId);
-
-        const uploadRes = await fetch("/API/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          const errJson = await uploadRes.json();
-          throw new Error(errJson?.error || "Gagal mengunggah berkas.");
-        }
-
-        const uploadData = await uploadRes.json();
-        fileUrl = uploadData.url;
-      }
-
       await createPost(
         boardId,
         title.trim(),
@@ -252,28 +295,48 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
 
             {file ? (
               <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "10px 14px", borderRadius: 10, background: "#f8fafc",
+                display: "flex", flexDirection: "column", gap: 8,
+                padding: "12px 14px", borderRadius: 10, background: "#f8fafc",
                 border: "1px solid #cbd5e1", fontSize: 13,
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
-                  <FileText width={18} height={18} style={{ color: "#6d28d9", flexShrink: 0 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: "#0f172a", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                      {file.name}
-                    </div>
-                    <div style={{ fontSize: 11, color: "#64748b" }}>
-                      {formatFileSize(file.size)}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
+                    <FileText width={18} height={18} style={{ color: "#6d28d9", flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: "#0f172a", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                        {file.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#64748b" }}>
+                        {formatFileSize(file.size)} {uploading && `• Mengunggah...`} {!uploading && uploadedUrl && `• Selesai`}
+                      </div>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleCancelFile}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}
+                  >
+                    <X width={16} height={16} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setFile(null)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}
-                >
-                  <X width={16} height={16} />
-                </button>
+
+                {uploading && (
+                  <div style={{ width: "100%", marginTop: 4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 4, fontWeight: 500 }}>
+                      <span>Progress Mengunggah</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div style={{ width: "100%", height: 6, background: "#e2e8f0", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{
+                        width: `${uploadProgress}%`,
+                        height: "100%",
+                        background: "linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%)",
+                        borderRadius: 3,
+                        transition: "width 0.15s ease-out-in"
+                      }} />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <label style={{
@@ -287,7 +350,7 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
                 <input
                   type="file"
                   onChange={handleFileChange}
-                  disabled={submitting}
+                  disabled={submitting || uploading}
                   style={{ display: "none" }}
                 />
               </label>
@@ -308,7 +371,7 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
               id="isPinnedCheck"
               checked={isPinned}
               onChange={(e) => setIsPinned(e.target.checked)}
-              disabled={submitting}
+              disabled={submitting || uploading}
               style={{ cursor: "pointer" }}
             />
             <label
@@ -325,7 +388,7 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              disabled={submitting}
+              disabled={submitting || uploading}
               style={{
                 padding: "8px 16px",
                 borderRadius: 8,
@@ -341,7 +404,7 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
             </button>
             <button
               type="submit"
-              disabled={submitting || !title.trim() || !content.trim() || !!fileError}
+              disabled={submitting || uploading || !title.trim() || !content.trim() || !!fileError}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -353,8 +416,8 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
                 background: "var(--v)",
                 color: "#fff",
                 border: "none",
-                cursor: submitting || !!fileError ? "not-allowed" : "pointer",
-                opacity: submitting || !title.trim() || !content.trim() || !!fileError ? 0.6 : 1,
+                cursor: submitting || uploading || !!fileError ? "not-allowed" : "pointer",
+                opacity: submitting || uploading || !title.trim() || !content.trim() || !!fileError ? 0.6 : 1,
               }}
             >
               <Send width={14} height={14} />

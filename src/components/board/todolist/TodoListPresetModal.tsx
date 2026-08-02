@@ -106,6 +106,10 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
     // File upload state (Message Board & Docs preset)
     const [msgFile, setMsgFile] = useState<File | null>(null);
     const [msgFileError, setMsgFileError] = useState<string | null>(null);
+    const [msgUploading, setMsgUploading] = useState(false);
+    const [msgUploadProgress, setMsgUploadProgress] = useState<number>(0);
+    const [msgUploadedUrl, setMsgUploadedUrl] = useState<string | null>(null);
+    const [msgXhrRef, setMsgXhrRef] = useState<XMLHttpRequest | null>(null);
 
     const [saving, setSaving] = useState(false);
 
@@ -121,6 +125,67 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
 
         setMsgFileError(null);
         setMsgFile(selectedFile);
+        setMsgUploading(true);
+        setMsgUploadProgress(0);
+
+        const xhr = new XMLHttpRequest();
+        setMsgXhrRef(xhr);
+
+        xhr.open("POST", "/API/upload");
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                setMsgUploadProgress(percent);
+            }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    setMsgUploadedUrl(data.url);
+                    setMsgUploading(false);
+                } catch (err) {
+                    setMsgFileError("Respon server tidak valid.");
+                    setMsgUploading(false);
+                    setMsgFile(null);
+                }
+            } else {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    setMsgFileError(data.error || "Gagal mengunggah berkas.");
+                } catch (err) {
+                    setMsgFileError("Gagal mengunggah berkas.");
+                }
+                setMsgUploading(false);
+                setMsgFile(null);
+            }
+        };
+
+        xhr.onerror = () => {
+            setMsgFileError("Koneksi jaringan bermasalah.");
+            setMsgUploading(false);
+            setMsgFile(null);
+        };
+
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("boardId", boardId);
+
+        xhr.send(formData);
+    };
+
+    const handleCancelMsgFile = () => {
+        if (msgXhrRef) {
+            msgXhrRef.abort();
+            setMsgXhrRef(null);
+        }
+        setMsgFile(null);
+        setMsgUploading(false);
+        setMsgUploadProgress(0);
+        setMsgUploadedUrl(null);
+        setMsgFileError(null);
     };
 
     const registeredUsers = Array.from(new Set([
@@ -133,36 +198,14 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (msgFileError) return;
+        if (msgFileError || msgUploading) return;
         setSaving(true);
 
         try {
             if (isMessageBoard) {
-                let fileUrl: string | null = null;
-                let fileName: string | null = null;
-                let fileSize: number | null = null;
-
-                if (msgFile) {
-                    fileName = msgFile.name;
-                    fileSize = msgFile.size;
-
-                    const formData = new FormData();
-                    formData.append("file", msgFile);
-                    formData.append("boardId", boardId);
-
-                    const uploadRes = await fetch("/API/upload", {
-                        method: "POST",
-                        body: formData,
-                    });
-
-                    if (!uploadRes.ok) {
-                        const errJson = await uploadRes.json();
-                        throw new Error(errJson?.error || "Gagal mengunggah berkas.");
-                    }
-
-                    const uploadData = await uploadRes.json();
-                    fileUrl = uploadData.url;
-                }
+                let fileUrl: string | null = msgUploadedUrl;
+                let fileName: string | null = msgFile ? msgFile.name : null;
+                let fileSize: number | null = msgFile ? msgFile.size : null;
 
                 await createPost(
                     boardId,
@@ -365,28 +408,48 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
 
                                     {msgFile ? (
                                         <div style={{
-                                            display: "flex", alignItems: "center", justifyContent: "space-between",
-                                            padding: "10px 14px", borderRadius: 10, background: "#f8fafc",
+                                            display: "flex", flexDirection: "column", gap: 8,
+                                            padding: "12px 14px", borderRadius: 10, background: "#f8fafc",
                                             border: "1px solid #cbd5e1", fontSize: 13,
                                         }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
-                                                <FileText width={18} height={18} style={{ color: "#6d28d9", flexShrink: 0 }} />
-                                                <div style={{ minWidth: 0 }}>
-                                                    <div style={{ fontWeight: 600, color: "#0f172a", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                                                        {msgFile.name}
-                                                    </div>
-                                                    <div style={{ fontSize: 11, color: "#64748b" }}>
-                                                        {formatFileSize(msgFile.size)}
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
+                                                    <FileText width={18} height={18} style={{ color: "#6d28d9", flexShrink: 0 }} />
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div style={{ fontWeight: 600, color: "#0f172a", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                                                            {msgFile.name}
+                                                        </div>
+                                                        <div style={{ fontSize: 11, color: "#64748b" }}>
+                                                            {formatFileSize(msgFile.size)} {msgUploading && `• Mengunggah...`} {!msgUploading && msgUploadedUrl && `• Selesai`}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCancelMsgFile}
+                                                    style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}
+                                                >
+                                                    <X width={16} height={16} />
+                                                </button>
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setMsgFile(null)}
-                                                style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}
-                                            >
-                                                <X width={16} height={16} />
-                                            </button>
+
+                                            {msgUploading && (
+                                                <div style={{ width: "100%", marginTop: 4 }}>
+                                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 4, fontWeight: 500 }}>
+                                                        <span>Progress Mengunggah</span>
+                                                        <span>{msgUploadProgress}%</span>
+                                                    </div>
+                                                    <div style={{ width: "100%", height: 6, background: "#e2e8f0", borderRadius: 3, overflow: "hidden" }}>
+                                                        <div style={{
+                                                            width: `${msgUploadProgress}%`,
+                                                            height: "100%",
+                                                            background: "linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%)",
+                                                            borderRadius: 3,
+                                                            transition: "width 0.15s ease-out-in"
+                                                        }} />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <label style={{
@@ -400,7 +463,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                             <input
                                                 type="file"
                                                 onChange={handleMsgFileChange}
-                                                disabled={saving}
+                                                disabled={saving || msgUploading}
                                                 style={{ display: "none" }}
                                             />
                                         </label>
@@ -509,28 +572,48 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
 
                                     {msgFile ? (
                                         <div style={{
-                                            display: "flex", alignItems: "center", justifyContent: "space-between",
-                                            padding: "10px 14px", borderRadius: 10, background: "#f8fafc",
+                                            display: "flex", flexDirection: "column", gap: 8,
+                                            padding: "12px 14px", borderRadius: 10, background: "#f8fafc",
                                             border: "1px solid #cbd5e1", fontSize: 13,
                                         }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
-                                                <FileText width={18} height={18} style={{ color: "#6d28d9", flexShrink: 0 }} />
-                                                <div style={{ minWidth: 0 }}>
-                                                    <div style={{ fontWeight: 600, color: "#0f172a", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                                                        {msgFile.name}
-                                                    </div>
-                                                    <div style={{ fontSize: 11, color: "#64748b" }}>
-                                                        {formatFileSize(msgFile.size)}
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
+                                                    <FileText width={18} height={18} style={{ color: "#6d28d9", flexShrink: 0 }} />
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div style={{ fontWeight: 600, color: "#0f172a", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                                                            {msgFile.name}
+                                                        </div>
+                                                        <div style={{ fontSize: 11, color: "#64748b" }}>
+                                                            {formatFileSize(msgFile.size)} {msgUploading && `• Mengunggah...`} {!msgUploading && msgUploadedUrl && `• Selesai`}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCancelMsgFile}
+                                                    style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}
+                                                >
+                                                    <X width={16} height={16} />
+                                                </button>
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setMsgFile(null)}
-                                                style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}
-                                            >
-                                                <X width={16} height={16} />
-                                            </button>
+
+                                            {msgUploading && (
+                                                <div style={{ width: "100%", marginTop: 4 }}>
+                                                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 4, fontWeight: 500 }}>
+                                                        <span>Progress Mengunggah</span>
+                                                        <span>{msgUploadProgress}%</span>
+                                                    </div>
+                                                    <div style={{ width: "100%", height: 6, background: "#e2e8f0", borderRadius: 3, overflow: "hidden" }}>
+                                                        <div style={{
+                                                            width: `${msgUploadProgress}%`,
+                                                            height: "100%",
+                                                            background: "linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%)",
+                                                            borderRadius: 3,
+                                                            transition: "width 0.15s ease-out-in"
+                                                        }} />
+                                                     </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <label style={{
@@ -544,7 +627,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                                             <input
                                                 type="file"
                                                 onChange={handleMsgFileChange}
-                                                disabled={saving}
+                                                disabled={saving || msgUploading}
                                                 style={{ display: "none" }}
                                             />
                                         </label>
@@ -709,27 +792,28 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
                         <button
                             type="button"
                             onClick={onClose}
-                            disabled={saving}
+                            disabled={saving || msgUploading}
                             style={{
                                 padding: "10px 18px", borderRadius: 10, fontSize: 13, fontWeight: 600,
                                 background: "none", border: "1px solid #cbd5e1",
-                                color: "#475569", cursor: "pointer"
+                                color: "#475569", cursor: (saving || msgUploading) ? "not-allowed" : "pointer"
                             }}
                         >
                             Batalkan
                         </button>
                         <button
                             type="submit"
-                            disabled={saving}
+                            disabled={saving || msgUploading}
                             style={{
                                 padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700,
                                 background: theme.main, color: "#fff", border: "none",
-                                cursor: saving ? "not-allowed" : "pointer",
+                                cursor: (saving || msgUploading) ? "not-allowed" : "pointer",
+                                opacity: (saving || msgUploading) ? 0.6 : 1,
                                 boxShadow: `0 4px 14px ${theme.shadow}`,
                                 display: "flex", alignItems: "center", gap: 6,
                             }}
                         >
-                            {saving ? "Membuat..." : isDocsFiles ? "Buat Dokumen Ini" : isCalendar ? "Buat Jadwal Kalender" : isMessageBoard ? "Buat Postingan" : "Buat Papan Ini"}
+                            {saving ? "Membuat..." : msgUploading ? "Mengunggah..." : isDocsFiles ? "Buat Dokumen Ini" : isCalendar ? "Buat Jadwal Kalender" : isMessageBoard ? "Buat Postingan" : "Buat Papan Ini"}
                         </button>
                     </div>
                 </form>

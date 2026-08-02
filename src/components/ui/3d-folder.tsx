@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, forwardRef } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, forwardRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { X, ExternalLink, ChevronLeft, ChevronRight, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,19 +37,21 @@ export function AnimatedFolder({
   const [sourceRect, setSourceRect] = useState<DOMRect | null>(null);
   const [hiddenCardId, setHiddenCardId] = useState<string | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [currentProjects, setCurrentProjects] = useState<Project[]>(projects);
+  const [customImages, setCustomImages] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const updated = projects.map((p) => {
+  const projectsKey = projects.map((p) => p.id).join(",");
+  const currentProjects = useMemo(() => {
+    return projects.map((p) => {
+      const customImg = customImages[p.id];
+      if (customImg) return { ...p, image: customImg };
+
+      if (typeof window !== "undefined") {
         const saved = localStorage.getItem(`kanvexa_img_${p.id}`);
-        return saved ? { ...p, image: saved } : p;
-      });
-      setCurrentProjects(updated);
-    } else {
-      setCurrentProjects(projects);
-    }
-  }, [projects]);
+        if (saved) return { ...p, image: saved };
+      }
+      return p;
+    });
+  }, [projectsKey, customImages]);
 
   const handleUpdateProjectImage = (projectId: string, newImage: string) => {
     if (typeof window !== "undefined") {
@@ -59,9 +61,10 @@ export function AnimatedFolder({
         console.warn("localStorage quota exceeded", err);
       }
     }
-    setCurrentProjects((prev) =>
-      prev.map((p) => (p.id === projectId ? { ...p, image: newImage } : p))
-    );
+    setCustomImages((prev) => ({
+      ...prev,
+      [projectId]: newImage,
+    }));
   };
 
   const handleProjectClick = (project: Project, index: number) => {
