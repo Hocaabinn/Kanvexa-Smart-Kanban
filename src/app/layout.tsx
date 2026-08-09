@@ -52,8 +52,8 @@ const scriptCode = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen">
+    <html lang="id" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className="min-h-screen" suppressHydrationWarning>
         <Script
           id="suppress-extension-errors"
           strategy="beforeInteractive"
