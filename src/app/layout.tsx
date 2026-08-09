@@ -18,6 +18,24 @@ export const metadata: Metadata = {
 
 const scriptCode = `
   (function() {
+    // Suppress console errors and warnings about hydration mismatches caused by browser extensions
+    const originalError = console.error;
+    console.error = function(...args) {
+      const firstArg = args[0];
+      if (typeof firstArg === 'string') {
+        if (
+          firstArg.includes('hydration-mismatch') ||
+          firstArg.includes('Hydration failed') ||
+          firstArg.includes('did not match') ||
+          firstArg.includes('bis_skin_checked') ||
+          firstArg.includes('suppressHydrationWarning')
+        ) {
+          return;
+        }
+      }
+      originalError.apply(console, args);
+    };
+
     window.addEventListener('error', function(e) {
       if (
         (e.filename && e.filename.indexOf('chrome-extension://') !== -1) ||
