@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Send, Trash2, MessageSquare } from "lucide-react";
 import { BoardPostComment, formatTimeAgo, getAuthorInitials } from "./messageboard-utils";
 import { createComment, deleteComment } from "@/app/board/[id]/actions";
+import { showConfirm, showAlert } from "@/lib/swal";
 
 interface Props {
   boardId: string;
@@ -35,15 +36,25 @@ export default function PostCommentsThread({ boardId, postId, comments, canEdit,
   }
 
   async function handleDeleteComment(commentId: string) {
-    if (!confirm("Hapus komentar ini?")) return;
-    setDeletingId(commentId);
-    try {
-      await deleteComment(boardId, commentId);
-    } catch (err) {
-      console.error("Gagal menghapus komentar:", err);
-    } finally {
-      setDeletingId(null);
-    }
+    showConfirm(
+      "Hapus Komentar?",
+      "Hapus komentar ini?",
+      "Hapus",
+      "Batal"
+    ).then(async (result) => {
+      if (result.isConfirmed) {
+        setDeletingId(commentId);
+        try {
+          await deleteComment(boardId, commentId);
+          showAlert("Sukses", "Komentar berhasil dihapus.", "success");
+        } catch (err) {
+          console.error("Gagal menghapus komentar:", err);
+          showAlert("Gagal", "Gagal menghapus komentar.", "error");
+        } finally {
+          setDeletingId(null);
+        }
+      }
+    });
   }
 
   return (

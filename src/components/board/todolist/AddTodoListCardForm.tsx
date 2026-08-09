@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Calendar, Clock, User, FileText } from "lucide-react";
 import { createCard } from "@/app/board/[id]/actions";
+import { showAlert } from "@/lib/swal";
 
 interface Props {
     boardId: string;
@@ -49,7 +50,7 @@ export default function AddTodoListCardForm({ boardId, columnId, userEmail = "",
             await createCard(boardId, columnId, fullTitle);
             onDone();
         } catch (e: any) {
-            alert("Gagal menambah kartu: " + e.message);
+            showAlert("Gagal", "Gagal menambah kartu: " + e.message, "error");
         } finally {
             setSaving(false);
         }

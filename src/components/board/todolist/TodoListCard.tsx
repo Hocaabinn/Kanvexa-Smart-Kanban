@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Calendar, Clock, User, FileText } from "lucide-react";
 import { updateCardTitle, deleteCard } from "@/app/board/[id]/actions";
 import { parseCardTitle } from "./todo-utils";
+import { showConfirm, showAlert } from "@/lib/swal";
 
 interface Props {
   id: string;
@@ -97,8 +98,21 @@ export default function TodoListCard({
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!confirm("Hapus kartu ini?")) return;
-    await deleteCard(boardId, id);
+    showConfirm(
+      "Hapus Kartu?",
+      "Hapus kartu ini?",
+      "Hapus",
+      "Batal"
+    ).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteCard(boardId, id);
+          showAlert("Sukses", "Kartu berhasil dihapus.", "success");
+        } catch (err: any) {
+          showAlert("Gagal", err.message || "Gagal menghapus kartu", "error");
+        }
+      }
+    });
   }
 
   return (

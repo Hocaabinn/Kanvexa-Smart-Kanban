@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Sparkles, CheckSquare, Plus, ArrowRight, AlertCircle } from "lucide-react";
 import { BoardPost, BoardPostComment } from "./messageboard-utils";
 import { insertTasksFromDiscussion } from "@/app/board/[id]/actions";
+import { showAlert } from "@/lib/swal";
 
 interface Props {
   boardId: string;
@@ -130,7 +131,7 @@ export default function AIDiscussionToTasksModal({ boardId, posts, comments, col
       onDone();
     } catch (err) {
       console.error("Gagal menyimpan tugas ke board:", err);
-      alert("Gagal menambahkan tugas ke board.");
+      showAlert("Gagal", "Gagal menambahkan tugas ke board.", "error");
       setSubmitting(false);
     }
   }

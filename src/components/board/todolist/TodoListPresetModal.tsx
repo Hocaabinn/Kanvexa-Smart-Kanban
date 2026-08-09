@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Calendar, Clock, User, FileText, MessageSquare, Pin, Sparkles, Paperclip, Upload, X, AlertCircle, BookOpen, Layers } from "lucide-react";
 import { createColumnWithCard, createKanbanWorkflow, createPost } from "@/app/board/[id]/actions";
 import { PostCategory, getCategoryBadge, formatFileSize } from "../MessageBoard/messageboard-utils";
+import { showAlert } from "@/lib/swal";
 
 interface Props {
     boardId: string;
@@ -257,7 +258,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
             }
             onClose();
         } catch (err: any) {
-            alert("Gagal membuat preset: " + err.message);
+            showAlert("Gagal", "Gagal membuat preset: " + err.message, "error");
         } finally {
             setSaving(false);
         }

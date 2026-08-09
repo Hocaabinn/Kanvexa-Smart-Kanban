@@ -7,6 +7,7 @@ import { Share2 } from "lucide-react";
 import TodoListCard from "./TodoListCard";
 import AddTodoListCardForm from "./AddTodoListCardForm";
 import { deleteColumn } from "@/app/board/[id]/actions";
+import { showConfirm, showAlert } from "@/lib/swal";
 
 interface Card { id: string; title: string; position: number; }
 
@@ -70,8 +71,21 @@ export default function TodoListColumn({ id, boardId, userEmail = "", name, acce
     }, [cards]);
 
     async function handleDeleteColumn() {
-        if (!confirm(`Hapus "${name}" beserta semua kartunya?`)) return;
-        await deleteColumn(boardId, id);
+        showConfirm(
+            "Hapus Kolom?",
+            `Hapus "${name}" beserta semua kartunya?`,
+            "Hapus",
+            "Batal"
+        ).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await deleteColumn(boardId, id);
+                    showAlert("Sukses", "Kolom berhasil dihapus.", "success");
+                } catch (err: any) {
+                    showAlert("Gagal", err.message || "Gagal menghapus kolom", "error");
+                }
+            }
+        });
     }
 
     const sortedCards = [...cards].sort((a, b) => a.position - b.position);

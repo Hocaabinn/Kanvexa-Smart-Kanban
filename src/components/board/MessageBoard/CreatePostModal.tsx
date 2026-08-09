@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, Send, Pin, MessageSquare, Paperclip, FileText, Upload, AlertCircle } from "lucide-react";
 import { PostCategory, getCategoryBadge, formatFileSize } from "./messageboard-utils";
 import { createPost } from "@/app/board/[id]/actions";
+import { showAlert } from "@/lib/swal";
 
 interface Props {
   boardId: string;
@@ -126,8 +127,8 @@ export default function CreatePostModal({ boardId, onClose }: Props) {
       );
       onClose();
     } catch (err: any) {
-      console.error("Gagal membuat postingan:", err);
-      alert(err?.message || "Gagal membuat postingan baru.");
+      console.error(err);
+      showAlert("Gagal", err?.message || "Gagal membuat postingan baru.", "error");
     } finally {
       setSubmitting(false);
     }

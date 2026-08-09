@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Pin, Trash2, ChevronDown, ChevronUp, Paperclip, Download } from "lucide-react";
 import { BoardPost, BoardPostComment, getCategoryBadge, formatTimeAgo, getAuthorInitials, formatFileSize } from "./messageboard-utils";
 import { deletePost, togglePinPost } from "@/app/board/[id]/actions";
+import { showConfirm, showAlert } from "@/lib/swal";
 import PostCommentsThread from "./PostCommentsThread";
 
 interface Props {
@@ -29,15 +30,24 @@ export default function MessagePostCard({
   const isMyPost = post.author_email === userEmail;
 
   async function handleDelete() {
-    if (!confirm("Apakah Anda yakin ingin menghapus postingan ini?")) return;
-    setDeleting(true);
-    try {
-      await deletePost(boardId, post.id);
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menghapus postingan.");
-      setDeleting(false);
-    }
+    showConfirm(
+      "Hapus Postingan?",
+      "Apakah Anda yakin ingin menghapus postingan ini?",
+      "Hapus",
+      "Batal"
+    ).then(async (result) => {
+      if (result.isConfirmed) {
+        setDeleting(true);
+        try {
+          await deletePost(boardId, post.id);
+          showAlert("Sukses", "Postingan berhasil dihapus.", "success");
+        } catch (err) {
+          console.error(err);
+          showAlert("Gagal", "Gagal menghapus postingan.", "error");
+          setDeleting(false);
+        }
+      }
+    });
   }
 
   async function handleTogglePin() {

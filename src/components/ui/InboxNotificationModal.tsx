@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { acceptBoardInvitation, rejectBoardInvitation } from "@/app/dashboard/actions";
+import { showAlert } from "@/lib/swal";
 
 export interface NotificationItem {
   id: string;
@@ -236,7 +237,7 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
       await rejectBoardInvitation(id);
       setDbInvitations((prev) => prev.filter((inv) => inv.id !== id));
     } catch (err: any) {
-      alert("Gagal menolak undangan: " + err.message);
+      showAlert("Gagal", "Gagal menolak undangan: " + err.message, "error");
     }
   };
 
@@ -281,7 +282,7 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
       onClose();
       router.push(`/board/${boardId}`);
     } catch (err: any) {
-      alert("Gagal menerima undangan: " + err.message);
+      showAlert("Gagal", "Gagal menerima undangan: " + err.message, "error");
     } finally {
       setProcessingId(null);
     }

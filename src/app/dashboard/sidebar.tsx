@@ -21,8 +21,14 @@ import {
   Clock,
   Menu,
   X,
-  Inbox
+  Inbox,
+  Bell,
+  Mail,
+  User,
+  Sliders,
+  Sparkles
 } from "lucide-react";
+import { showAlert } from "@/lib/swal";
 import { KanvexaIcon, KanvexaLogo } from "@/components/ui/KanvexaLogo";
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 
@@ -902,7 +908,11 @@ export default function Sidebar({
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <button
             type="button"
-            onClick={() => alert(`Settings App Kanvexa\n\n• User Login: ${userEmail}\n• Status Akun: Aktif\n• Versi App: v1.0.0 Pro`)}
+            onClick={() => showAlert(
+              "Settings App Kanvexa",
+              `• User Login: ${userEmail}\n• Status Akun: Aktif\n• Versi App: v1.0.0 Pro`,
+              "info"
+            )}
             title="Settings / Pengaturan"
             style={{
               background: "none",

@@ -41,6 +41,7 @@ import {
 } from "./docsfiles-utils";
 import AIDocsAssistantModal from "./AIDocsAssistantModal";
 import { formatFileSize } from "../MessageBoard/messageboard-utils";
+import { showConfirm, showAlert } from "@/lib/swal";
 
 interface Props {
   boardId: string;
@@ -285,23 +286,31 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
   };
 
   const handleDeleteFolder = (id: string, folderName: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus folder "${folderName}" beserta seluruh isinya?`)) return;
+    showConfirm(
+      "Hapus Folder?",
+      `Apakah Anda yakin ingin menghapus folder "${folderName}" beserta seluruh isinya?`,
+      "Hapus",
+      "Batal"
+    ).then((result) => {
+      if (result.isConfirmed) {
+        const deleteRecursive = (items: DocFolderItem[]): DocFolderItem[] => {
+          return items
+            .filter((item) => item.id !== id)
+            .map((item) => {
+              if (item.subfolders && item.subfolders.length > 0) {
+                return { ...item, subfolders: deleteRecursive(item.subfolders) };
+              }
+              return item;
+            });
+        };
 
-    const deleteRecursive = (items: DocFolderItem[]): DocFolderItem[] => {
-      return items
-        .filter((item) => item.id !== id)
-        .map((item) => {
-          if (item.subfolders && item.subfolders.length > 0) {
-            return { ...item, subfolders: deleteRecursive(item.subfolders) };
-          }
-          return item;
-        });
-    };
-
-    setFolders(deleteRecursive(folders));
-    if (selectedFolderId === id) {
-      setSelectedFolderId("f-1");
-    }
+        setFolders(deleteRecursive(folders));
+        if (selectedFolderId === id) {
+          setSelectedFolderId("f-1");
+        }
+        showAlert("Sukses", "Folder berhasil dihapus.", "success");
+      }
+    });
   };
 
   const startNewDoc = () => {
@@ -353,13 +362,22 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
   };
 
   const deleteCurrentDoc = (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus dokumen ini?")) return;
-    const updated = docs.filter((d) => d.id !== id);
-    setDocs(updated);
-    if (selectedDocId === id) {
-      setSelectedDocId(null);
-      setShowDocDrawer(false);
-    }
+    showConfirm(
+      "Hapus Dokumen?",
+      "Apakah Anda yakin ingin menghapus dokumen ini?",
+      "Hapus",
+      "Batal"
+    ).then((result) => {
+      if (result.isConfirmed) {
+        const updated = docs.filter((d) => d.id !== id);
+        setDocs(updated);
+        if (selectedDocId === id) {
+          setSelectedDocId(null);
+          setShowDocDrawer(false);
+        }
+        showAlert("Sukses", "Dokumen berhasil dihapus.", "success");
+      }
+    });
   };
 
   const handleApplyAIResult = (aiData: AIDocResponse["data"]) => {
