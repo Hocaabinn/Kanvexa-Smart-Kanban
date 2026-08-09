@@ -32,7 +32,7 @@ import MessageBoardView from "./board/MessageBoard/MessageBoardView";
 import CalendarView from "./board/Calendar/CalendarView";
 import DocsFilesView from "./board/DocsFiles/DocsFilesView";
 import type { BoardPost, BoardPostComment } from "./board/MessageBoard/messageboard-utils";
-import { moveCard, createColumn, createColumnWithCard } from "@/app/board/[id]/actions";
+import { moveCard, createColumn, createColumnWithCard, insertAIBreakdown } from "@/app/board/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 
 interface Card { id: string; column_id: string; title: string; position: number; }
@@ -50,6 +50,13 @@ interface Props {
 }
 
 const COL_COLORS = ["#6D28D9", "#059669", "#D97706", "#DB2777", "#2563EB", "#DC2626", "#0891B2", "#7C3AED"];
+
+const AI_STEPS = [
+  { id: 1, label: "Query Rewrite", desc: "Menganalisis dan menyusun ulang perintah..." },
+  { id: 2, label: "Classify Agent", desc: "Mengklasifikasikan tugas dengan AI..." },
+  { id: 3, label: "Router & Mapper", desc: "Mencocokkan kolom & memetakan struktur Kanban..." },
+  { id: 4, label: "Database Sync", desc: "Sinkronisasi seluruh kartu tugas ke database..." },
+];
 
 function colColor(index: number, name?: string) {
   if (name) {
@@ -109,6 +116,8 @@ export default function BoardClient({
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [originalColId, setOriginalColId] = useState<string | null>(null);
   const [showAI, setShowAI] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
+  const [aiStep, setAiStep] = useState(0);
   const [addingCol, setAddingCol] = useState(false);
   const [colName, setColName] = useState("");
   const [savingCol, setSavingCol] = useState(false);
@@ -300,6 +309,50 @@ export default function BoardClient({
     setAddingCol(false);
   }
 
+  const handleAISubmit = async (prompt: string, clearExisting: boolean) => {
+    setShowAI(false);
+    setIsAILoading(true);
+    setAiStep(1);
+
+    const t2 = setTimeout(() => setAiStep(2), 1500);
+    const t3 = setTimeout(() => setAiStep(3), 3200);
+
+    try {
+      const res = await fetch("/API/ai-breakdown", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goal: prompt }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData?.error || "Gagal menghubungi AI.");
+      }
+
+      const data = await res.json();
+      if (!data.columns || !Array.isArray(data.columns)) {
+        throw new Error("Format hasil AI tidak valid.");
+      }
+
+      await insertAIBreakdown(boardId, data.columns, clearExisting);
+      setAiStep(4);
+
+      setTimeout(() => {
+        setIsAILoading(false);
+        setAiStep(0);
+        router.refresh();
+      }, 1000);
+    } catch (err: any) {
+      console.error(err);
+      setIsAILoading(false);
+      setAiStep(0);
+      alert(err?.message || "Gagal mengurai tugas.");
+    } finally {
+      clearTimeout(t2);
+      clearTimeout(t3);
+    }
+  };
+
   return (
     <>
       {/* Interactive moving blurred dotted-grid background */}
@@ -333,12 +386,75 @@ export default function BoardClient({
           filter: blur(0.6px);
           animation: moveGrid 50s linear infinite;
         }
+
+        .node-card-light {
+          position: absolute;
+          background: #ffffff;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 6px 10px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.02);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 2;
+        }
+
+        .node-card-light.active {
+          border-color: var(--v);
+          box-shadow: 0 0 12px rgba(109, 40, 217, 0.15);
+          transform: translateY(-1px);
+        }
+
+        .node-card-light.completed {
+          border-color: #10B981;
+          box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+
+        .node-icon-wrapper-light {
+          width: 22px;
+          height: 22px;
+          border-radius: 6px;
+          background: #f1f5f9;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          color: #64748b;
+          flex-shrink: 0;
+          transition: all 0.3s ease;
+        }
+
+        .node-icon-wrapper-light.completed {
+          background: #ecfdf5 !important;
+          color: #10B981 !important;
+          font-weight: bold;
+        }
+
+        .path-flow {
+          stroke-dasharray: 6 12;
+          animation: flow 1.2s linear infinite;
+        }
+
+        @keyframes flow {
+          from {
+            stroke-dashoffset: 18;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+
+        @keyframes pulseText {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
       `}</style>
       {showAI && (
         <AIBreakdownModal
-          boardId={boardId}
           onClose={() => setShowAI(false)}
-          onDone={() => { setShowAI(false); router.refresh(); }}
+          onSubmit={handleAISubmit}
         />
       )}
 
@@ -541,6 +657,183 @@ export default function BoardClient({
           userEmail={userEmail}
           canEdit={canEdit}
         />
+      ) : isAILoading ? (
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          width: "100%",
+          padding: "40px 20px",
+          minHeight: "450px",
+        }}>
+          {/* Visual Dotted Canvas Background (n8n Style - Light Theme) */}
+          <div className="workflow-canvas-light" style={{
+            height: 240,
+            width: "100%",
+            maxWidth: 580,
+            background: "#ffffff",
+            backgroundImage: "radial-gradient(rgba(148, 163, 184, 0.25) 1.5px, transparent 1.5px)",
+            backgroundSize: "16px 16px",
+            position: "relative",
+            borderRadius: 16,
+            border: "1px solid var(--border-strong)",
+            overflow: "hidden",
+            marginBottom: 20,
+            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)",
+          }}>
+            {/* SVG Connecting Paths */}
+            <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1 }}>
+              <defs>
+                <linearGradient id="activeGradLight" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.85" />
+                  <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.85" />
+                </linearGradient>
+                <filter id="glowLight" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              {/* Path 1: Query Rewrite -> Classify */}
+              <path d="M 140 120 L 175 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+              {aiStep === 1 && (
+                <path d="M 140 120 L 175 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+              )}
+              {aiStep > 1 && (
+                <path d="M 140 120 L 175 120" stroke="#10B981" strokeWidth="2" fill="none" />
+              )}
+
+              {/* Path 2: Classify -> Router */}
+              <path d="M 260 120 L 290 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+              {aiStep === 2 && (
+                <path d="M 260 120 L 290 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+              )}
+              {aiStep > 2 && (
+                <path d="M 260 120 L 290 120" stroke="#10B981" strokeWidth="2" fill="none" />
+              )}
+
+              {/* Path 3, 4, 5: Router Branches -> AI Breakdown */}
+              {/* Branch Q&A */}
+              <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+              {aiStep === 3 && (
+                <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+              )}
+              {aiStep > 3 && (
+                <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
+              )}
+
+              {/* Branch Fact Finding */}
+              <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+              {aiStep === 3 && (
+                <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+              )}
+              {aiStep > 3 && (
+                <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
+              )}
+
+              {/* Branch Else */}
+              <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+              {aiStep === 3 && (
+                <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+              )}
+              {aiStep > 3 && (
+                <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
+              )}
+            </svg>
+
+            {/* Node Cards */}
+            {/* 1. Query Rewrite Node */}
+            <div 
+              className={`node-card-light ${aiStep === 1 ? "active" : ""} ${aiStep > 1 ? "completed" : ""}`}
+              style={{ left: 20, top: 98, width: 120, height: 44 }}
+            >
+              <div className={`node-icon-wrapper-light ${aiStep > 1 ? "completed" : ""}`} style={{ color: "#7c3aed", background: "rgba(124, 58, 237, 0.1)" }}>
+                {aiStep > 1 ? "✓" : "🔍"}
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Query rewrite</div>
+                <div style={{ fontSize: 8, color: "var(--text-3)" }}>Agent</div>
+              </div>
+            </div>
+
+            {/* 2. Classify Node */}
+            <div 
+              className={`node-card-light ${aiStep === 2 ? "active" : ""} ${aiStep > 2 ? "completed" : ""}`}
+              style={{ left: 175, top: 98, width: 85, height: 44 }}
+            >
+              <div className={`node-icon-wrapper-light ${aiStep > 2 ? "completed" : ""}`} style={{ color: "#2563eb", background: "rgba(37, 99, 235, 0.1)" }}>
+                {aiStep > 2 ? "✓" : "{ }"}
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Classify</div>
+                <div style={{ fontSize: 8, color: "var(--text-3)" }}>Agent</div>
+              </div>
+            </div>
+
+            {/* 3. Router Node */}
+            <div 
+              className={`node-card-light ${aiStep === 3 ? "active" : ""} ${aiStep > 3 ? "completed" : ""}`}
+              style={{ left: 290, top: 55, width: 100, height: 130, flexDirection: "column", alignItems: "stretch", padding: 0, gap: 0, overflow: "hidden" }}
+            >
+              <div style={{ 
+                background: aiStep > 3 ? "rgba(5, 150, 105, 0.08)" : "rgba(217, 119, 6, 0.08)", 
+                color: aiStep > 3 ? "#059669" : "#d97706", 
+                fontSize: 10, 
+                fontWeight: 800, 
+                padding: "6px 8px",
+                borderBottom: "1px solid var(--border)" 
+              }}>
+                If (Router)
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", fontSize: 9, color: "var(--text-2)", fontWeight: 500 }}>
+                <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(0,0,0,0.03)", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Q&A</div>
+                <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(0,0,0,0.03)", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Fact finding</div>
+                <div style={{ padding: "6px 8px", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Else</div>
+              </div>
+            </div>
+
+            {/* 4. AI Breakdown Node */}
+            <div 
+              className={`node-card-light ${aiStep === 4 ? "active completed" : ""}`}
+              style={{ left: 420, top: 98, width: 100, height: 44 }}
+            >
+              <div className={`node-icon-wrapper-light ${aiStep === 4 ? "completed" : ""}`} style={{ color: "#059669", background: "rgba(5, 150, 105, 0.1)" }}>
+                {aiStep === 4 ? "✓" : "⚡"}
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Kanban Sync</div>
+                <div style={{ fontSize: 8, color: "var(--text-3)" }}>DB Sync</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Steps explanations */}
+          <div style={{ 
+            textAlign: "center", 
+            background: "var(--surface)", 
+            border: "1px solid var(--border)", 
+            borderRadius: 12, 
+            padding: "16px 20px",
+            minHeight: 82,
+            width: "100%",
+            maxWidth: 580,
+          }}>
+            <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>
+              {AI_STEPS[Math.max(1, aiStep) - 1]?.label}
+            </p>
+            <p style={{ 
+              margin: 0, 
+              fontSize: 12, 
+              color: "var(--text-2)", 
+              animation: aiStep < 4 ? "pulseText 1.5s infinite" : "none" 
+            }}>
+              {AI_STEPS[Math.max(1, aiStep) - 1]?.desc}
+            </p>
+          </div>
+        </div>
       ) : (
 
       <DndContext
