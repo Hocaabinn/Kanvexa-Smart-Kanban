@@ -22,6 +22,7 @@ import {
   Menu
 } from "lucide-react";
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
+import { showAlert, showConfirm } from "@/lib/swal";
 
 interface Board {
   id: string;
@@ -75,8 +76,6 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   // Rename & Delete state
   const [boardToRename, setBoardToRename] = useState<{ id: string; name: string } | null>(null);
   const [renameInput, setRenameInput] = useState("");
-  const [boardToDeleteId, setBoardToDeleteId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [renaming, setRenaming] = useState(false);
 
   // Load from localStorage on mount
@@ -149,8 +148,9 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
       setBoardToRename(null);
       setRenameInput("");
       router.refresh();
+      showAlert("Sukses", "Nama papan berhasil dirubah.", "success");
     } catch (err: any) {
-      alert("Gagal merubah nama papan: " + err.message);
+      showAlert("Gagal", "Gagal merubah nama papan: " + err.message, "error");
     } finally {
       setRenaming(false);
     }
@@ -160,30 +160,31 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   const openDeleteModal = (boardId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setBoardToDeleteId(boardId);
-  };
+    
+    showConfirm(
+      "Hapus Papan Proyek?",
+      "Tindakan ini tidak dapat dibatalkan. Seluruh data kolom, tugas, dokumen, dan riwayat di dalam papan ini akan terhapus secara permanen.",
+      "Hapus Permanen",
+      "Batal"
+    ).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const cleanPins = pinnedBoardIds.filter(id => id !== boardId);
+          setPinnedBoardIds(cleanPins);
+          localStorage.setItem("pinned_boards", JSON.stringify(cleanPins));
 
-  const handleDeleteConfirm = async () => {
-    if (!boardToDeleteId) return;
+          const cleanStars = starredBoardIds.filter(id => id !== boardId);
+          setStarredBoardIds(cleanStars);
+          localStorage.setItem("starred_boards", JSON.stringify(cleanStars));
 
-    setDeleting(true);
-    try {
-      const cleanPins = pinnedBoardIds.filter(id => id !== boardToDeleteId);
-      setPinnedBoardIds(cleanPins);
-      localStorage.setItem("pinned_boards", JSON.stringify(cleanPins));
-
-      const cleanStars = starredBoardIds.filter(id => id !== boardToDeleteId);
-      setStarredBoardIds(cleanStars);
-      localStorage.setItem("starred_boards", JSON.stringify(cleanStars));
-
-      await deleteBoard(boardToDeleteId);
-      setBoardToDeleteId(null);
-      router.refresh();
-    } catch (err: any) {
-      alert("Gagal menghapus papan: " + err.message);
-    } finally {
-      setDeleting(false);
-    }
+          await deleteBoard(boardId);
+          router.refresh();
+          showAlert("Sukses", "Papan proyek berhasil dihapus.", "success");
+        } catch (err: any) {
+          showAlert("Gagal", "Gagal menghapus papan: " + err.message, "error");
+        }
+      }
+    });
   };
 
   // Sort boards: Pinned first, then by created_at (which is the initial order)
@@ -787,78 +788,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
         </div>
       )}
 
-      {/* 7. Delete Board Modal Confirmation */}
-      {boardToDeleteId && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(15, 23, 42, 0.45)",
-          backdropFilter: "blur(8px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1000,
-          padding: "20px",
-        }}>
-          <div style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: 20,
-            width: "100%",
-            maxWidth: 420,
-            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-            overflow: "hidden",
-            animation: "modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}>
-            <div style={{ padding: "24px" }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12, background: "#fef2f2", color: "#ef4444",
-                display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16,
-                fontSize: 20
-              }}>
-                🗑️
-              </div>
-              <h3 style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>
-                Hapus Papan Proyek?
-              </h3>
-              <p style={{ fontSize: 13, color: "#64748b", margin: 0, lineHeight: 1.5 }}>
-                Tindakan ini tidak dapat dibatalkan. Seluruh data kolom, tugas, dokumen, dan riwayat di dalam papan ini akan terhapus secara permanen.
-              </p>
-            </div>
 
-            <div style={{
-              padding: "16px 24px 20px",
-              background: "#f8fafc",
-              borderTop: "1px solid #e2e8f0",
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 10,
-            }}>
-              <button
-                type="button"
-                onClick={() => setBoardToDeleteId(null)}
-                style={{
-                  padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600,
-                  background: "none", border: "1px solid #cbd5e1",
-                  color: "#475569", cursor: "pointer"
-                }}
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                style={{
-                  padding: "8px 18px", borderRadius: 10, fontSize: 13, fontWeight: 700,
-                  background: "#ef4444", color: "#fff", border: "none",
-                  cursor: deleting ? "wait" : "pointer",
-                  boxShadow: "0 4px 12px rgba(239, 68, 68, 0.25)"
-                }}
-              >
-                {deleting ? "Menghapus..." : "Hapus Permanen"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style>{`
         @keyframes slideInDown {

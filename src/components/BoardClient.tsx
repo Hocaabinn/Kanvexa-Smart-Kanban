@@ -34,6 +34,7 @@ import DocsFilesView from "./board/DocsFiles/DocsFilesView";
 import type { BoardPost, BoardPostComment } from "./board/MessageBoard/messageboard-utils";
 import { moveCard, createColumn, createColumnWithCard, insertAIBreakdown } from "@/app/board/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
+import { showAlert } from "@/lib/swal";
 
 interface Card { id: string; column_id: string; title: string; position: number; }
 interface Column { id: string; name: string; position: number; }
@@ -346,7 +347,7 @@ export default function BoardClient({
       console.error(err);
       setIsAILoading(false);
       setAiStep(0);
-      alert(err?.message || "Gagal mengurai tugas.");
+      showAlert("Gagal", err?.message || "Gagal mengurai tugas.", "error");
     } finally {
       clearTimeout(t2);
       clearTimeout(t3);
