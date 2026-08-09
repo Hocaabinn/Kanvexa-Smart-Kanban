@@ -657,183 +657,6 @@ export default function BoardClient({
           userEmail={userEmail}
           canEdit={canEdit}
         />
-      ) : isAILoading ? (
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          flex: 1,
-          width: "100%",
-          padding: "40px 20px",
-          minHeight: "450px",
-        }}>
-          {/* Visual Dotted Canvas Background (n8n Style - Light Theme) */}
-          <div className="workflow-canvas-light" style={{
-            height: 240,
-            width: "100%",
-            maxWidth: 580,
-            background: "#ffffff",
-            backgroundImage: "radial-gradient(rgba(148, 163, 184, 0.25) 1.5px, transparent 1.5px)",
-            backgroundSize: "16px 16px",
-            position: "relative",
-            borderRadius: 16,
-            border: "1px solid var(--border-strong)",
-            overflow: "hidden",
-            marginBottom: 20,
-            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)",
-          }}>
-            {/* SVG Connecting Paths */}
-            <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1 }}>
-              <defs>
-                <linearGradient id="activeGradLight" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.85" />
-                  <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.85" />
-                </linearGradient>
-                <filter id="glowLight" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
-
-              {/* Path 1: Query Rewrite -> Classify */}
-              <path d="M 140 120 L 175 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
-              {aiStep === 1 && (
-                <path d="M 140 120 L 175 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
-              )}
-              {aiStep > 1 && (
-                <path d="M 140 120 L 175 120" stroke="#10B981" strokeWidth="2" fill="none" />
-              )}
-
-              {/* Path 2: Classify -> Router */}
-              <path d="M 260 120 L 290 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
-              {aiStep === 2 && (
-                <path d="M 260 120 L 290 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
-              )}
-              {aiStep > 2 && (
-                <path d="M 260 120 L 290 120" stroke="#10B981" strokeWidth="2" fill="none" />
-              )}
-
-              {/* Path 3, 4, 5: Router Branches -> AI Breakdown */}
-              {/* Branch Q&A */}
-              <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
-              {aiStep === 3 && (
-                <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
-              )}
-              {aiStep > 3 && (
-                <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
-              )}
-
-              {/* Branch Fact Finding */}
-              <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
-              {aiStep === 3 && (
-                <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
-              )}
-              {aiStep > 3 && (
-                <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
-              )}
-
-              {/* Branch Else */}
-              <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
-              {aiStep === 3 && (
-                <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
-              )}
-              {aiStep > 3 && (
-                <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
-              )}
-            </svg>
-
-            {/* Node Cards */}
-            {/* 1. Query Rewrite Node */}
-            <div 
-              className={`node-card-light ${aiStep === 1 ? "active" : ""} ${aiStep > 1 ? "completed" : ""}`}
-              style={{ left: 20, top: 98, width: 120, height: 44 }}
-            >
-              <div className={`node-icon-wrapper-light ${aiStep > 1 ? "completed" : ""}`} style={{ color: "#7c3aed", background: "rgba(124, 58, 237, 0.1)" }}>
-                {aiStep > 1 ? "✓" : "🔍"}
-              </div>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Query rewrite</div>
-                <div style={{ fontSize: 8, color: "var(--text-3)" }}>Agent</div>
-              </div>
-            </div>
-
-            {/* 2. Classify Node */}
-            <div 
-              className={`node-card-light ${aiStep === 2 ? "active" : ""} ${aiStep > 2 ? "completed" : ""}`}
-              style={{ left: 175, top: 98, width: 85, height: 44 }}
-            >
-              <div className={`node-icon-wrapper-light ${aiStep > 2 ? "completed" : ""}`} style={{ color: "#2563eb", background: "rgba(37, 99, 235, 0.1)" }}>
-                {aiStep > 2 ? "✓" : "{ }"}
-              </div>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Classify</div>
-                <div style={{ fontSize: 8, color: "var(--text-3)" }}>Agent</div>
-              </div>
-            </div>
-
-            {/* 3. Router Node */}
-            <div 
-              className={`node-card-light ${aiStep === 3 ? "active" : ""} ${aiStep > 3 ? "completed" : ""}`}
-              style={{ left: 290, top: 55, width: 100, height: 130, flexDirection: "column", alignItems: "stretch", padding: 0, gap: 0, overflow: "hidden" }}
-            >
-              <div style={{ 
-                background: aiStep > 3 ? "rgba(5, 150, 105, 0.08)" : "rgba(217, 119, 6, 0.08)", 
-                color: aiStep > 3 ? "#059669" : "#d97706", 
-                fontSize: 10, 
-                fontWeight: 800, 
-                padding: "6px 8px",
-                borderBottom: "1px solid var(--border)" 
-              }}>
-                If (Router)
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", fontSize: 9, color: "var(--text-2)", fontWeight: 500 }}>
-                <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(0,0,0,0.03)", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Q&A</div>
-                <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(0,0,0,0.03)", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Fact finding</div>
-                <div style={{ padding: "6px 8px", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Else</div>
-              </div>
-            </div>
-
-            {/* 4. AI Breakdown Node */}
-            <div 
-              className={`node-card-light ${aiStep === 4 ? "active completed" : ""}`}
-              style={{ left: 420, top: 98, width: 100, height: 44 }}
-            >
-              <div className={`node-icon-wrapper-light ${aiStep === 4 ? "completed" : ""}`} style={{ color: "#059669", background: "rgba(5, 150, 105, 0.1)" }}>
-                {aiStep === 4 ? "✓" : "⚡"}
-              </div>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Kanban Sync</div>
-                <div style={{ fontSize: 8, color: "var(--text-3)" }}>DB Sync</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Steps explanations */}
-          <div style={{ 
-            textAlign: "center", 
-            background: "var(--surface)", 
-            border: "1px solid var(--border)", 
-            borderRadius: 12, 
-            padding: "16px 20px",
-            minHeight: 82,
-            width: "100%",
-            maxWidth: 580,
-          }}>
-            <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>
-              {AI_STEPS[Math.max(1, aiStep) - 1]?.label}
-            </p>
-            <p style={{ 
-              margin: 0, 
-              fontSize: 12, 
-              color: "var(--text-2)", 
-              animation: aiStep < 4 ? "pulseText 1.5s infinite" : "none" 
-            }}>
-              {AI_STEPS[Math.max(1, aiStep) - 1]?.desc}
-            </p>
-          </div>
-        </div>
       ) : (
 
       <DndContext
@@ -847,10 +670,193 @@ export default function BoardClient({
           display: "flex", gap: 14, alignItems: "flex-start",
           padding: "20px 20px 28px", overflowX: "auto", flex: 1,
           minHeight: 0,
+          position: "relative",
         }}
           className="scrollbar-hide"
           suppressHydrationWarning
         >
+          {isAILoading && (
+            <div style={{
+              position: "absolute",
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: "rgba(255, 255, 255, 0.45)",
+              backdropFilter: "blur(6px)",
+              zIndex: 50,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 16,
+              animation: "fadeIn 0.25s ease-out",
+            }}>
+              {/* Visual Dotted Canvas Background (n8n Style - Light Theme Card) */}
+              <div className="workflow-canvas-light" style={{
+                height: 240,
+                width: "100%",
+                maxWidth: 580,
+                background: "#ffffff",
+                backgroundImage: "radial-gradient(rgba(148, 163, 184, 0.25) 1.5px, transparent 1.5px)",
+                backgroundSize: "16px 16px",
+                position: "relative",
+                borderRadius: 16,
+                border: "1px solid var(--border-strong)",
+                overflow: "hidden",
+                marginBottom: 20,
+                boxShadow: "0 15px 30px -5px rgba(0,0,0,0.08), 0 8px 12px -6px rgba(0,0,0,0.04)",
+              }}>
+                {/* SVG Connecting Paths */}
+                <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1 }}>
+                  <defs>
+                    <linearGradient id="activeGradLight" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.85" />
+                      <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.85" />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity="0.85" />
+                    </linearGradient>
+                    <filter id="glowLight" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                  </defs>
+
+                  {/* Path 1: Query Rewrite -> Classify */}
+                  <path d="M 140 120 L 175 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+                  {aiStep === 1 && (
+                    <path d="M 140 120 L 175 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+                  )}
+                  {aiStep > 1 && (
+                    <path d="M 140 120 L 175 120" stroke="#10B981" strokeWidth="2" fill="none" />
+                  )}
+
+                  {/* Path 2: Classify -> Router */}
+                  <path d="M 260 120 L 290 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+                  {aiStep === 2 && (
+                    <path d="M 260 120 L 290 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+                  )}
+                  {aiStep > 2 && (
+                    <path d="M 260 120 L 290 120" stroke="#10B981" strokeWidth="2" fill="none" />
+                  )}
+
+                  {/* Path 3, 4, 5: Router Branches -> AI Breakdown */}
+                  {/* Branch Q&A */}
+                  <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+                  {aiStep === 3 && (
+                    <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+                  )}
+                  {aiStep > 3 && (
+                    <path d="M 390 98 C 405 98, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
+                  )}
+
+                  {/* Branch Fact Finding */}
+                  <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+                  {aiStep === 3 && (
+                    <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+                  )}
+                  {aiStep > 3 && (
+                    <path d="M 390 125 C 405 125, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
+                  )}
+
+                  {/* Branch Else */}
+                  <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="2" fill="none" />
+                  {aiStep === 3 && (
+                    <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="url(#activeGradLight)" strokeWidth="2.5" fill="none" strokeDasharray="6 12" className="path-flow" filter="url(#glowLight)" />
+                  )}
+                  {aiStep > 3 && (
+                    <path d="M 390 157 C 405 157, 405 120, 420 120" stroke="#10B981" strokeWidth="2" fill="none" />
+                  )}
+                </svg>
+
+                {/* Node Cards */}
+                {/* 1. Query Rewrite Node */}
+                <div 
+                  className={`node-card-light ${aiStep === 1 ? "active" : ""} ${aiStep > 1 ? "completed" : ""}`}
+                  style={{ left: 20, top: 98, width: 120, height: 44 }}
+                >
+                  <div className={`node-icon-wrapper-light ${aiStep > 1 ? "completed" : ""}`} style={{ color: "#7c3aed", background: "rgba(124, 58, 237, 0.1)" }}>
+                    {aiStep > 1 ? "✓" : "🔍"}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Query rewrite</div>
+                    <div style={{ fontSize: 8, color: "var(--text-3)" }}>Agent</div>
+                  </div>
+                </div>
+
+                {/* 2. Classify Node */}
+                <div 
+                  className={`node-card-light ${aiStep === 2 ? "active" : ""} ${aiStep > 2 ? "completed" : ""}`}
+                  style={{ left: 175, top: 98, width: 85, height: 44 }}
+                >
+                  <div className={`node-icon-wrapper-light ${aiStep > 2 ? "completed" : ""}`} style={{ color: "#2563eb", background: "rgba(37, 99, 235, 0.1)" }}>
+                    {aiStep > 2 ? "✓" : "{ }"}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Classify</div>
+                    <div style={{ fontSize: 8, color: "var(--text-3)" }}>Agent</div>
+                  </div>
+                </div>
+
+                {/* 3. Router Node */}
+                <div 
+                  className={`node-card-light ${aiStep === 3 ? "active" : ""} ${aiStep > 3 ? "completed" : ""}`}
+                  style={{ left: 290, top: 55, width: 100, height: 130, flexDirection: "column", alignItems: "stretch", padding: 0, gap: 0, overflow: "hidden" }}
+                >
+                  <div style={{ 
+                    background: aiStep > 3 ? "rgba(5, 150, 105, 0.08)" : "rgba(217, 119, 6, 0.08)", 
+                    color: aiStep > 3 ? "#059669" : "#d97706", 
+                    fontSize: 10, 
+                    fontWeight: 800, 
+                    padding: "6px 8px",
+                    borderBottom: "1px solid var(--border)" 
+                  }}>
+                    If (Router)
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", fontSize: 9, color: "var(--text-2)", fontWeight: 500 }}>
+                    <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(0,0,0,0.03)", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Q&A</div>
+                    <div style={{ padding: "6px 8px", borderBottom: "1px solid rgba(0,0,0,0.03)", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Fact finding</div>
+                    <div style={{ padding: "6px 8px", background: aiStep === 3 ? "rgba(109, 40, 217, 0.05)" : "none" }}>Else</div>
+                  </div>
+                </div>
+
+                {/* 4. AI Breakdown Node */}
+                <div 
+                  className={`node-card-light ${aiStep === 4 ? "active completed" : ""}`}
+                  style={{ left: 420, top: 98, width: 100, height: 44 }}
+                >
+                  <div className={`node-icon-wrapper-light ${aiStep === 4 ? "completed" : ""}`} style={{ color: "#059669", background: "rgba(5, 150, 105, 0.1)" }}>
+                    {aiStep === 4 ? "✓" : "⚡"}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-1)", lineHeight: 1.1 }}>Kanban Sync</div>
+                    <div style={{ fontSize: 8, color: "var(--text-3)" }}>DB Sync</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Steps explanations */}
+              <div style={{ 
+                textAlign: "center", 
+                background: "var(--card)", 
+                border: "1px solid var(--border)", 
+                borderRadius: 12, 
+                padding: "16px 20px",
+                minHeight: 82,
+                width: "100%",
+                maxWidth: 580,
+                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)",
+              }}>
+                <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 700, color: "var(--text-1)" }}>
+                  {AI_STEPS[Math.max(1, aiStep) - 1]?.label}
+                </p>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: 12, 
+                  color: "var(--text-2)", 
+                  animation: aiStep < 4 ? "pulseText 1.5s infinite" : "none" 
+                }}>
+                  {AI_STEPS[Math.max(1, aiStep) - 1]?.desc}
+                </p>
+              </div>
+            </div>
+          )}
           {sortedCols.length === 0 ? (
             <div style={{
               display: "flex",
