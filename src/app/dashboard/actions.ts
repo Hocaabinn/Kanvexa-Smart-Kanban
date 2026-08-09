@@ -63,23 +63,47 @@ export async function createBoard(formData: FormData) {
     ];
   }
 
-  // Insert columns and then cards
-  for (const col of columnsToInsert) {
-    const { data: insertedCol, error: colErr } = await supabase
-      .from("board_columns")
-      .insert({ board_id: boardId, name: col.name, position: col.position })
-      .select("id")
-      .single();
+  // Insert columns all at once
+  const { data: insertedCols, error: colErr } = await supabase
+    .from("board_columns")
+    .insert(columnsToInsert.map(col => ({
+      board_id: boardId,
+      name: col.name,
+      position: col.position
+    })))
+    .select("id, name");
+
+  if (colErr) {
+    throw new Error(colErr.message);
+  }
+
+  // Compile all cards to insert across all columns in a single array
+  if (insertedCols && insertedCols.length > 0) {
+    const cardsToInsert: { board_id: string; column_id: string; title: string; description: string; position: number }[] = [];
     
-    if (!colErr && insertedCol && col.cards && col.cards.length > 0) {
-      const cardsToInsert = col.cards.map((title, index) => ({
-        board_id: boardId,
-        column_id: insertedCol.id,
-        title: title,
-        description: `Deskripsi otomatis untuk tugas: ${title}`,
-        position: index
-      }));
-      await supabase.from("cards").insert(cardsToInsert);
+    for (const col of columnsToInsert) {
+      if (col.cards && col.cards.length > 0) {
+        // Match the columns by name to get their inserted IDs
+        const dbCol = insertedCols.find(c => c.name === col.name);
+        if (dbCol) {
+          col.cards.forEach((title, index) => {
+            cardsToInsert.push({
+              board_id: boardId,
+              column_id: dbCol.id,
+              title: title,
+              description: `Deskripsi otomatis untuk tugas: ${title}`,
+              position: index
+            });
+          });
+        }
+      }
+    }
+
+    if (cardsToInsert.length > 0) {
+      const { error: cardErr } = await supabase.from("cards").insert(cardsToInsert);
+      if (cardErr) {
+        throw new Error(cardErr.message);
+      }
     }
   }
 

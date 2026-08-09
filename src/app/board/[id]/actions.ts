@@ -57,17 +57,22 @@ export async function moveCard(
 ) {
   const supabase = await createClient();
 
-  // Move card to the new column first
-  await supabase
-    .from("cards")
-    .update({ column_id: newColumnId, updated_at: new Date().toISOString() })
-    .eq("id", cardId);
+  const updates: { id: string; column_id: string; position: number; updated_at?: string }[] = [];
+  
+  for (const { columnId, cardIds } of columnOrders) {
+    cardIds.forEach((id, index) => {
+      updates.push({
+        id,
+        column_id: columnId,
+        position: index,
+        ...(id === cardId ? { updated_at: new Date().toISOString() } : {})
+      });
+    });
+  }
 
-  // Bulk-update positions for all changed columns
-  for (const { cardIds } of columnOrders) {
-    for (let i = 0; i < cardIds.length; i++) {
-      await supabase.from("cards").update({ position: i }).eq("id", cardIds[i]);
-    }
+  if (updates.length > 0) {
+    const { error } = await supabase.from("cards").upsert(updates);
+    if (error) throw new Error(error.message);
   }
 
   revalidatePath(`/board/${boardId}`);
@@ -166,19 +171,21 @@ export async function createKanbanWorkflow(
   let position = (existing?.[0]?.position ?? -1) + 1;
 
   const colNames = ["To-dos", "In Progress", "In Review", "Done"];
-  let firstColId = "";
+  const colRows = colNames.map((cName, idx) => ({
+    board_id: boardId,
+    name: cName,
+    position: position + idx
+  }));
 
-  for (const cName of colNames) {
-    const { data: col } = await supabase
-      .from("board_columns")
-      .insert({ board_id: boardId, name: cName, position: position++ })
-      .select()
-      .single();
+  const { data: insertedCols, error: colErr } = await supabase
+    .from("board_columns")
+    .insert(colRows)
+    .select("id, name")
+    .order("position", { ascending: true });
 
-    if (col && !firstColId) {
-      firstColId = col.id;
-    }
-  }
+  if (colErr) throw new Error(colErr.message);
+
+  const firstColId = insertedCols?.[0]?.id;
 
   if (firstColId && initialCardTitle && initialCardTitle.trim()) {
     let fullTitle = initialCardTitle.trim();
@@ -243,23 +250,41 @@ export async function insertAIBreakdown(boardId: string, aiColumns: AIColumn[], 
     colPosition = (existing?.[0]?.position ?? -1) + 1;
   }
 
-  for (const aiCol of aiColumns) {
-    const { data: col, error: colErr } = await supabase
-      .from("board_columns")
-      .insert({ board_id: boardId, name: aiCol.name, position: colPosition++ })
-      .select()
-      .single();
+  // Bulk insert all columns
+  const colRows = aiColumns.map((aiCol, idx) => ({
+    board_id: boardId,
+    name: aiCol.name,
+    position: colPosition + idx
+  }));
 
-    if (colErr || !col) continue;
+  const { data: insertedCols, error: colErr } = await supabase
+    .from("board_columns")
+    .insert(colRows)
+    .select("id, name");
 
-    const cardRows = aiCol.cards.map((c, i) => ({
-      board_id: boardId,
-      column_id: col.id,
-      title: c.title,
-      position: i,
-    }));
+  if (colErr) throw new Error(colErr.message);
 
-    if (cardRows.length) await supabase.from("cards").insert(cardRows);
+  if (insertedCols && insertedCols.length > 0) {
+    const cardRows: { board_id: string; column_id: string; title: string; position: number }[] = [];
+    
+    aiColumns.forEach(aiCol => {
+      const dbCol = insertedCols.find(c => c.name === aiCol.name);
+      if (dbCol && aiCol.cards && aiCol.cards.length > 0) {
+        aiCol.cards.forEach((c, i) => {
+          cardRows.push({
+            board_id: boardId,
+            column_id: dbCol.id,
+            title: c.title,
+            position: i
+          });
+        });
+      }
+    });
+
+    if (cardRows.length > 0) {
+      const { error: cardErr } = await supabase.from("cards").insert(cardRows);
+      if (cardErr) throw new Error(cardErr.message);
+    }
   }
 
   revalidatePath(`/board/${boardId}`);
@@ -343,27 +368,39 @@ export async function insertTasksFromDiscussion(
   boardId: string,
   tasks: { title: string; description?: string; columnId: string }[]
 ) {
+  if (tasks.length === 0) return;
   const supabase = await createClient();
 
-  for (const task of tasks) {
-    // Get current max position for target column
+  // Find unique column IDs
+  const uniqueColIds = Array.from(new Set(tasks.map(t => t.columnId)));
+  
+  // Find current max positions for these columns
+  const colPositions: { [colId: string]: number } = {};
+  for (const colId of uniqueColIds) {
     const { data: existing } = await supabase
       .from("cards")
       .select("position")
-      .eq("column_id", task.columnId)
+      .eq("column_id", colId)
       .order("position", { ascending: false })
       .limit(1);
+    
+    colPositions[colId] = (existing?.[0]?.position ?? -1) + 1;
+  }
 
-    const position = (existing?.[0]?.position ?? -1) + 1;
-
-    await supabase.from("cards").insert({
+  // Build the list of cards to insert
+  const cardsToInsert = tasks.map(task => {
+    const pos = colPositions[task.columnId]++;
+    return {
       board_id: boardId,
       column_id: task.columnId,
       title: task.title.trim(),
       description: task.description?.trim() || null,
-      position,
-    });
-  }
+      position: pos
+    };
+  });
+
+  const { error } = await supabase.from("cards").insert(cardsToInsert);
+  if (error) throw new Error(error.message);
 
   revalidatePath(`/board/${boardId}`);
 }
