@@ -30,7 +30,7 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
   const canEdit = role === "admin" || role === "member";
 
   const { data: columns } = await supabase
-    .from("board_columns").select("id, name, position").eq("board_id", id).order("position");
+    .from("board_columns").select("id, name, position, agent_type, agent_prompt").eq("board_id", id).order("position");
 
   const { data: cards } = await supabase
     .from("cards").select("id, column_id, title, description, position").eq("board_id", id).order("position");

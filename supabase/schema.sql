@@ -26,6 +26,8 @@ create table if not exists board_columns (
   board_id uuid not null references boards(id) on delete cascade,
   name text not null,
   position int not null default 0,
+  agent_type text not null default 'none',
+  agent_prompt text,
   created_at timestamptz not null default now()
 );
 
