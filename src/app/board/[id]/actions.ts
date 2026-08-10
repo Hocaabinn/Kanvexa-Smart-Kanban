@@ -39,6 +39,16 @@ export async function updateCardTitle(boardId: string, cardId: string, title: st
   revalidatePath(`/board/${boardId}`);
 }
 
+export async function updateCardDescription(boardId: string, cardId: string, description: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("cards")
+    .update({ description: description, updated_at: new Date().toISOString() })
+    .eq("id", cardId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/board/${boardId}`);
+}
+
 export async function deleteCard(boardId: string, cardId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("cards").delete().eq("id", cardId);
@@ -57,12 +67,13 @@ export async function moveCard(
 ) {
   const supabase = await createClient();
 
-  const updates: { id: string; column_id: string; position: number; updated_at?: string }[] = [];
+  const updates: { id: string; board_id: string; column_id: string; position: number; updated_at?: string }[] = [];
   
   for (const { columnId, cardIds } of columnOrders) {
     cardIds.forEach((id, index) => {
       updates.push({
         id,
+        board_id: boardId,
         column_id: columnId,
         position: index,
         ...(id === cardId ? { updated_at: new Date().toISOString() } : {})
@@ -71,8 +82,17 @@ export async function moveCard(
   }
 
   if (updates.length > 0) {
-    const { error } = await supabase.from("cards").upsert(updates);
-    if (error) throw new Error(error.message);
+    for (const update of updates) {
+      const { error } = await supabase
+        .from("cards")
+        .update({
+          column_id: update.column_id,
+          position: update.position,
+          ...(update.updated_at ? { updated_at: update.updated_at } : {})
+        })
+        .eq("id", update.id);
+      if (error) throw new Error(error.message);
+    }
   }
 
   revalidatePath(`/board/${boardId}`);
@@ -214,6 +234,16 @@ export async function deleteColumn(boardId: string, columnId: string) {
   const supabase = await createClient();
   // Cards inside are deleted automatically via ON DELETE CASCADE
   const { error } = await supabase.from("board_columns").delete().eq("id", columnId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/board/${boardId}`);
+}
+
+export async function updateColumnAgent(boardId: string, columnId: string, agentType: string, agentPrompt?: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("board_columns")
+    .update({ agent_type: agentType, agent_prompt: agentPrompt || null })
+    .eq("id", columnId);
   if (error) throw new Error(error.message);
   revalidatePath(`/board/${boardId}`);
 }
