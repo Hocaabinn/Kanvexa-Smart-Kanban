@@ -22,22 +22,27 @@ import {
   FileText,
   Clock,
   Eye,
-  CheckCircle2
+  CheckCircle2,
+  Settings,
+  GitBranch
 } from "lucide-react";
 import KanbanColumn from "./KanbanColumn";
 import TodoListColumn from "./board/todolist/TodoListColumn";
 import TodoListPresetModal from "./board/todolist/TodoListPresetModal";
 import AIBreakdownModal from "./AIBreakdownModal";
+import AISettingsModal from "./AISettingsModal";
 import MessageBoardView from "./board/MessageBoard/MessageBoardView";
 import CalendarView from "./board/Calendar/CalendarView";
 import DocsFilesView from "./board/DocsFiles/DocsFilesView";
+import GraphView from "./board/GraphView";
 import type { BoardPost, BoardPostComment } from "./board/MessageBoard/messageboard-utils";
-import { moveCard, createColumn, createColumnWithCard, insertAIBreakdown } from "@/app/board/[id]/actions";
+import { moveCard, createColumn, createColumnWithCard, insertAIBreakdown, updateCardDescription } from "@/app/board/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 import { showAlert } from "@/lib/swal";
+import { processCardWithAgent } from "@/lib/ai-client";
 
-interface Card { id: string; column_id: string; title: string; position: number; }
-interface Column { id: string; name: string; position: number; }
+interface Card { id: string; column_id: string; title: string; position: number; description?: string; }
+interface Column { id: string; name: string; position: number; agent_type?: string; agent_prompt?: string; }
 
 interface Props {
   boardId: string;
@@ -82,8 +87,8 @@ export default function BoardClient({
 }: Props) {
   const router = useRouter();
 
-  // Tab state: "kanban" vs "messageboard" vs "calendar" vs "docs"
-  const [activeTab, setActiveTab] = useState<"kanban" | "messageboard" | "calendar" | "docs">("kanban");
+  // Tab state: "kanban" vs "messageboard" vs "calendar" vs "docs" vs "graph"
+  const [activeTab, setActiveTab] = useState<"kanban" | "messageboard" | "calendar" | "docs" | "graph">("kanban");
 
   // Derived state from props to allow server-side updates / revalidations to reflect in client state
   const [prevInitialColumns, setPrevInitialColumns] = useState(initialColumns);
@@ -117,7 +122,10 @@ export default function BoardClient({
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [originalColId, setOriginalColId] = useState<string | null>(null);
   const [showAI, setShowAI] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
+  const [processingCardId, setProcessingCardId] = useState<string | null>(null);
+  const [processingAgent, setProcessingAgent] = useState<string | null>(null);
   const [aiStep, setAiStep] = useState(0);
   const [addingCol, setAddingCol] = useState(false);
   const [colName, setColName] = useState("");
@@ -298,6 +306,38 @@ export default function BoardClient({
     }
 
     await moveCard(boardId, cardId, toColId, columnOrders);
+
+    // AI Agent Trigger
+    if (fromColId !== toColId) {
+      const targetCol = columns.find(c => c.id === toColId);
+      if (targetCol && targetCol.agent_type && targetCol.agent_type !== "none") {
+        const cardToProcess = cards.find(c => c.id === cardId);
+        if (cardToProcess) {
+          setProcessingCardId(cardId);
+          setProcessingAgent(targetCol.agent_type);
+          try {
+            const aiRes = await processCardWithAgent(
+              cardToProcess.title,
+              cardToProcess.description || "",
+              targetCol.agent_type,
+              targetCol.agent_prompt || ""
+            );
+            if (aiRes.success && aiRes.content) {
+              await updateCardDescription(boardId, cardId, aiRes.content);
+              showAlert("AI Sukses", `Agen ${targetCol.agent_type === "researcher" ? "Researcher" : targetCol.agent_type === "coder" ? "Coder" : "QA"} telah memperbarui kartu!`, "success");
+            } else {
+              showAlert("AI Gagal", aiRes.error || "Gagal mendapatkan respon dari AI.", "error");
+            }
+          } catch (err: any) {
+            console.error("Gagal memproses kartu dengan AI:", err);
+            showAlert("Error", "Terjadi kesalahan saat memproses kartu dengan AI.", "error");
+          } finally {
+            setProcessingCardId(null);
+            setProcessingAgent(null);
+          }
+        }
+      }
+    }
   }
 
   async function handleAddColumn() {
@@ -459,6 +499,12 @@ export default function BoardClient({
         />
       )}
 
+      {showAISettings && (
+        <AISettingsModal
+          onClose={() => setShowAISettings(false)}
+        />
+      )}
+
       {/* Preset Column Config Modal */}
       {selectedPresetModal && (
         <TodoListPresetModal
@@ -594,26 +640,76 @@ export default function BoardClient({
             <FileText width={14} height={14} />
             <span className="tab-label">Docs & Files</span>
           </button>
-        </div>
 
-        {/* AI Breakdown Button (Shown in Kanban view) */}
-        {activeTab === "kanban" && canEdit && (
           <button
-            onClick={() => setShowAI(true)}
+            onClick={() => setActiveTab("graph")}
             style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-              background: "var(--v)", color: "#fff", border: "none", cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(109,40,217,0.3)",
-              transition: "opacity 0.15s",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 14px",
+              borderRadius: 7,
+              fontSize: 13,
+              fontWeight: 600,
+              border: "none",
+              background: activeTab === "graph" ? "#ffffff" : "transparent",
+              color: activeTab === "graph" ? "var(--v)" : "#64748b",
+              boxShadow: activeTab === "graph" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
               whiteSpace: "nowrap",
               flexShrink: 0,
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.88"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}
           >
-            ✦ Urai dengan AI
+            <GitBranch width={14} height={14} />
+            <span className="tab-label">Graph View</span>
           </button>
+        </div>
+
+        {/* AI Action Buttons (Shown in Kanban view) */}
+        {activeTab === "kanban" && canEdit && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => setShowAISettings(true)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "7px 12px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", cursor: "pointer",
+                transition: "background 0.15s, border-color 0.15s",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => {
+                const target = e.currentTarget as HTMLElement;
+                target.style.background = "#e2e8f0";
+                target.style.borderColor = "#94a3b8";
+              }}
+              onMouseLeave={e => {
+                const target = e.currentTarget as HTMLElement;
+                target.style.background = "#f1f5f9";
+                target.style.borderColor = "#cbd5e1";
+              }}
+            >
+              <Settings width={14} height={14} />
+              AI Settings
+            </button>
+            <button
+              onClick={() => setShowAI(true)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: "var(--v)", color: "#fff", border: "none", cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(109,40,217,0.3)",
+                transition: "opacity 0.15s",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.88"}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}
+            >
+              ✦ Urai dengan AI
+            </button>
+          </div>
         )}
       </div>
 
@@ -656,6 +752,13 @@ export default function BoardClient({
         <DocsFilesView
           boardId={boardId}
           userEmail={userEmail}
+          canEdit={canEdit}
+        />
+      ) : activeTab === "graph" ? (
+        <GraphView
+          boardId={boardId}
+          columns={columns.map(c => ({ id: c.id, name: c.name, accent_color: c.accent_color }))}
+          cards={cards.map(c => ({ id: c.id, column_id: c.column_id, title: c.title, description: c.description }))}
           canEdit={canEdit}
         />
       ) : (
@@ -928,6 +1031,10 @@ export default function BoardClient({
                 cards={cardsForCol(col.id)}
                 isAdmin={isAdmin}
                 canEdit={canEdit}
+                agentType={col.agent_type}
+                agentPrompt={col.agent_prompt}
+                processingCardId={processingCardId}
+                processingAgent={processingAgent}
               />
             ))
           )}
