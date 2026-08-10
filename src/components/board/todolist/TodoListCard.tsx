@@ -3,27 +3,35 @@
 import { useState, useRef, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Calendar, Clock, User, FileText } from "lucide-react";
+import { Calendar, Clock, User, FileText, Bot, Sparkles } from "lucide-react";
 import { updateCardTitle, deleteCard } from "@/app/board/[id]/actions";
 import { parseCardTitle } from "./todo-utils";
 import { showConfirm, showAlert } from "@/lib/swal";
+import CardDetailsModal from "../CardDetailsModal";
 
 interface Props {
   id: string;
   boardId: string;
   title: string;
+  description?: string;
   accentColor: string;
   canEdit: boolean;
+  isProcessing?: boolean;
+  processingAgent?: string | null;
 }
 
 export default function TodoListCard({
   id,
   boardId,
   title,
+  description = "",
   accentColor,
   canEdit,
+  isProcessing = false,
+  processingAgent = null,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [prevTitle, setPrevTitle] = useState(title);
   const [value, setValue] = useState(title);
 
@@ -70,7 +78,7 @@ export default function TodoListCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id, disabled: !canEdit });
+  } = useSortable({ id, disabled: !canEdit || isProcessing });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -118,9 +126,14 @@ export default function TodoListCard({
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, cursor: isProcessing ? "wait" : "pointer" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => {
+        if (!editing && !isProcessing) {
+          setShowDetails(true);
+        }
+      }}
     >
       {/* Physical Plank/Papan Card */}
       <div
@@ -129,22 +142,24 @@ export default function TodoListCard({
           background: completed
             ? "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)"
             : "linear-gradient(135deg, #ffffff 0%, #fdfdfd 50%, #f8fafc 100%)",
-          borderTop: `1px solid ${completed ? "#e2e8f0" : "#cbd5e1"}`,
-          borderRight: `1px solid ${completed ? "#e2e8f0" : "#cbd5e1"}`,
-          borderBottom: `1px solid ${completed ? "#e2e8f0" : "#cbd5e1"}`,
+          borderTop: `1px solid ${isProcessing ? "var(--v)" : completed ? "#e2e8f0" : "#cbd5e1"}`,
+          borderRight: `1px solid ${isProcessing ? "var(--v)" : completed ? "#e2e8f0" : "#cbd5e1"}`,
+          borderBottom: `1px solid ${isProcessing ? "var(--v)" : completed ? "#e2e8f0" : "#cbd5e1"}`,
           borderLeft: `6px solid ${accentColor}`,
           borderRadius: 14,
           padding: "13px 14px 12px 14px",
           marginBottom: 10,
           transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
           transform:
-            hovered && !isDragging ? "translateY(-3px) scale(1.01)" : "none",
-          boxShadow: isDragging
-            ? "0 20px 30px -10px rgba(15,23,42,0.25), 0 10px 15px -5px rgba(15,23,42,0.15)"
-            : hovered
-              ? "0 12px 24px -4px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff"
-              : "0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.03), inset 0 1px 0 #ffffff",
-          cursor: isDragging ? "grabbing" : "default",
+            hovered && !isDragging && !isProcessing ? "translateY(-3px) scale(1.01)" : "none",
+          boxShadow: isProcessing
+            ? "0 0 15px rgba(109, 40, 217, 0.25), 0 4px 12px rgba(109, 40, 217, 0.08)"
+            : isDragging
+              ? "0 20px 30px -10px rgba(15,23,42,0.25), 0 10px 15px -5px rgba(15,23,42,0.15)"
+              : hovered
+                ? "0 12px 24px -4px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff"
+                : "0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.03), inset 0 1px 0 #ffffff",
+          cursor: isProcessing ? "wait" : isDragging ? "grabbing" : "default",
           display: "flex",
           alignItems: "flex-start",
           gap: 10,
@@ -198,10 +213,10 @@ export default function TodoListCard({
           </div>
         )}
 
-        {/* Checkbox / Kotak Centang */}
         <button
           type="button"
           onClick={toggleCompleted}
+          disabled={isProcessing}
           title={completed ? "Tandai belum selesai" : "Tandai selesai"}
           style={{
             width: 18,
@@ -209,7 +224,7 @@ export default function TodoListCard({
             borderRadius: 6,
             border: completed ? "none" : "1.5px solid #cbd5e1",
             background: completed ? "var(--v)" : "#ffffff",
-            cursor: "pointer",
+            cursor: isProcessing ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -221,6 +236,7 @@ export default function TodoListCard({
               ? "0 2px 5px rgba(109, 40, 217, 0.3)"
               : "inset 0 1px 2px rgba(0,0,0,0.05)",
             transition: "all 0.15s ease",
+            opacity: isProcessing ? 0.6 : 1,
           }}
         >
           {completed && (
@@ -308,8 +324,8 @@ export default function TodoListCard({
           ) : (
             <div>
               <p
-                onDoubleClick={() => canEdit && setEditing(true)}
-                title={canEdit ? "Klik dua kali untuk edit" : undefined}
+                onDoubleClick={() => canEdit && !isProcessing && setEditing(true)}
+                title={canEdit && !isProcessing ? "Klik dua kali untuk edit" : undefined}
                 style={{
                   margin: 0,
                   fontSize: 13,
@@ -319,12 +335,27 @@ export default function TodoListCard({
                   opacity: completed ? 0.65 : 1,
                   lineHeight: 1.4,
                   paddingRight: hovered && canEdit ? 18 : 0,
-                  cursor: canEdit ? "text" : "default",
+                  cursor: canEdit && !isProcessing ? "text" : "default",
                   transition: "all 0.15s ease",
                 }}
               >
                 {mainTitle}
               </p>
+              {isProcessing && (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 6,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "var(--v)",
+                  animation: "pulseText 1.5s infinite"
+                }}>
+                  <Sparkles width={12} height={12} style={{ animation: "spin 3s linear infinite" }} />
+                  <span>Agen {processingAgent === "researcher" ? "Researcher" : processingAgent === "coder" ? "Coder" : "QA"} sedang memikirkan deskripsi...</span>
+                </div>
+              )}
 
               {/* Metadata Badges */}
               {meta && (
@@ -436,6 +467,16 @@ export default function TodoListCard({
           )}
         </div>
       </div>
+      {showDetails && (
+        <CardDetailsModal
+          id={id}
+          boardId={boardId}
+          title={title}
+          description={description}
+          onClose={() => setShowDetails(false)}
+          canEdit={canEdit}
+        />
+      )}
     </div>
   );
 }

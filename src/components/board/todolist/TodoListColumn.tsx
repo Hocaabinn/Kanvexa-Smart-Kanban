@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Share2 } from "lucide-react";
+import { Share2, Bot, Settings, Sparkles } from "lucide-react";
 import TodoListCard from "./TodoListCard";
 import AddTodoListCardForm from "./AddTodoListCardForm";
-import { deleteColumn } from "@/app/board/[id]/actions";
+import { deleteColumn, updateColumnAgent } from "@/app/board/[id]/actions";
 import { showConfirm, showAlert } from "@/lib/swal";
 
-interface Card { id: string; title: string; position: number; }
+interface Card { id: string; title: string; position: number; description?: string; }
 
 interface Props {
     id: string;
@@ -20,12 +20,39 @@ interface Props {
     cards: Card[];
     isAdmin: boolean;
     canEdit: boolean;
+    agentType?: string;
+    agentPrompt?: string;
+    processingCardId?: string | null;
+    processingAgent?: string | null;
 }
 
-export default function TodoListColumn({ id, boardId, userEmail = "", name, accentColor, cards, isAdmin, canEdit }: Props) {
+export default function TodoListColumn({ id, boardId, userEmail = "", name, accentColor, cards, isAdmin, canEdit, agentType = "none", agentPrompt = "", processingCardId = null, processingAgent = null }: Props) {
     const [addingCard, setAddingCard] = useState(false);
     const [allCompleted, setAllCompleted] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    const [showAgentConfig, setShowAgentConfig] = useState(false);
+    const [selectedAgent, setSelectedAgent] = useState(agentType);
+    const [customPrompt, setCustomPrompt] = useState(agentPrompt || "");
+    const [savingAgent, setSavingAgent] = useState(false);
+
+    useEffect(() => {
+        setSelectedAgent(agentType);
+        setCustomPrompt(agentPrompt || "");
+    }, [agentType, agentPrompt]);
+
+    const handleSaveAgent = async () => {
+        setSavingAgent(true);
+        try {
+            await updateColumnAgent(boardId, id, selectedAgent, customPrompt);
+            setShowAgentConfig(false);
+            showAlert("Sukses", "Konfigurasi Agent kolom berhasil disimpan!", "success");
+        } catch (err: any) {
+            showAlert("Gagal", err.message || "Gagal menyimpan konfigurasi Agent", "error");
+        } finally {
+            setSavingAgent(false);
+        }
+    };
 
     const { setNodeRef, isOver } = useDroppable({ id });
 
@@ -103,20 +130,67 @@ export default function TodoListColumn({ id, boardId, userEmail = "", name, acce
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 flexShrink: 0,
             }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.01em" }}>
-                        {name}
-                    </span>
-                    <span style={{
-                        fontSize: 11, fontWeight: 700, borderRadius: 100,
-                        background: "rgba(0,0,0,0.06)", color: "var(--text-2)",
-                        padding: "2px 8px",
-                    }}>
-                        {cards.length}
-                    </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 20, fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.01em" }}>
+                            {name}
+                        </span>
+                        <span style={{
+                            fontSize: 11, fontWeight: 700, borderRadius: 100,
+                            background: "rgba(0,0,0,0.06)", color: "var(--text-2)",
+                            padding: "2px 8px",
+                        }}>
+                            {cards.length}
+                        </span>
+                    </div>
+                    {agentType !== "none" && (
+                        <span style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            color: "var(--v)",
+                            background: "rgba(109, 40, 217, 0.08)",
+                            padding: "2px 6px",
+                            borderRadius: 6,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            alignSelf: "flex-start",
+                            marginTop: 2
+                        }}>
+                            <Bot width={10} height={10} />
+                            {agentType === "researcher" ? "Agen Riset & Analisis" : agentType === "coder" ? "Agen Draf & Solusi" : "Agen Review & Evaluasi"}
+                        </span>
+                    )}
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {canEdit && (
+                        <button
+                            onClick={() => setShowAgentConfig(!showAgentConfig)}
+                            title="Konfigurasi AI Agent untuk kolom ini"
+                            style={{
+                                background: showAgentConfig ? "rgba(109, 40, 217, 0.08)" : "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: showAgentConfig ? "var(--v)" : "var(--text-3)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                padding: "4px",
+                                borderRadius: 6,
+                                transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={e => {
+                                if (!showAgentConfig) (e.currentTarget as HTMLElement).style.color = "var(--v)";
+                            }}
+                            onMouseLeave={e => {
+                                if (!showAgentConfig) (e.currentTarget as HTMLElement).style.color = "var(--text-3)";
+                            }}
+                        >
+                            <Bot style={{ width: 14, height: 14 }} />
+                        </button>
+                    )}
+
                     <button
                         onClick={handleShare}
                         title="Bagikan link proyek untuk kolaborasi"
@@ -160,6 +234,78 @@ export default function TodoListColumn({ id, boardId, userEmail = "", name, acce
                     )}
                 </div>
             </div>
+
+            {/* AI Agent Configuration Dropdown Panel */}
+            {showAgentConfig && canEdit && (
+                <div style={{
+                    background: "#ffffff",
+                    border: "1px solid var(--border-strong)",
+                    borderRadius: 12,
+                    padding: 12,
+                    marginBottom: 10,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                    animation: "fadeIn 0.2s ease"
+                }}>
+                    <div>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "var(--text-2)", marginBottom: 4, textTransform: "uppercase" }}>
+                            Pilih Peran Agen AI
+                        </label>
+                        <select
+                            value={selectedAgent}
+                            onChange={e => setSelectedAgent(e.target.value)}
+                            style={{
+                                width: "100%", padding: "6px", borderRadius: 6, fontSize: 12,
+                                border: "1px solid var(--border-strong)", outline: "none",
+                                background: "var(--surface)", color: "var(--text-1)"
+                            }}
+                        >
+                            <option value="none">Tanpa AI Agent</option>
+                            <option value="researcher">Agen Riset & Analisis (Ide & Konsep)</option>
+                            <option value="coder">Agen Draf & Solusi (Kode Program / Teks)</option>
+                            <option value="qa">Agen Review & Evaluasi (Cek Risiko & Koreksi)</option>
+                        </select>
+                    </div>
+                    {selectedAgent !== "none" && (
+                        <div>
+                            <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "var(--text-2)", marginBottom: 4, textTransform: "uppercase" }}>
+                                Instruksi Kustom (Opsional)
+                            </label>
+                            <textarea
+                                value={customPrompt}
+                                onChange={e => setCustomPrompt(e.target.value)}
+                                placeholder="misal: 'Fokus pada keamanan' atau 'Gunakan Tailwind CSS'..."
+                                rows={2}
+                                style={{
+                                    width: "100%", padding: "6px", borderRadius: 6, fontSize: 11,
+                                    border: "1px solid var(--border-strong)", outline: "none",
+                                    background: "var(--surface)", color: "var(--text-1)",
+                                    resize: "none", fontFamily: "inherit"
+                                }}
+                            />
+                        </div>
+                    )}
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                        <button
+                            type="button"
+                            onClick={() => setShowAgentConfig(false)}
+                            style={{ padding: "4px 8px", borderRadius: 6, fontSize: 11, background: "none", border: "1px solid var(--border)", cursor: "pointer", color: "var(--text-2)" }}
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSaveAgent}
+                            disabled={savingAgent}
+                            style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, background: "var(--v)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 600 }}
+                        >
+                            {savingAgent ? "Menyimpan..." : "Simpan"}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Physical Papan Board Container */}
             <div style={{
@@ -264,8 +410,11 @@ export default function TodoListColumn({ id, boardId, userEmail = "", name, acce
                                 id={card.id}
                                 boardId={boardId}
                                 title={card.title}
+                                description={card.description}
                                 accentColor={accentColor}
                                 canEdit={canEdit}
+                                isProcessing={processingCardId === card.id}
+                                processingAgent={processingAgent}
                             />
                         ))}
                     </SortableContext>
