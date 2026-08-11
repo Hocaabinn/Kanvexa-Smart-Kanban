@@ -30,7 +30,6 @@ import KanbanColumn from "./KanbanColumn";
 import TodoListColumn from "./board/todolist/TodoListColumn";
 import TodoListPresetModal from "./board/todolist/TodoListPresetModal";
 import AIBreakdownModal from "./AIBreakdownModal";
-import AISettingsModal from "./AISettingsModal";
 import MessageBoardView from "./board/MessageBoard/MessageBoardView";
 import CalendarView from "./board/Calendar/CalendarView";
 import DocsFilesView from "./board/DocsFiles/DocsFilesView";
@@ -42,7 +41,7 @@ import { showAlert } from "@/lib/swal";
 import { processCardWithAgent } from "@/lib/ai-client";
 
 interface Card { id: string; column_id: string; title: string; position: number; description?: string; }
-interface Column { id: string; name: string; position: number; agent_type?: string; agent_prompt?: string; }
+interface Column { id: string; name: string; position: number; agent_type?: string; agent_prompt?: string; accent_color?: string; }
 
 interface Props {
   boardId: string;
@@ -122,7 +121,6 @@ export default function BoardClient({
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [originalColId, setOriginalColId] = useState<string | null>(null);
   const [showAI, setShowAI] = useState(false);
-  const [showAISettings, setShowAISettings] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
   const [processingCardId, setProcessingCardId] = useState<string | null>(null);
   const [processingAgent, setProcessingAgent] = useState<string | null>(null);
@@ -499,12 +497,6 @@ export default function BoardClient({
         />
       )}
 
-      {showAISettings && (
-        <AISettingsModal
-          onClose={() => setShowAISettings(false)}
-        />
-      )}
-
       {/* Preset Column Config Modal */}
       {selectedPresetModal && (
         <TodoListPresetModal
@@ -670,30 +662,6 @@ export default function BoardClient({
         {activeTab === "kanban" && canEdit && (
           <div style={{ display: "flex", gap: 8 }}>
             <button
-              onClick={() => setShowAISettings(true)}
-              style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "7px 12px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-                background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", cursor: "pointer",
-                transition: "background 0.15s, border-color 0.15s",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-              onMouseEnter={e => {
-                const target = e.currentTarget as HTMLElement;
-                target.style.background = "#e2e8f0";
-                target.style.borderColor = "#94a3b8";
-              }}
-              onMouseLeave={e => {
-                const target = e.currentTarget as HTMLElement;
-                target.style.background = "#f1f5f9";
-                target.style.borderColor = "#cbd5e1";
-              }}
-            >
-              <Settings width={14} height={14} />
-              AI Settings
-            </button>
-            <button
               onClick={() => setShowAI(true)}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
@@ -757,7 +725,7 @@ export default function BoardClient({
       ) : activeTab === "graph" ? (
         <GraphView
           boardId={boardId}
-          columns={columns.map(c => ({ id: c.id, name: c.name, accent_color: c.accent_color }))}
+          columns={columns.map((c, i) => ({ id: c.id, name: c.name, accent_color: c.accent_color || colColor(i, c.name) }))}
           cards={cards.map(c => ({ id: c.id, column_id: c.column_id, title: c.title, description: c.description }))}
           canEdit={canEdit}
         />
