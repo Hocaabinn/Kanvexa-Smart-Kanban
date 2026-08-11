@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Sparkles, Cpu, Check, Key, Globe, Layers, Bot, Search, Code, CheckSquare, ArrowRight, Settings2 } from "lucide-react";
+import { X, Sparkles, Cpu, Check, Key, Globe, Layers, Bot, Search, Code, CheckSquare, ArrowRight, Settings2, Eye, EyeOff } from "lucide-react";
 
 interface AISettingsModalProps {
   onClose: () => void;
@@ -351,12 +351,12 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
                       type="button"
                       onClick={() => setShowKey(!showKey)}
                       style={{
-                        position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
-                        background: "none", border: "none", color: "var(--v)", fontSize: 10,
-                        fontWeight: 700, cursor: "pointer"
+                        position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                        background: "none", border: "none", color: "#64748b",
+                        display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"
                       }}
                     >
-                      {showKey ? "Sembunyi" : "Lihat"}
+                      {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                   <span style={{ fontSize: 9, color: "#94a3b8", lineHeight: 1.3 }}>
@@ -390,12 +390,12 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
                       type="button"
                       onClick={() => setShowKey(!showKey)}
                       style={{
-                        position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
-                        background: "none", border: "none", color: "var(--v)", fontSize: 10,
-                        fontWeight: 700, cursor: "pointer"
+                        position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                        background: "none", border: "none", color: "#64748b",
+                        display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"
                       }}
                     >
-                      {showKey ? "Sembunyi" : "Lihat"}
+                      {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                   <span style={{ fontSize: 9, color: "#94a3b8", lineHeight: 1.3 }}>
@@ -453,12 +453,12 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
                         type="button"
                         onClick={() => setShowKey(!showKey)}
                         style={{
-                          position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
-                          background: "none", border: "none", color: "var(--v)", fontSize: 10,
-                          fontWeight: 700, cursor: "pointer"
+                          position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                          background: "none", border: "none", color: "#64748b",
+                          display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"
                         }}
                       >
-                        {showKey ? "Sembunyi" : "Lihat"}
+                        {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
                   </div>
