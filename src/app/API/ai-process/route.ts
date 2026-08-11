@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // 2. Parse request payload
-  const { cardTitle, currentDescription, agentType, customPrompt, model: userModel } = await req.json();
+  const { cardTitle, currentDescription, agentType, customPrompt, model: userModel, userApiKey } = await req.json();
   if (!cardTitle?.trim() || !agentType) {
     return NextResponse.json({ error: "Card title and agent type are required" }, { status: 400 });
   }
@@ -82,8 +82,63 @@ ${currentDescription || "(Belum ada deskripsi)"}
 
 ${customPrompt ? `Instruksi Tambahan Khusus: ${customPrompt}` : ""}`;
 
-  // 5. Connect to OpenRouter server-side using developer's API key
+  // 5. Connect to AI Providers
   try {
+    let content = "";
+    let lastError = "";
+
+    // 5A. If user provided their own API key for Gemini or Claude
+    if (userApiKey) {
+      if (userModel === "google/gemini-2.5-flash") {
+        const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${userApiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "gemini-2.5-flash",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userContent }
+            ],
+            temperature: 0.2
+          })
+        });
+        const data = await response.json();
+        if (response.ok && data?.choices?.[0]?.message?.content) {
+          return NextResponse.json({ success: true, content: data.choices[0].message.content });
+        } else {
+          return NextResponse.json({ error: data.error?.message || "Gemini API Error" }, { status: response.status });
+        }
+      } else if (userModel === "anthropic/claude-3.5-haiku") {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": userApiKey,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "claude-3-5-haiku-20241022",
+            max_tokens: 2548,
+            system: systemPrompt,
+            messages: [
+              { role: "user", content: userContent }
+            ],
+            temperature: 0.2
+          })
+        });
+        const data = await response.json();
+        if (response.ok && data?.content?.[0]?.text) {
+          return NextResponse.json({ success: true, content: data.content[0].text });
+        } else {
+          return NextResponse.json({ error: data.error?.message || "Claude API Error" }, { status: response.status });
+        }
+      }
+    }
+
+    // 5B. Fallback to centralized OpenRouter
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "Server AI key is not configured" }, { status: 500 });
@@ -102,9 +157,6 @@ ${customPrompt ? `Instruksi Tambahan Khusus: ${customPrompt}` : ""}`;
       }
       MODELS.unshift(userModel);
     }
-
-    let content = "";
-    let lastError = "";
 
     for (const model of MODELS) {
       try {
