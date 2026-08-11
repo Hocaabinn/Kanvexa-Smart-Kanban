@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Sparkles, Cpu, Check } from "lucide-react";
+import { X, Sparkles, Cpu, Check, Key, Globe, Layers } from "lucide-react";
 
 interface AISettingsModalProps {
   onClose: () => void;
@@ -9,14 +9,23 @@ interface AISettingsModalProps {
 
 export default function AISettingsModal({ onClose }: AISettingsModalProps) {
   const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
+  const [customUrl, setCustomUrl] = useState("https://api.openai.com/v1");
+  const [customKey, setCustomKey] = useState("");
+  const [customModel, setCustomModel] = useState("gpt-4o-mini");
+  const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("kanvexa_selected_model") || "google/gemini-2.5-flash";
-    setSelectedModel(saved);
+    setSelectedModel(localStorage.getItem("kanvexa_selected_model") || "google/gemini-2.5-flash");
+    setCustomUrl(localStorage.getItem("kanvexa_custom_url") || "https://api.openai.com/v1");
+    setCustomKey(localStorage.getItem("kanvexa_custom_key") || "");
+    setCustomModel(localStorage.getItem("kanvexa_custom_model") || "gpt-4o-mini");
   }, []);
 
   const handleSave = () => {
     localStorage.setItem("kanvexa_selected_model", selectedModel);
+    localStorage.setItem("kanvexa_custom_url", customUrl);
+    localStorage.setItem("kanvexa_custom_key", customKey);
+    localStorage.setItem("kanvexa_custom_model", customModel);
     onClose();
   };
 
@@ -24,32 +33,24 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
     {
       id: "google/gemini-2.5-flash",
       name: "Gemini 2.5 Flash",
-      description: "Sangat cepat, hemat kuota, dan seimbang untuk semua jenis analisis.",
-      badge: "Rekomendasi",
+      description: "Model bawaan gratis, sangat cepat, hemat, dan andal untuk penggunaan umum.",
+      badge: "Gratis & Cepat",
       badgeColor: "#6366f1",
       badgeBg: "#e0e7ff"
     },
     {
-      id: "meta-llama/llama-3.3-70b-instruct",
-      name: "Llama 3.3 70B",
-      description: "Model open-source terkuat, sangat baik untuk draf panjang dan terperinci.",
-      badge: "Detail & Informatif",
-      badgeColor: "#059669",
-      badgeBg: "#d1fae5"
-    },
-    {
       id: "anthropic/claude-3.5-haiku",
       name: "Claude 3.5 Haiku",
-      description: "Model dari Anthropic yang sangat cepat dengan penalaran dan bahasa yang natural.",
-      badge: "Bahasa Luwes",
+      description: "Model bawaan gratis dari Anthropic dengan tata bahasa luwes dan responsif.",
+      badge: "Gratis & Luwes",
       badgeColor: "#d97706",
       badgeBg: "#fef3c7"
     },
     {
-      id: "anthropic/claude-3.5-sonnet",
-      name: "Claude 3.5 Sonnet",
-      description: "Kualitas terbaik untuk analisis kompleks dan penulisan kode program tingkat lanjut.",
-      badge: "Kualitas Premium",
+      id: "custom",
+      name: "Custom API (BYOK)",
+      description: "Gunakan API Key Anda sendiri untuk menghubungkan Groq, DeepSeek, Minimax, Kiro, atau Ollama lokal.",
+      badge: "Kustom / Mandiri",
       badgeColor: "#7c3aed",
       badgeBg: "#f3e8ff"
     }
@@ -65,7 +66,8 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
         background: "#ffffff", borderRadius: 16, width: "100%", maxWidth: 480,
         boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
         overflow: "hidden", border: "1px solid #e2e8f0",
-        animation: "scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
+        animation: "scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+        display: "flex", flexDirection: "column", maxHeight: "90vh"
       }}>
         {/* Header */}
         <div style={{
@@ -85,12 +87,12 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
         </div>
 
         {/* Content */}
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: 20, overflowY: "auto", flex: 1 }}>
           <p style={{ fontSize: 12, color: "#64748b", marginTop: 0, marginBottom: 16, lineHeight: 1.45 }}>
-            Pilih kecerdasan buatan (AI) yang ingin Anda gunakan untuk mengurai tugas. Semua API Key dikelola dengan aman di server kami.
+            Pilih kecerdasan buatan (AI) yang ingin Anda gunakan. Model bawaan disediakan gratis, atau gunakan API mandiri Anda secara privat.
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 320, overflowY: "auto", paddingRight: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: selectedModel === "custom" ? 16 : 0 }}>
             {models.map((model) => {
               const isSelected = selectedModel === model.id;
               return (
@@ -135,6 +137,86 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
               );
             })}
           </div>
+
+          {/* Custom API Inputs */}
+          {selectedModel === "custom" && (
+            <div style={{
+              marginTop: 16, padding: 14, borderRadius: 12, border: "1px dashed #cbd5e1",
+              background: "#f8fafc", display: "flex", flexDirection: "column", gap: 12,
+              animation: "fadeIn 0.2s ease"
+            }}>
+              <h4 style={{ margin: "0 0 4px 0", fontSize: 12, fontWeight: 700, color: "#334155" }}>
+                Konfigurasi API Mandiri (BYOK)
+              </h4>
+              
+              <div>
+                <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: "#475569", marginBottom: 4, textTransform: "uppercase" }}>
+                  <Globe size={11} /> API Base URL
+                </label>
+                <input
+                  type="text"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder="https://api.groq.com/openai/v1"
+                  style={{
+                    width: "100%", padding: "8px 10px", borderRadius: 6, fontSize: 12,
+                    border: "1px solid #cbd5e1", outline: "none", color: "#334155"
+                  }}
+                />
+                <span style={{ fontSize: 9, color: "#94a3b8", marginTop: 2, display: "block" }}>
+                  Gunakan URL endpoint yang kompatibel dengan format OpenAI.
+                </span>
+              </div>
+
+              <div>
+                <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: "#475569", marginBottom: 4, textTransform: "uppercase" }}>
+                  <Key size={11} /> API Key
+                </label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={customKey}
+                    onChange={(e) => setCustomKey(e.target.value)}
+                    placeholder="Masukkan API Key Anda..."
+                    style={{
+                      width: "100%", padding: "8px 45px 8px 10px", borderRadius: 6, fontSize: 12,
+                      border: "1px solid #cbd5e1", outline: "none", color: "#334155"
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(!showKey)}
+                    style={{
+                      position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                      background: "none", border: "none", color: "var(--v)", fontSize: 10,
+                      fontWeight: 700, cursor: "pointer"
+                    }}
+                  >
+                    {showKey ? "Sembunyi" : "Lihat"}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: "#475569", marginBottom: 4, textTransform: "uppercase" }}>
+                  <Layers size={11} /> Nama Model AI
+                </label>
+                <input
+                  type="text"
+                  value={customModel}
+                  onChange={(e) => setCustomModel(e.target.value)}
+                  placeholder="llama-3.3-70b-versatile"
+                  style={{
+                    width: "100%", padding: "8px 10px", borderRadius: 6, fontSize: 12,
+                    border: "1px solid #cbd5e1", outline: "none", color: "#334155"
+                  }}
+                />
+                <span style={{ fontSize: 9, color: "#94a3b8", marginTop: 2, display: "block" }}>
+                  Contoh: <code>llama-3.3-70b-versatile</code> (Groq), <code>gpt-4o-mini</code> (OpenAI), dll.
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -169,6 +251,10 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
         @keyframes scaleUp {
           from { transform: scale(0.96); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
