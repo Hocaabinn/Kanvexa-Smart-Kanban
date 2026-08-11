@@ -20,9 +20,9 @@ export async function processCardWithAgent(
   // 1. If it's the Custom option (BYOK), fetch directly from the custom API
   if (selectedModel === "custom") {
     try {
-      const customUrl = localStorage.getItem("kanvexa_custom_url") || "https://api.openai.com/v1";
+      const customUrl = localStorage.getItem("kanvexa_custom_url") || "";
       const customKey = localStorage.getItem("kanvexa_custom_key") || "";
-      const customModel = localStorage.getItem("kanvexa_custom_model") || "gpt-4o-mini";
+      const customModel = localStorage.getItem("kanvexa_custom_model") || "";
 
       if (!customKey) {
         return { success: false, error: "Custom API Key belum dikonfigurasi di AI Settings." };
@@ -150,6 +150,11 @@ ${customPrompt ? `Instruksi Tambahan Khusus: ${customPrompt}` : ""}`;
         agentType,
         customPrompt,
         model: selectedModel,
+        userApiKey: selectedModel === "google/gemini-2.5-flash"
+          ? (localStorage.getItem("kanvexa_gemini_key") || undefined)
+          : selectedModel === "anthropic/claude-3.5-haiku"
+            ? (localStorage.getItem("kanvexa_claude_key") || undefined)
+            : undefined,
       }),
     });
 
