@@ -15,7 +15,8 @@ export async function processCardWithAgent(
   agentType: string,
   customPrompt: string = ""
 ): Promise<AgentResponse> {
-  try {
+    try {
+    const selectedModel = localStorage.getItem("kanvexa_selected_model") || "google/gemini-2.5-flash";
     const response = await fetch("/API/ai-process", {
       method: "POST",
       headers: {
@@ -26,6 +27,7 @@ export async function processCardWithAgent(
         currentDescription,
         agentType,
         customPrompt,
+        model: selectedModel,
       }),
     });
 

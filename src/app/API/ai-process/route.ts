@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // 2. Parse request payload
-  const { cardTitle, currentDescription, agentType, customPrompt } = await req.json();
+  const { cardTitle, currentDescription, agentType, customPrompt, model: userModel } = await req.json();
   if (!cardTitle?.trim() || !agentType) {
     return NextResponse.json({ error: "Card title and agent type are required" }, { status: 400 });
   }
@@ -94,6 +94,14 @@ ${customPrompt ? `Instruksi Tambahan Khusus: ${customPrompt}` : ""}`;
       "meta-llama/llama-3.3-70b-instruct",
       "qwen/qwen-2.5-72b-instruct"
     ];
+
+    if (userModel) {
+      const idx = MODELS.indexOf(userModel);
+      if (idx !== -1) {
+        MODELS.splice(idx, 1);
+      }
+      MODELS.unshift(userModel);
+    }
 
     let content = "";
     let lastError = "";
