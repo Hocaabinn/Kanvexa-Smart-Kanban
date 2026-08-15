@@ -527,35 +527,37 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
         @media (max-width: 900px) {
           .docs-columns-wrapper {
             flex-direction: column !important;
-            gap: 20px !important;
+            gap: 16px !important;
           }
           .docs-sidebar-pane {
             width: 100% !important;
           }
           .docs-folders-grid {
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+            gap: 12px !important;
           }
           .docs-table-container {
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch;
           }
           .docs-table-container table {
-            min-width: 650px !important;
+            min-width: 600px !important;
           }
         }
 
         @media (max-width: 600px) {
           .docs-view-container {
-            padding: 12px 16px 30px !important;
+            padding: 12px 8px 30px !important;
           }
           .docs-header-bar {
             flex-direction: column !important;
-            align-items: flex-start !important;
+            align-items: stretch !important;
             gap: 12px !important;
           }
           .docs-buttons-group {
             width: 100% !important;
-            justify-content: flex-start !important;
+            display: flex !important;
+            flex-direction: row !important;
             gap: 8px !important;
           }
           .docs-buttons-group button {
@@ -565,7 +567,15 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
             justify-content: center !important;
           }
           .docs-folders-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .docs-folders-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px !important;
           }
         }
       `}</style>

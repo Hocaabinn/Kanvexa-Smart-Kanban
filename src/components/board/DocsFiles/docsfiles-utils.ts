@@ -90,8 +90,8 @@ export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
     title: "Product Requirement Document (PRD) - Kanvexa SaaS",
     category: "PRD",
     author_email: "andi@kanvexa.com",
-    created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2025-02-14T10:00:00.000Z",
+    updated_at: "2025-02-15T10:00:00.000Z",
     summary_highlights: [
       "Peluncuran modul Message Board & AI Assistant",
       "Dukungan upload file hingga 50 MB",
@@ -128,8 +128,8 @@ export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
     title: "Catatan Rapat Peluncuran Fitur Baru",
     category: "Meeting Notes",
     author_email: "bintangwcproger@gmail.com",
-    created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2025-02-13T10:00:00.000Z",
+    updated_at: "2025-02-15T10:00:00.000Z",
     summary_highlights: [
       "Tim menyepakati desain gradient ungu cerah khas Kanvexa",
       "Sinkronisasi real-time Supabase berjalan lancar",
@@ -140,7 +140,7 @@ export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
     ],
     content_markdown: `# Catatan Rapat Peluncuran Fitur Baru
 
-**Tanggal:** ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}  
+**Tanggal:** 15 Februari 2025  
 **Peserta:** Tim Developer & Desainer Kanvexa
 
 ---
@@ -164,8 +164,8 @@ export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
     title: "Spesifikasi Teknis & Arsitektur API",
     category: "Technical Spec",
     author_email: "bintangwcproger@gmail.com",
-    created_at: new Date(Date.now() - 3600000 * 72).toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2025-02-12T10:00:00.000Z",
+    updated_at: "2025-02-15T10:00:00.000Z",
     content_markdown: `# Spesifikasi Teknis & Arsitektur API
 
 Dokumen spesifikasi teknis platform Kanvexa SaaS untuk integrasi API dan database real-time.`,

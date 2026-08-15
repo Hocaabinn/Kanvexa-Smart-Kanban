@@ -200,7 +200,7 @@ const FloatingIcon = ({
           rotate: [0, 3, 0, -3, 0],
         }}
         transition={{
-          duration: 5 + Math.random() * 5,
+          duration: 5 + ((index * 3) % 5),
           repeat: Infinity,
           repeatType: "mirror",
           ease: "easeInOut",
@@ -769,6 +769,14 @@ export default function LandingPage() {
   const [activeSection, setActiveSection] = useState("home");
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobileNav, setIsMobileNav] = useState(false);
+
+  useEffect(() => {
+    setIsMobileNav(window.innerWidth < 768);
+    const handleResize = () => setIsMobileNav(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   /* Locomotive Scroll Parallax Effects */
   const heroRef = useRef<HTMLDivElement>(null);
@@ -907,8 +915,8 @@ export default function LandingPage() {
           className="flex items-center justify-between font-body w-full"
           animate={{
             maxWidth: isScrolled ? 760 : 9999,
-            paddingLeft: isScrolled ? 24 : (typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 80),
-            paddingRight: isScrolled ? 24 : (typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 80),
+            paddingLeft: isScrolled ? 24 : (isMobileNav ? 20 : 80),
+            paddingRight: isScrolled ? 24 : (isMobileNav ? 20 : 80),
             paddingTop: isScrolled ? 10 : 20,
             paddingBottom: isScrolled ? 10 : 20,
             borderRadius: isScrolled ? 9999 : 0,

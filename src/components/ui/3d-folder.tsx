@@ -102,8 +102,11 @@ export function AnimatedFolder({
           className
         )}
         style={{
-          minWidth: "210px",
-          minHeight: "210px",
+          minWidth: "0",
+          width: "100%",
+          maxWidth: "100%",
+          minHeight: "160px",
+          overflow: "hidden",
           perspective: "1000px",
           background: "linear-gradient(135deg, #ffffff 0%, #faf5ff 45%, #f3e8ff 100%)",
           border: "1.5px solid #d8b4fe",
@@ -136,7 +139,7 @@ export function AnimatedFolder({
           }}
         />
 
-        <div className="relative flex items-center justify-center mb-1" style={{ height: "110px", width: "150px" }}>
+        <div className="relative flex items-center justify-center mb-1" style={{ height: "110px", width: "100%", maxWidth: "150px", margin: "0 auto" }}>
           {/* Folder back layer - z-index 10 */}
           <div
             className="absolute w-28 h-20 rounded-lg shadow-md"
@@ -705,27 +708,27 @@ interface ProjectCardProps {
 
 export const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(
   ({ image, title, delay, isVisible, index, onClick, isSelected }, ref) => {
-    const rotations = [-12, 0, 12];
-    const translations = [-55, 0, 55];
+    const rotations = [-8, 0, 8];
+    const translations = [-30, 0, 30];
 
     return (
       <div
         ref={ref}
         className={cn(
-          "absolute w-20 h-28 rounded-lg overflow-hidden shadow-xl",
+          "absolute w-16 h-22 rounded-lg overflow-hidden shadow-xl",
           "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700",
           "cursor-pointer hover:ring-2 hover:ring-purple-500/50",
           isSelected && "opacity-0"
         )}
         style={{
           transform: isVisible
-            ? `translateY(-90px) translateX(${translations[index]}px) rotate(${rotations[index]}deg) scale(1)`
+            ? `translateY(-75px) translateX(${translations[index]}px) rotate(${rotations[index]}deg) scale(1)`
             : "translateY(0px) translateX(0px) rotate(0deg) scale(0.5)",
           opacity: isSelected ? 0 : isVisible ? 1 : 0,
           transition: `all 600ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
           zIndex: 10 - index,
-          left: "-40px",
-          top: "-56px",
+          left: "-32px",
+          top: "-44px",
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -772,8 +775,8 @@ export function Dashboard3DFolderCard({
   dateFormatted,
 }: Dashboard3DFolderCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const rotations = [-12, 0, 12];
-  const translations = [-45, 0, 45];
+  const rotations = [-8, 0, 8];
+  const translations = [-24, 0, 24];
 
   return (
     <div
@@ -837,7 +840,8 @@ export function Dashboard3DFolderCard({
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          minHeight: "250px",
+          minHeight: "220px",
+          overflow: "hidden",
           position: "relative",
           transition: "all 400ms cubic-bezier(0.16, 1, 0.3, 1)",
           transform: isHovered ? "translateY(-4px)" : "translateY(0)",
@@ -856,8 +860,8 @@ export function Dashboard3DFolderCard({
         <div
           style={{
             position: "absolute",
-            top: "40px",
-            right: "40px",
+            top: "36px",
+            right: "24px",
             pointerEvents: "none",
             zIndex: 15,
           }}

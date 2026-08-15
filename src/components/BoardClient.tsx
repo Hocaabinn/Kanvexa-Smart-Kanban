@@ -668,7 +668,7 @@ export default function BoardClient({
 
         {/* AI Action Buttons (Shown in Kanban view) */}
         {activeTab === "kanban" && canEdit && (
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="board-tab-actions" style={{ display: "flex", gap: 8 }}>
             <button
               onClick={() => setShowAISettings(true)}
               style={{
@@ -716,13 +716,33 @@ export default function BoardClient({
       <style>{`
         @media (max-width: 640px) {
           .board-tab-bar {
-            padding: 10px 12px 0 !important;
+            padding: 8px 12px 0 !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 8px !important;
           }
-          .tab-label {
-            display: none;
+          .board-tab-actions {
+            width: 100% !important;
+            display: flex !important;
+            gap: 8px !important;
+          }
+          .board-tab-actions button {
+            flex: 1 !important;
+            justify-content: center !important;
           }
           .board-tabs-scroll {
-            -webkit-overflow-scrolling: touch;
+            width: 100% !important;
+          }
+          .kanban-columns-container {
+            flex-direction: column !important;
+            width: 100% !important;
+            padding: 12px 12px 28px !important;
+            gap: 16px !important;
+            overflow-x: hidden !important;
+          }
+          .todo-list-column {
+            width: 100% !important;
+            max-height: none !important;
           }
         }
       `}</style>
@@ -776,7 +796,7 @@ export default function BoardClient({
           minHeight: 0,
           position: "relative",
         }}
-          className="scrollbar-hide"
+          className="scrollbar-hide kanban-columns-container"
           suppressHydrationWarning
         >
           {isAILoading && (

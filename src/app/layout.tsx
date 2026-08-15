@@ -18,20 +18,60 @@ export const metadata: Metadata = {
 
 const scriptCode = `
   (function() {
-    // Suppress console errors and warnings about hydration mismatches caused by browser extensions
+    // 1. Scrub browser extension attributes (Bitdefender bis_skin_checked, bis_size, etc.) before React hydration
+    function scrubExtensionAttributes(root) {
+      if (!root || root.nodeType !== 1) return;
+      if (root.hasAttribute('bis_skin_checked')) root.removeAttribute('bis_skin_checked');
+      if (root.hasAttribute('bis_size')) root.removeAttribute('bis_size');
+      var targets = root.querySelectorAll('[bis_skin_checked], [bis_size]');
+      for (var i = 0; i < targets.length; i++) {
+        targets[i].removeAttribute('bis_skin_checked');
+        targets[i].removeAttribute('bis_size');
+      }
+    }
+
+    if (typeof document !== 'undefined') {
+      scrubExtensionAttributes(document.documentElement);
+
+      if (typeof MutationObserver !== 'undefined') {
+        var observer = new MutationObserver(function(mutations) {
+          for (var i = 0; i < mutations.length; i++) {
+            var m = mutations[i];
+            if (m.type === 'attributes' && (m.attributeName === 'bis_skin_checked' || m.attributeName === 'bis_size')) {
+              m.target.removeAttribute(m.attributeName);
+            } else if (m.type === 'childList') {
+              for (var j = 0; j < m.addedNodes.length; j++) {
+                scrubExtensionAttributes(m.addedNodes[j]);
+              }
+            }
+          }
+        });
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['bis_skin_checked', 'bis_size'],
+          childList: true,
+          subtree: true
+        });
+      }
+    }
+
+    // 2. Suppress console errors and warnings about hydration mismatches caused by browser extensions
     const originalError = console.error;
     console.error = function(...args) {
-      const firstArg = args[0];
-      if (typeof firstArg === 'string') {
-        if (
-          firstArg.includes('hydration-mismatch') ||
-          firstArg.includes('Hydration failed') ||
-          firstArg.includes('did not match') ||
-          firstArg.includes('bis_skin_checked') ||
-          firstArg.includes('suppressHydrationWarning')
-        ) {
-          return;
-        }
+      const fullText = args.map(a => {
+        if (typeof a === 'string') return a;
+        if (a && typeof a === 'object') return a.message || a.stack || JSON.stringify(a);
+        return String(a);
+      }).join(' ');
+
+      if (
+        fullText.includes('hydration-mismatch') ||
+        fullText.includes('Hydration failed') ||
+        fullText.includes('did not match') ||
+        fullText.includes('bis_skin_checked') ||
+        fullText.includes('suppressHydrationWarning')
+      ) {
+        return;
       }
       originalError.apply(console, args);
     };

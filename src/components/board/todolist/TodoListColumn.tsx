@@ -119,11 +119,14 @@ export default function TodoListColumn({ id, boardId, userEmail = "", name, acce
     const cardIds = sortedCards.map(c => c.id);
 
     return (
-        <div style={{
-            width: 290, flexShrink: 0,
-            display: "flex", flexDirection: "column",
-            maxHeight: "calc(100vh - 140px)",
-        }}>
+        <div
+            className="todo-list-column"
+            style={{
+                width: 290, flexShrink: 0,
+                display: "flex", flexDirection: "column",
+                maxHeight: "calc(100vh - 140px)",
+            }}
+        >
             {/* Column Header Title above Card Container */}
             <div style={{
                 padding: "4px 4px 10px 4px",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Share2, Copy, Check, UserPlus, Mail, Shield, ExternalLink, MessageCircle } from "lucide-react";
 import { inviteBoardMember } from "@/app/board/[id]/actions";
 
@@ -17,8 +17,13 @@ export default function ShareBoardModal({ boardId, userEmail, onClose }: Props) 
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState(`http://localhost:3000/board/${boardId}`);
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : `http://localhost:3000/board/${boardId}`;
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setShareUrl(window.location.href);
+    }
+  }, [boardId]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
