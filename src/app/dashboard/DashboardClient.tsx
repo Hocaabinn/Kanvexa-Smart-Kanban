@@ -22,6 +22,7 @@ import {
   Menu
 } from "lucide-react";
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
+import BoardLoaderModal from "@/components/ui/BoardLoaderModal";
 import { showAlert, showConfirm } from "@/lib/swal";
 
 interface Board {
@@ -72,6 +73,12 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   const [showInbox, setShowInbox] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations);
   const [inboxUpdateTrigger, setInboxUpdateTrigger] = useState(0);
+  const [openingBoardTitle, setOpeningBoardTitle] = useState<string | null>(null);
+
+  const handleOpenBoard = (boardId: string, boardName: string) => {
+    setOpeningBoardTitle(boardName);
+    router.push(`/board/${boardId}`);
+  };
 
   // Rename & Delete state
   const [boardToRename, setBoardToRename] = useState<{ id: string; name: string } | null>(null);
@@ -218,6 +225,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
         isMobileOpen={isMobileOpen}
         setIsMobileOpen={setIsMobileOpen}
         onInboxClick={() => setShowInbox(true)}
+        onOpenBoard={(name) => setOpeningBoardTitle(name)}
       />
 
       {/* Main Content Pane */}
@@ -393,13 +401,19 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                   const isStarred = starredBoardIds.includes(board.id);
 
                   return (
-                    <Link key={board.id} href={`/board/${board.id}`} style={{ textDecoration: "none" }}>
+                    <Link 
+                      key={board.id} 
+                      href={`/board/${board.id}`} 
+                      style={{ textDecoration: "none" }}
+                      onClick={() => setOpeningBoardTitle(board.name)}
+                    >
                       <AnimatedFolder
                         title={board.name}
                         subtitle={`${board.owner_email || "Kanvexa"} • ${dateFormatted}`}
                         isPinned={isPinned}
                         isStarred={isStarred}
                         showOpenButton={true}
+                        onClickFolder={() => handleOpenBoard(board.id, board.name)}
                         projects={[
                           { id: `${board.id}-1`, image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=60&w=150&auto=format&fit=crop", title: "Kanban Board" },
                           { id: `${board.id}-2`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=60&w=150&auto=format&fit=crop", title: "Docs & Files" },
@@ -788,7 +802,11 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
         </div>
       )}
 
-
+      {/* Pop-up Board Loader Modal */}
+      <BoardLoaderModal
+        isOpen={!!openingBoardTitle}
+        boardTitle={openingBoardTitle ?? ""}
+      />
 
       <style>{`
         @keyframes slideInDown {

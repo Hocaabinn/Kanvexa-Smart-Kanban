@@ -69,7 +69,9 @@ const scriptCode = `
         fullText.includes('Hydration failed') ||
         fullText.includes('did not match') ||
         fullText.includes('bis_skin_checked') ||
-        fullText.includes('suppressHydrationWarning')
+        fullText.includes('suppressHydrationWarning') ||
+        fullText.includes('chrome-extension://') ||
+        fullText.includes('M_ID')
       ) {
         return;
       }
@@ -77,9 +79,11 @@ const scriptCode = `
     };
 
     window.addEventListener('error', function(e) {
+      var errorStr = (e.filename || '') + ' ' + (e.message || '') + ' ' + (e.error && e.error.stack ? e.error.stack : '');
       if (
-        (e.filename && e.filename.indexOf('chrome-extension://') !== -1) ||
-        (e.message && e.message.indexOf('Cannot redefine property: ethereum') !== -1)
+        errorStr.indexOf('chrome-extension://') !== -1 ||
+        errorStr.indexOf('M_ID') !== -1 ||
+        errorStr.indexOf('Cannot redefine property: ethereum') !== -1
       ) {
         e.stopImmediatePropagation();
         e.preventDefault();
@@ -87,11 +91,20 @@ const scriptCode = `
     }, true);
 
     window.addEventListener('unhandledrejection', function(e) {
+      var reasonStr = '';
+      if (e.reason) {
+        if (typeof e.reason === 'string') {
+          reasonStr = e.reason;
+        } else {
+          reasonStr = (e.reason.stack || e.reason.message || '') + '';
+        }
+      }
       if (
-        e.reason &&
-        e.reason.message &&
-        e.reason.message.indexOf('Cannot redefine property: ethereum') !== -1
+        reasonStr.indexOf('chrome-extension://') !== -1 ||
+        reasonStr.indexOf('M_ID') !== -1 ||
+        reasonStr.indexOf('Cannot redefine property: ethereum') !== -1
       ) {
+        e.stopImmediatePropagation();
         e.preventDefault();
       }
     }, true);

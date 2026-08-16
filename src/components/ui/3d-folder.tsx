@@ -247,6 +247,12 @@ export function AnimatedFolder({
         {showOpenButton && (
           <div className="mt-2 flex items-center justify-center">
             <span
+              onClick={(e) => {
+                if (onClickFolder) {
+                  e.stopPropagation();
+                  onClickFolder();
+                }
+              }}
               style={{
                 background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
                 color: "#ffffff",
@@ -255,6 +261,7 @@ export function AnimatedFolder({
                 fontSize: "11px",
                 fontWeight: "800",
                 boxShadow: "0 3px 10px rgba(109, 40, 217, 0.3)",
+                cursor: "pointer",
               }}
               className="transition-transform duration-300 group-hover:scale-105"
             >

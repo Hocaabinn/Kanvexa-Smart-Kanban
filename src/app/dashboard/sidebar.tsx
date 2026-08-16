@@ -55,6 +55,7 @@ interface SidebarProps {
   isMobileOpen?: boolean;
   setIsMobileOpen?: (open: boolean) => void;
   onInboxClick?: () => void;
+  onOpenBoard?: (boardName: string) => void;
 }
 
 function initials(email: string) {
@@ -77,6 +78,7 @@ export default function Sidebar({
   isMobileOpen = false,
   setIsMobileOpen,
   onInboxClick,
+  onOpenBoard,
 }: SidebarProps) {
   const [showInboxModal, setShowInboxModal] = useState(false);
   const pathname = usePathname();
@@ -178,7 +180,13 @@ export default function Sidebar({
         style={{ position: "relative" }}
         className="sidebar-item-container"
       >
-        <Link href={`/board/${b.id}`} style={{ textDecoration: "none" }}>
+        <Link
+          href={`/board/${b.id}`}
+          style={{ textDecoration: "none" }}
+          onClick={() => {
+            if (onOpenBoard) onOpenBoard(b.name);
+          }}
+        >
           <div style={{
             display: "flex",
             alignItems: "center",
