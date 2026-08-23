@@ -8,10 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
 
 const images = [
-  "https://res.cloudinary.com/harshitproject/image/upload/v1782138638/midjourney-image-one.png",
-  "https://res.cloudinary.com/harshitproject/image/upload/v1782138637/midjourney-image-two.png",
-  "https://res.cloudinary.com/harshitproject/image/upload/v1782138639/midjourney-image-three.png",
-  "https://res.cloudinary.com/harshitproject/image/upload/v1782138640/midjourney-image-four.png",
+  "/img/starry_night.png",
+  "/img/purple_landscape.png",
+  "/img/purple_cat.png",
+  "/img/purple_fuji.png",
 ];
 
 const prompts = [
