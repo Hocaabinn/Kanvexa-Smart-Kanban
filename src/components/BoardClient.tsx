@@ -35,6 +35,8 @@ import MessageBoardView from "./board/MessageBoard/MessageBoardView";
 import CalendarView from "./board/Calendar/CalendarView";
 import DocsFilesView from "./board/DocsFiles/DocsFilesView";
 import GraphView from "./board/GraphView";
+import BoardCoverBanner, { type CoverData } from "./board/BoardCoverBanner";
+import BoardIconPickerModal, { type BoardIconData, LUCIDE_ICONS_MAP } from "./board/BoardIconPickerModal";
 import type { BoardPost, BoardPostComment } from "./board/MessageBoard/messageboard-utils";
 import { moveCard, createColumn, createColumnWithCard, insertAIBreakdown, updateCardDescription } from "@/app/board/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -121,6 +123,58 @@ export default function BoardClient({
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [originalColId, setOriginalColId] = useState<string | null>(null);
+
+  // Board Cover & Icon persistence
+  const COVER_STORAGE_KEY = `kanvexa_cover_${boardId}`;
+  const ICON_STORAGE_KEY = `kanvexa_icon_${boardId}`;
+
+  const [cover, setCover] = useState<CoverData | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(COVER_STORAGE_KEY);
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return { type: "gradient", value: "linear-gradient(135deg, #6d28d9 0%, #4c1d95 50%, #1e1b4b 100%)" };
+  });
+
+  const [boardIcon, setBoardIcon] = useState<BoardIconData>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(ICON_STORAGE_KEY);
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return { type: "lucide", value: "FolderKanban", color: "#f5f3ff" };
+  });
+
+  const [showIconPicker, setShowIconPicker] = useState(false);
+
+  const handleUpdateCover = (newCover: CoverData | null) => {
+    setCover(newCover);
+    if (typeof window !== "undefined") {
+      if (newCover) {
+        localStorage.setItem(COVER_STORAGE_KEY, JSON.stringify(newCover));
+      } else {
+        localStorage.removeItem(COVER_STORAGE_KEY);
+      }
+    }
+  };
+
+  const handleUpdateIcon = (newIcon: BoardIconData) => {
+    setBoardIcon(newIcon);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(ICON_STORAGE_KEY, JSON.stringify(newIcon));
+    }
+  };
+
+  const handleRemoveIcon = () => {
+    const defaultIcon: BoardIconData = { type: "lucide", value: "FolderKanban", color: "#f5f3ff" };
+    setBoardIcon(defaultIcon);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(ICON_STORAGE_KEY, JSON.stringify(defaultIcon));
+    }
+  };
   const [showAI, setShowAI] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
@@ -514,6 +568,68 @@ export default function BoardClient({
           onClose={() => setSelectedPresetModal(null)}
         />
       )}
+      {/* Notion-Style Board Cover Banner & Floating Icon Badge */}
+      <div style={{ position: "relative", width: "100%" }}>
+        <BoardCoverBanner cover={cover} onUpdateCover={handleUpdateCover} canEdit={canEdit} />
+
+        {/* Floating Icon Badge Overlapping Cover */}
+        <div style={{
+          padding: "0 24px",
+          marginTop: -36,
+          marginBottom: 4,
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          position: "relative",
+          zIndex: 20
+        }}>
+          <div 
+            onClick={() => canEdit && setShowIconPicker(true)}
+            title={canEdit ? "Klik untuk ubah ikon papan" : undefined}
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 18,
+              background: boardIcon.type === "lucide" ? (boardIcon.color || "#f5f3ff") : "#ffffff",
+              border: "4px solid #ffffff",
+              boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: canEdit ? "pointer" : "default",
+              position: "relative",
+              transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className="floating-board-icon-badge"
+          >
+            {boardIcon.type === "emoji" && (
+              <span style={{ fontSize: 32 }}>{boardIcon.value}</span>
+            )}
+
+            {boardIcon.type === "lucide" && (() => {
+              const IconComp = LUCIDE_ICONS_MAP[boardIcon.value] || LUCIDE_ICONS_MAP.FolderKanban;
+              return <IconComp style={{ width: 32, height: 32, color: "#6d28d9" }} />;
+            })()}
+
+            {boardIcon.type === "image" && (
+              <img 
+                src={boardIcon.value} 
+                alt="Board Icon" 
+                style={{ width: "100%", height: "100%", borderRadius: 14, objectFit: "cover" }} 
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <BoardIconPickerModal
+        isOpen={showIconPicker}
+        onClose={() => setShowIconPicker(false)}
+        currentIcon={boardIcon}
+        onSelectIcon={handleUpdateIcon}
+        onRemoveIcon={handleRemoveIcon}
+      />
+
       {/* Tab Navigation & Action Bar */}
       <div style={{
         padding: "12px 20px 0",
