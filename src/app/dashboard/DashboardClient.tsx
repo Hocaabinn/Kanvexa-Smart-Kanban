@@ -594,6 +594,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       prompt: "Travel & Vacation Planner",
                       tagColor: "#3b82f6",
                       tagBg: "#dbeafe"
+                    },
+                    {
+                      title: "Pelacak Buku & Film",
+                      desc: "Daftar bacaan buku, watchlist film/seri, ringkasan, dan review pribadi.",
+                      tags: ["Personal", "Hiburan"],
+                      prompt: "Pelacak Buku & Film",
+                      tagColor: "#8b5cf6",
+                      tagBg: "#f5f3ff"
                     }
                   ]
                 }

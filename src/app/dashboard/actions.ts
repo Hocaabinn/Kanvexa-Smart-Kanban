@@ -103,6 +103,13 @@ export async function createBoard(formData: FormData) {
       { name: "Rencana Perjalanan", position: 2, cards: ["Itinerary Hari 1: Pantai Kuta", "Itinerary Hari 2: Ubud tour", "Itinerary Hari 3: Belanja oleh-oleh"] },
       { name: "Packing Checklist", position: 3, cards: ["Siapkan pakaian & baju renang", "Bawa charger & powerbank", "Siapkan obat-obatan pribadi"] },
     ];
+  } else if (name === "Pelacak Buku & Film") {
+    columnsToInsert = [
+      { name: "Daftar Keinginan (Wishlist)", position: 0, cards: ["Buku: Atomic Habits", "Film: Interstellar", "Buku: Psychology of Money"] },
+      { name: "Sedang Dibaca / Ditonton", position: 1, cards: ["Membaca novel Bumi Manusia", "Menonton series Breaking Bad Season 1"] },
+      { name: "Selesai & Review", position: 2, cards: ["Review buku Fil filosofi Teras", "Rating film Inception (10/10)"] },
+      { name: "Kutipan Favorit", position: 3, cards: ["Kutipan Stoikisme Bab 2", "Quote terkenal dari film Interstellar"] },
+    ];
   } else {
     // Default fallback columns
     columnsToInsert = [
