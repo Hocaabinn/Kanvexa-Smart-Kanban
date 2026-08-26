@@ -609,7 +609,11 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                .map((cat, catIdx) => {
                 const CategoryIcon = cat.icon;
                 return (
-                  <div key={catIdx} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div 
+                    key={`${activeCategory}-${cat.category}`} 
+                    className="template-category-container"
+                    style={{ display: "flex", flexDirection: "column", gap: 14 }}
+                  >
                     {/* Subheader Kategori */}
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{
@@ -920,9 +924,16 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
           from { transform: scale(0.95); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
+        @keyframes templateFadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .template-category-container {
+          animation: templateFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
         .template-card-btn:hover {
           border-color: var(--v) !important;
-          boxShadow: 0 10px 25px -5px rgba(109, 40, 217, 0.1), 0 8px 10px -6px rgba(109, 40, 217, 0.05) !important;
+          box-shadow: 0 10px 25px -5px rgba(109, 40, 217, 0.1), 0 8px 10px -6px rgba(109, 40, 217, 0.05) !important;
           transform: translateY(-2px);
         }
         @media (max-width: 767px) {
