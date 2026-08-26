@@ -1,5 +1,10 @@
 import { GraduationCap, Lightbulb, type LucideIcon } from "lucide-react";
 
+export interface ColumnPreview {
+  name: string;
+  cards: string[];
+}
+
 export interface Template {
   title: string;
   desc: string;
@@ -7,6 +12,7 @@ export interface Template {
   prompt: string;
   tagColor: string;
   tagBg: string;
+  columnsPreview: ColumnPreview[];
 }
 
 export interface TemplateCategory {
@@ -32,7 +38,12 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Akademik", "Populer"],
         prompt: "Persiapan Seminar & Skripsi",
         tagColor: "#8b5cf6",
-        tagBg: "#f5f3ff"
+        tagBg: "#f5f3ff",
+        columnsPreview: [
+          { name: "Riset & Bab 1-3", cards: ["Penyusunan Judul & Abstrak", "Kajian Pustaka", "Draft Proposal"] },
+          { name: "Revisi Dosen", cards: ["Revisi Dosen Pembimbing 1", "Revisi Dosen Pembimbing 2"] },
+          { name: "Sidang & Berkas", cards: ["Pendaftaran Sidang", "Cetak Naskah & Bebas Pustaka"] }
+        ]
       },
       {
         title: "Manajemen Rapat Organisasi / OSIS",
@@ -40,7 +51,13 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Organisasi"],
         prompt: "Manajemen Rapat Organisasi / OSIS",
         tagColor: "#2563eb",
-        tagBg: "#eff6ff"
+        tagBg: "#eff6ff",
+        columnsPreview: [
+          { name: "Agenda Rapat", cards: ["Penyusunan Proposal Anggaran", "Rencana Tanggal Rapat Bulanan"] },
+          { name: "Dalam Pembahasan", cards: ["Pembagian Divisi Acara & Humas", "Evaluasi Program Kerja"] },
+          { name: "Tindak Lanjut", cards: ["Desain Spanduk & Publikasi"] },
+          { name: "Selesai", cards: ["Booking Ruang Aula Sekolah"] }
+        ]
       },
       {
         title: "Student Planner (Jadwal & Tugas)",
@@ -48,7 +65,13 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Akademik", "Studi"],
         prompt: "Student Planner (Jadwal & Tugas)",
         tagColor: "#10b981",
-        tagBg: "#ecfdf5"
+        tagBg: "#ecfdf5",
+        columnsPreview: [
+          { name: "Daftar Tugas", cards: ["Tugas Matematika Diskrit", "Laporan Praktikum Fisika"] },
+          { name: "Sedang Dikerjakan", cards: ["Makalah Bahasa Indonesia"] },
+          { name: "Review & Revisi", cards: ["Checklist Referensi Jurnal"] },
+          { name: "Selesai", cards: ["Kuis Mingguan Module 1"] }
+        ]
       },
       {
         title: "Kelompok Belajar (Study Group)",
@@ -56,7 +79,12 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Organisasi", "Kolaborasi"],
         prompt: "Kelompok Belajar (Study Group)",
         tagColor: "#f59e0b",
-        tagBg: "#fffbeb"
+        tagBg: "#fffbeb",
+        columnsPreview: [
+          { name: "Topik Diskusi", cards: ["Pembagian Bab Presentasi", "Jadwal Zoom / Kerja Kelompok"] },
+          { name: "Pengerjaan", cards: ["Draft Slide PPT", "Pengumpulan Bahan Materi"] },
+          { name: "Selesai", cards: ["Submit Tugas ke LMS"] }
+        ]
       },
       {
         title: "Pemburu Beasiswa (Scholarship Tracker)",
@@ -64,7 +92,13 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Akademik", "Pribadi"],
         prompt: "Pemburu Beasiswa (Scholarship Tracker)",
         tagColor: "#3b82f6",
-        tagBg: "#dbeafe"
+        tagBg: "#dbeafe",
+        columnsPreview: [
+          { name: "Incaran Beasiswa", cards: ["Beasiswa Unggulan Kemendikbud", "Beasiswa Djarum Plus"] },
+          { name: "Persyaratan Berkas", cards: ["Surat Rekomendasi Dosen", "Translate Transkrip Nilai", "Sertifikat TOEFL/IELTS"] },
+          { name: "Tahap Seleksi", cards: ["Submit Form Pendaftaran", "Persiapan Wawancara"] },
+          { name: "Hasil / Lolos", cards: ["Pengumuman Resmi"] }
+        ]
       },
       {
         title: "Persiapan Ujian Akhir (Exam Prep)",
@@ -72,7 +106,13 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Akademik", "Studi"],
         prompt: "Persiapan Ujian Akhir (Exam Prep)",
         tagColor: "#ec4899",
-        tagBg: "#fce7f3"
+        tagBg: "#fce7f3",
+        columnsPreview: [
+          { name: "Mata Kuliah", cards: ["Algoritma & Pemrograman", "Kalkulus II", "Basis Data"] },
+          { name: "Rangkuman Materi", cards: ["Bikin Mindmap Bab 1-5", "Kumpulan Rumus Penting"] },
+          { name: "Latihan Soal", cards: ["Kerjakan Latihan UTS Tahun Lalu", "Tryout Mandiri"] },
+          { name: "Siap Ujian", cards: ["Cetak Kartu Ujian"] }
+        ]
       }
     ]
   },
@@ -89,7 +129,12 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Kreatif"],
         prompt: "Mindmap Ide & Brainstorming",
         tagColor: "#d97706",
-        tagBg: "#fffbeb"
+        tagBg: "#fffbeb",
+        columnsPreview: [
+          { name: "Ide Mentah", cards: ["Konsep Fitur AI Summary", "Desain UI Dark Mode"] },
+          { name: "Dukungan & Riset", cards: ["Analisis Kompetitor", "Survei Pengguna"] },
+          { name: "Prioritas Utama", cards: ["Bikin MVP Halaman Dashboard"] }
+        ]
       },
       {
         title: "Papan Peluncuran Proyek (Sprint 1 Minggu)",
@@ -97,7 +142,13 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Manajemen Proyek"],
         prompt: "Papan Peluncuran Proyek (Sprint 1 Minggu)",
         tagColor: "#db2777",
-        tagBg: "#fdf2f8"
+        tagBg: "#fdf2f8",
+        columnsPreview: [
+          { name: "Backlog", cards: ["Setup Server & DB", "Fitur Reset Password"] },
+          { name: "Sprint To-Do", cards: ["Desain Header Component", "Integrasi Payment Gateway"] },
+          { name: "In Progress", cards: ["Slicing Page Landing"] },
+          { name: "Done", cards: ["Setup Next.js Project"] }
+        ]
       },
       {
         title: "Daily Journal & Habit Tracker",
@@ -105,7 +156,12 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Personal", "Life"],
         prompt: "Daily Journal & Habit Tracker",
         tagColor: "#ec4899",
-        tagBg: "#fce7f3"
+        tagBg: "#fce7f3",
+        columnsPreview: [
+          { name: "Habit Pagi 🌅", cards: ["Minum Air Putih 500ml", "Olahraga Ringan 15 Menit", "Membaca 10 Halaman Buku"] },
+          { name: "Target Hari Ini 🎯", cards: ["Menyelesaikan 3 Task Utama", "Jalan Kaki 5.000 Langkah"] },
+          { name: "Refleksi Malam 🌙", cards: ["Tulis 3 Hal Yang Disyukuri", "Evaluasi Progres Harian"] }
+        ]
       },
       {
         title: "Monthly Finance Tracker",
@@ -113,7 +169,13 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Personal", "Keuangan"],
         prompt: "Monthly Finance Tracker",
         tagColor: "#10b981",
-        tagBg: "#ecfdf5"
+        tagBg: "#ecfdf5",
+        columnsPreview: [
+          { name: "Pemasukan 💰", cards: ["Gaji Utama / Uang Saku", "Side Income / Freelance"] },
+          { name: "Tagihan Rutin 📜", cards: ["Bayar Kos / Listrik", "Langganan Internet & Streaming"] },
+          { name: "Rencana Tabungan 🏦", cards: ["Dana Darurat 10%", "Investasi Bulanan"] },
+          { name: "Pengeluaran Harian 🛒", cards: ["Belanja Bulanan / Groceries", "Jajan & Hiburan"] }
+        ]
       },
       {
         title: "Travel & Vacation Planner",
@@ -121,7 +183,12 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Personal", "Travel"],
         prompt: "Travel & Vacation Planner",
         tagColor: "#3b82f6",
-        tagBg: "#dbeafe"
+        tagBg: "#dbeafe",
+        columnsPreview: [
+          { name: "Rencana Destinasi ✈️", cards: ["Tiket Pesawat & Hotel", "List Tempat Wisata Hits"] },
+          { name: "Checklist Packing 🧳", cards: ["Dokumen & Paspor/KTP", "Pakaian & Obat-obatan", "Charger & Powerbank"] },
+          { name: "Itinerary Harian 🗓️", cards: ["Hari 1: City Tour & Kuliner", "Hari 2: Island Hopping"] }
+        ]
       },
       {
         title: "Pelacak Buku & Film",
@@ -129,7 +196,12 @@ export const allCategories: TemplateCategory[] = [
         tags: ["Personal", "Hiburan"],
         prompt: "Pelacak Buku & Film",
         tagColor: "#8b5cf6",
-        tagBg: "#f5f3ff"
+        tagBg: "#f5f3ff",
+        columnsPreview: [
+          { name: "Wishlist / Antrean 📚", cards: ["Buku: Atomic Habits", "Film: Interstellar"] },
+          { name: "Sedang Dibaca/Ditonton 📖", cards: ["Buku: Psychology of Money"] },
+          { name: "Selesai & Review ⭐", cards: ["Buku: Deep Work (Rating 5/5)", "Film: Inception (Rating 5/5)"] }
+        ]
       }
     ]
   }

@@ -7,6 +7,7 @@ import crypto from "crypto";
 
 export async function createBoard(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
+  const templatePrompt = (formData.get("templatePrompt") as string)?.trim();
   if (!name) return;
 
   const supabase = await createClient();
@@ -25,8 +26,9 @@ export async function createBoard(formData: FormData) {
 
   // Seed columns and cards depending on selected templates
   let columnsToInsert: { name: string; position: number; cards?: string[] }[] = [];
+  const matchTarget = templatePrompt || name;
 
-  if (name === "Persiapan Seminar & Skripsi") {
+  if (matchTarget === "Persiapan Seminar & Skripsi") {
     columnsToInsert = [
       { name: "Ide & Referensi", position: 0, cards: ["Mencari 5 jurnal pendukung", "Pilih topik utama skripsi"] },
       { name: "Checklist Dokumen", position: 1, cards: ["Draft Proposal Bab 1-3", "Form persetujuan dosen pembimbing"] },

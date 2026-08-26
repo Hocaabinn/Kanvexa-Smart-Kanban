@@ -28,7 +28,7 @@ import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 import BoardLoaderModal from "@/components/ui/BoardLoaderModal";
 import { showAlert, showConfirm } from "@/lib/swal";
 import Swal from "sweetalert2";
-import { allCategories } from "@/lib/templates-config";
+import { allCategories, type Template } from "@/lib/templates-config";
 
 interface Board {
   id: string;
@@ -81,6 +81,8 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   const [openingBoardTitle, setOpeningBoardTitle] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<"all" | "school" | "life">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [customTemplateTitle, setCustomTemplateTitle] = useState("");
 
   const handleOpenBoard = (boardId: string, boardName: string) => {
     setOpeningBoardTitle(boardName);
@@ -647,72 +649,74 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                         {/* Grid Cards */}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))", gap: 18 }}>
                           {cat.templates.map((tpl, tplIdx) => (
-                            <form key={tplIdx} action={handleApplyTemplate} style={{ margin: 0 }}>
-                              <input type="hidden" name="name" value={tpl.prompt} />
-                              <button
-                                type="submit"
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  textAlign: "left",
-                                  padding: "20px",
-                                  borderRadius: 16,
-                                  background: "#ffffff",
-                                  border: "1px solid #e2e8f0",
-                                  cursor: "pointer",
-                                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  justifyContent: "space-between",
-                                  gap: 16,
-                                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                                }}
-                                className="template-card-btn"
-                              >
-                                <div>
-                                  {/* Tags Badges */}
-                                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                                    {tpl.tags.map((tag, tagIdx) => (
-                                      <span key={tagIdx} style={{
-                                        fontSize: 10,
-                                        fontWeight: 700,
-                                        padding: "3px 9px",
-                                        borderRadius: 20,
-                                        background: tpl.tagBg,
-                                        color: tpl.tagColor,
-                                        letterSpacing: "0.02em"
-                                      }}>
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-
-                                  {/* Title */}
-                                  <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6, lineHeight: 1.35 }}>
-                                    {tpl.title}
-                                  </div>
-
-                                  {/* Description */}
-                                  <div style={{ fontSize: 12, color: "#64748b", fontWeight: 400, lineHeight: 1.5 }}>
-                                    {tpl.desc}
-                                  </div>
+                            <button
+                              key={tplIdx}
+                              type="button"
+                              onClick={() => {
+                                setPreviewTemplate(tpl);
+                                setCustomTemplateTitle(tpl.title);
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                textAlign: "left",
+                                padding: "20px",
+                                borderRadius: 16,
+                                background: "#ffffff",
+                                border: "1px solid #e2e8f0",
+                                cursor: "pointer",
+                                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "space-between",
+                                gap: 16,
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                              }}
+                              className="template-card-btn"
+                            >
+                              <div>
+                                {/* Tags Badges */}
+                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                                  {tpl.tags.map((tag, tagIdx) => (
+                                    <span key={tagIdx} style={{
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      padding: "3px 9px",
+                                      borderRadius: 20,
+                                      background: tpl.tagBg,
+                                      color: tpl.tagColor,
+                                      letterSpacing: "0.02em"
+                                    }}>
+                                      {tag}
+                                    </span>
+                                  ))}
                                 </div>
 
-                                {/* Footer Action */}
-                                <div style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 6,
-                                  fontSize: 12,
-                                  fontWeight: 700,
-                                  color: "var(--v)",
-                                  marginTop: 4
-                                }}>
-                                  <span>Gunakan Template</span>
-                                  <Plus style={{ width: 14, height: 14 }} />
+                                {/* Title */}
+                                <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6, lineHeight: 1.35 }}>
+                                  {tpl.title}
                                 </div>
-                              </button>
-                            </form>
+
+                                {/* Description */}
+                                <div style={{ fontSize: 12, color: "#64748b", fontWeight: 400, lineHeight: 1.5 }}>
+                                  {tpl.desc}
+                                </div>
+                              </div>
+
+                              {/* Footer Action */}
+                              <div style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: "var(--v)",
+                                marginTop: 4
+                              }}>
+                                <span>Gunakan Template</span>
+                                <Plus style={{ width: 14, height: 14 }} />
+                              </div>
+                            </button>
                           ))}
                         </div>
                       </div>
@@ -724,6 +728,160 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
           </div>
         </main>
       </div>
+      {/* Template Preview & Customization Modal */}
+      {previewTemplate && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(15, 23, 42, 0.55)",
+          backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000,
+          padding: "20px",
+        }}>
+          <div style={{
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 24,
+            width: "100%",
+            maxWidth: 640,
+            maxHeight: "90vh",
+            overflow: "hidden",
+            boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+            animation: "modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            display: "flex",
+            flexDirection: "column"
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: "24px 28px 18px",
+              borderBottom: "1px solid #f1f5f9",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 16
+            }}>
+              <div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+                  {previewTemplate.tags.map((tag, idx) => (
+                    <span key={idx} style={{
+                      fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20,
+                      background: previewTemplate.tagBg, color: previewTemplate.tagColor
+                    }}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", margin: "0 0 4px" }}>
+                  {previewTemplate.title}
+                </h3>
+                <p style={{ fontSize: 13, color: "#64748b", margin: 0, lineHeight: 1.4 }}>
+                  {previewTemplate.desc}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewTemplate(null)}
+                style={{
+                  background: "#f1f5f9", border: "none", cursor: "pointer",
+                  color: "#64748b", fontSize: 20, width: 32, height: 32, borderRadius: 16,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  lineHeight: 1, flexShrink: 0
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Body: Structural Column Preview */}
+            <div style={{ padding: "24px 28px", flex: 1, overflowY: "auto", background: "#f8fafc" }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#475569", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Preview Struktur Kolom & Tugas Bawaan:
+              </div>
+              
+              <div style={{
+                display: "flex", gap: 14, overflowX: "auto", paddingBottom: 12, marginBottom: 20
+              }}>
+                {previewTemplate.columnsPreview.map((col, cIdx) => (
+                  <div key={cIdx} style={{
+                    minWidth: 200, maxWidth: 220, background: "#ffffff", borderRadius: 14,
+                    padding: "14px", border: "1px solid #e2e8f0", flexShrink: 0,
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.03)"
+                  }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span>{col.name}</span>
+                      <span style={{ fontSize: 11, background: "#f1f5f9", color: "#64748b", padding: "2px 6px", borderRadius: 10, fontWeight: 600 }}>
+                        {col.cards.length}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {col.cards.map((cardTitle, kIdx) => (
+                        <div key={kIdx} style={{
+                          fontSize: 11, fontWeight: 500, color: "#334155", background: "#f8fafc",
+                          padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0"
+                        }}>
+                          {cardTitle}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Input Custom Name Form */}
+              <form action={(formData) => {
+                handleApplyTemplate(formData);
+                setPreviewTemplate(null);
+              }}>
+                <input type="hidden" name="templatePrompt" value={previewTemplate.prompt} />
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 6 }}>
+                  Nama Ruang Kerja Anda:
+                </label>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  value={customTemplateTitle}
+                  onChange={(e) => setCustomTemplateTitle(e.target.value)}
+                  placeholder="Ketik nama proyek / ruang kerja Anda..."
+                  style={{
+                    width: "100%", padding: "12px 16px", borderRadius: 12, fontSize: 14,
+                    border: "1px solid #cbd5e1", outline: "none", background: "#ffffff",
+                    color: "#0f172a", fontWeight: 600
+                  }}
+                />
+
+                {/* Footer Action Buttons */}
+                <div style={{
+                  marginTop: 20, display: "flex", justifyContent: "flex-end", gap: 10
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTemplate(null)}
+                    style={{
+                      padding: "10px 18px", borderRadius: 12, fontSize: 13, fontWeight: 600,
+                      background: "#ffffff", border: "1px solid #cbd5e1", color: "#475569",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      padding: "10px 22px", borderRadius: 12, fontSize: 13, fontWeight: 700,
+                      background: "var(--v)", color: "#ffffff", border: "none",
+                      cursor: "pointer", boxShadow: "0 4px 12px rgba(109, 40, 217, 0.25)"
+                    }}
+                  >
+                    Buat Ruang Kerja dari Template
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 5. Create Board Modal Pop-up */}
       {showCreateModal && (
         <div style={{
