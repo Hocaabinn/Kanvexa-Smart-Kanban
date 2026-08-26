@@ -128,25 +128,29 @@ export default function BoardClient({
   const COVER_STORAGE_KEY = `kanvexa_cover_${boardId}`;
   const ICON_STORAGE_KEY = `kanvexa_icon_${boardId}`;
 
-  const [cover, setCover] = useState<CoverData | null>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(COVER_STORAGE_KEY);
-      if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error(e); }
-      }
-    }
-    return { type: "gradient", value: "linear-gradient(135deg, #6d28d9 0%, #4c1d95 50%, #1e1b4b 100%)" };
+  const [cover, setCover] = useState<CoverData | null>({ 
+    type: "gradient", 
+    value: "linear-gradient(135deg, #6d28d9 0%, #4c1d95 50%, #1e1b4b 100%)" 
   });
 
-  const [boardIcon, setBoardIcon] = useState<BoardIconData>(() => {
+  const [boardIcon, setBoardIcon] = useState<BoardIconData>({ 
+    type: "lucide", 
+    value: "FolderKanban", 
+    color: "#f5f3ff" 
+  });
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(ICON_STORAGE_KEY);
-      if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      const savedCover = localStorage.getItem(COVER_STORAGE_KEY);
+      if (savedCover) {
+        try { setCover(JSON.parse(savedCover)); } catch (e) { console.error(e); }
+      }
+      const savedIcon = localStorage.getItem(ICON_STORAGE_KEY);
+      if (savedIcon) {
+        try { setBoardIcon(JSON.parse(savedIcon)); } catch (e) { console.error(e); }
       }
     }
-    return { type: "lucide", value: "FolderKanban", color: "#f5f3ff" };
-  });
+  }, [COVER_STORAGE_KEY, ICON_STORAGE_KEY]);
 
   const [showIconPicker, setShowIconPicker] = useState(false);
 

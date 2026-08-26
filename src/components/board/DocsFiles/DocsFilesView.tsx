@@ -53,38 +53,33 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
   const FOLDERS_STORAGE_KEY = `kanvexa_folders_${boardId}`;
   const DOCS_STORAGE_KEY = `kanvexa_docs_${boardId}`;
 
-  const [folders, setFolders] = useState<DocFolderItem[]>(() => {
+  const [folders, setFolders] = useState<DocFolderItem[]>([]);
+  const [docs, setDocs] = useState<DocFileItem[]>([]);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(FOLDERS_STORAGE_KEY);
-      if (saved) {
+      const savedFolders = localStorage.getItem(FOLDERS_STORAGE_KEY);
+      if (savedFolders) {
         try {
-          const parsed: DocFolderItem[] = JSON.parse(saved);
-          // Filter out legacy dummy sample folders
+          const parsed: DocFolderItem[] = JSON.parse(savedFolders);
           const dummyFolderIds = ["f-1", "f-2", "f-3", "f-1-1", "f-1-2", "f-1-3"];
-          return parsed.filter(f => !dummyFolderIds.includes(f.id));
+          setFolders(parsed.filter(f => !dummyFolderIds.includes(f.id)));
         } catch (e) {
           console.error("Failed to parse saved folders", e);
         }
       }
-    }
-    return [];
-  });
 
-  const [docs, setDocs] = useState<DocFileItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(DOCS_STORAGE_KEY);
-      if (saved) {
+      const savedDocs = localStorage.getItem(DOCS_STORAGE_KEY);
+      if (savedDocs) {
         try {
-          const parsed: DocFileItem[] = JSON.parse(saved);
-          // Filter out anomaly docs authored by andi@kanvexa.com or board_id general
-          return parsed.filter(d => d.author_email !== "andi@kanvexa.com" && d.board_id !== "general");
+          const parsed: DocFileItem[] = JSON.parse(savedDocs);
+          setDocs(parsed.filter(d => d.author_email !== "andi@kanvexa.com" && d.board_id !== "general"));
         } catch (e) {
           console.error("Failed to parse saved docs", e);
         }
       }
     }
-    return [];
-  });
+  }, [FOLDERS_STORAGE_KEY, DOCS_STORAGE_KEY]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
