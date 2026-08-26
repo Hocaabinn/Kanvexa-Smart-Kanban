@@ -116,26 +116,6 @@ export default function MessageBoardView({
         {/* Action Buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <button
-            onClick={() => setShowSummaryModal(true)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "9px 16px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              background: "rgba(109, 40, 217, 0.08)",
-              color: "#6d28d9",
-              border: "1px solid rgba(109, 40, 217, 0.2)",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-          >
-            <span>✦ Urai dengan AI</span>
-          </button>
-
-          <button
             onClick={() => setShowTasksModal(true)}
             style={{
               display: "flex",
