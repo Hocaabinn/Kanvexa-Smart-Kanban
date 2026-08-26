@@ -570,6 +570,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       prompt: "Papan Peluncuran Proyek (Sprint 1 Minggu)",
                       tagColor: "#db2777",
                       tagBg: "#fdf2f8"
+                    },
+                    {
+                      title: "Daily Journal & Habit Tracker",
+                      desc: "Jurnal refleksi harian dan pelacak kebiasaan (habit tracker) pagi & malam.",
+                      tags: ["Personal", "Life"],
+                      prompt: "Daily Journal & Habit Tracker",
+                      tagColor: "#ec4899",
+                      tagBg: "#fce7f3"
                     }
                   ]
                 }
