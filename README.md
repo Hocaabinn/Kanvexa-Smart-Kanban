@@ -1,115 +1,216 @@
-# Kanvexa
+<div align="center">
 
-Satu kalimat, langsung jadi rencana kerja. Kanban board kolaboratif dengan AI
-breakdown tugas otomatis.
+# ⚡ Kanvexa
 
-Project ini sudah di-scaffold sampai tahap **setup project & auth** dari
-roadmap (lihat diagram yang dikirim di chat). Auth, schema database, dan
-struktur dasar board sudah jalan. Drag-drop, real-time sync, dan integrasi
-AI menyusul di tahap berikutnya.
+**Satu kalimat, langsung jadi rencana kerja.**  
+*Smart AI-Powered Collaborative Kanban Board for Modern Workflows & Productivity.*
 
-## 1. Buat project Supabase
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database_%26_Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](./LICENSE)
 
-1. Buka [supabase.com](https://supabase.com) -> New project.
-2. Setelah project jadi, buka **SQL Editor** -> tempel isi file
-   `supabase/schema.sql` -> Run. Ini bikin semua tabel, RLS policy, dan
-   trigger auto-admin.
-3. Di **Settings -> API**, copy `Project URL` dan `anon public` key.
-4. Di **Authentication -> Providers**, pastikan Email provider aktif. Kalau
-   mau skip konfirmasi email saat development, matikan "Confirm email" di
-   **Authentication -> Settings**.
+---
 
-## 2. Setup environment variables
+</div>
+
+## 📌 Ringkasan Proyek
+
+**Kanvexa** adalah platform Kanban Board modern dan kolaboratif yang menggabungkan manajemen tugas intuitif dengan kecerdasan buatan (AI). Dirancang untuk mempercepat alur kerja individu maupun tim, Kanvexa mampu mengubah satu kalimat tujuan menjadi rincian tugas terstruktur, menyediakan template produktivitas siap pakai (*School & Life*), serta mengamankan kolaborasi melalui kontrol akses berbasis peran (RBAC) dan Row-Level Security (RLS) di Supabase.
+
+---
+
+## ✨ Fitur Utama
+
+- 🧠 **AI Smart Breakdown & Assistance**:
+  - Konversi satu kalimat tujuan/objektif menjadi daftar kolom dan kartu tugas siap eksekusi.
+  - Ringkasan diskusi dan pengubahan catatan menjadi tugas (*AI Discussion to Tasks*).
+- 📋 **Interactive Drag-and-Drop Kanban**:
+  - Pengelolaan visual kolom dan kartu yang mulus ditenagai oleh `@dnd-kit`.
+  - Personalisasi board dengan cover banner, icon picker kustom, dan indikator prioritas.
+- 📚 **Sistem Galeri Template (*School & Life*)**:
+  - **School (Akademik)**: *Student Planner*, *Kelompok Belajar*, *Pemburu Beasiswa*, *Persiapan Ujian Akhir*.
+  - **Life (Produktivitas & Gaya Hidup)**: *Daily Habit Tracker*, *Monthly Finance Tracker*, *Travel Planner*, *Pelacak Buku & Film*.
+- 🔐 **Autentikasi & RBAC Multi-Tenant**:
+  - Otentikasi aman melalui Supabase Auth & SSR middleware.
+  - Granular Per-Board Role Access Control (*Admin*, *Member*, *Viewer*) yang dilindungi Supabase Row-Level Security (RLS).
+- 🎨 **Modern Minimalist UI/UX**:
+  - Animasi responsif berbasis Framer Motion, shader visual kontemporer, dan umpan balik interaktif (SweetAlert2 & Canvas Confetti).
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Teknologi |
+| :--- | :--- |
+| **Framework** | [Next.js](https://nextjs.org/) (App Router & Server Actions) |
+| **Frontend Core** | [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/) |
+| **Styling & UI** | [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/), [Radix UI](https://www.radix-ui.com/) |
+| **Motion & Interactivity** | [Framer Motion](https://www.framer.com/motion/), [@dnd-kit](https://dndkit.com/), [Canvas Confetti](https://www.npmjs.com/package/canvas-confetti) |
+| **Backend & Database** | [Supabase](https://supabase.com/) (PostgreSQL, Realtime, SSR Client) |
+| **Security & Auth** | Supabase Auth, Row-Level Security (RLS) Policies |
+
+---
+
+## 🚀 Panduan Memulai Cepat
+
+Ikuti langkah-langkah berikut untuk menjalankan Kanvexa di lingkungan lokal Anda.
+
+### 1. Prasyarat
+
+- [Node.js](https://nodejs.org/) (versi LTS direkomendasikan, `>= 18.x`)
+- [npm](https://www.npmjs.com/) atau [pnpm](https://pnpm.io/)
+- Akun aktif di [Supabase](https://supabase.com/)
+
+### 2. Setup Database Supabase
+
+1. Buka [Supabase Dashboard](https://supabase.com/dashboard) dan buat project baru.
+2. Buka menu **SQL Editor**, salin dan jalankan seluruh isi file `supabase/schema.sql`.
+   > Skrip ini akan membuat tabel (`boards`, `board_members`, `board_columns`, `cards`), trigger `on_board_created`, indeks, serta konfigurasi RLS Policies.
+3. Di **Project Settings -> API**, catat:
+   - `Project URL`
+   - `anon / public` API Key.
+4. Di **Authentication -> Providers**, pastikan provider **Email** aktif.  
+   *(Tips Development: Matikan "Confirm email" di **Authentication -> Settings** untuk mempercepat proses uji coba).*
+
+### 3. Konfigurasi Environment Variables
+
+Duplikasi template berkas environment:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Isi `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` dengan
-nilai dari Supabase. `ANTHROPIC_API_KEY` belum dipakai di tahap ini — bisa
-diisi nanti pas masuk tahap integrasi AI.
+Buka file `.env.local` dan sesuaikan nilainya:
 
-## 3. Install & jalankan
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# AI Integration (Opsional / Saat Menggunakan AI Breakdown)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
+
+### 4. Instalasi & Menjalankan Aplikasi
 
 ```bash
+# Install dependencies
 npm install
+
+# Jalankan server development
 npm run dev
 ```
 
-Buka `http://localhost:3000` — otomatis redirect ke `/login`.
+Buka [http://localhost:3000](http://localhost:3000) pada browser Anda. Aplikasi akan otomatis mengarahkan ke halaman `/login` bila belum terautentikasi.
 
-## Struktur yang sudah ada
+---
+
+## 📂 Struktur Repositori
 
 ```
-src/
-  lib/supabase/
-    client.ts      # Supabase client untuk browser (Client Component)
-    server.ts      # Supabase client untuk Server Component / Server Action
-    middleware.ts  # Refresh session + lindungi /dashboard dan /board
-  app/
-    login/page.tsx
-    signup/page.tsx
-    auth/callback/route.ts   # Handle link konfirmasi email
-    dashboard/
-      page.tsx     # List board + form buat board baru
-      actions.ts   # Server actions: createBoard, signOut
-    board/[id]/page.tsx       # Placeholder board detail (kolom only, belum ada kartu)
-supabase/
-  schema.sql       # Tabel: boards, board_members, board_columns, cards + RLS
+├── src/
+│   ├── app/
+│   │   ├── API/                       # Endpoint API (AI breakdown, summary, upload)
+│   │   ├── auth/callback/route.ts     # Supabase Auth OAuth/Email verification callback
+│   │   ├── board/[id]/                # Halaman board dinamis & server actions
+│   │   ├── dashboard/                 # Dashboard utama, sidebar, & board management
+│   │   ├── Galeri-Template/           # Halaman galeri eksplorasi template
+│   │   ├── login/ & signup/           # Halaman autentikasi pengguna
+│   │   ├── globals.css                # Konfigurasi Tailwind CSS v4 & theme
+│   │   ├── layout.tsx                 # Root layout & context providers
+│   │   └── page.tsx                   # Landing page
+│   ├── components/
+│   │   ├── board/                     # Komponen board (Banner, Icon Picker, Calendar View)
+│   │   ├── BoardClient.tsx            # Drag & drop state orchestrator
+│   │   ├── KanbanCard.tsx             # Kartu kanban interaktif
+│   │   ├── KanbanColumn.tsx           # Kolom kanban dan sorting container
+│   │   └── AISettingsModal.tsx        # Konfigurasi parameter AI
+│   └── lib/
+│       ├── supabase/                  # Inisialisasi client, server, & middleware Supabase
+│       ├── templates-config.ts        # Definisi data & metadata galeri template
+│       └── utils.ts                   # Utility helper functions
+└── supabase/
+    └── schema.sql                     # Skema SQL, RLS, & triggers
 ```
 
-## Soal role (admin / member / viewer)
+---
 
-Role disimpan per board di tabel `board_members`, bukan global di level
-user — jadi satu orang bisa admin di board A tapi cuma member di board B.
+## 👥 Matriks Hak Akses (Role-Based Access Control)
 
-- **admin** — satu-satunya yang bisa update/delete board dan
-  invite/remove member. Otomatis ke-assign ke pembuat board lewat trigger
-  `on_board_created`.
-- **member** — bisa CRUD kolom & kartu.
-- **viewer** — cuma bisa baca (RLS sudah membatasi insert/update kolom &
-  kartu lewat helper `is_board_editor`).
+Hak akses dikelola secara independen **per-board** pada tabel `board_members` (seorang pengguna bisa menjadi *Admin* di Board A dan hanya *Viewer* di Board B):
 
-Fitur invite member belum dibuat di tahap ini — sementara kalau mau test
-multi-role, insert manual ke tabel `board_members` lewat Supabase Table
-Editor.
+| Hak Akses / Aksi | Admin 👑 | Member 🛠 | Viewer 👁 |
+| :--- | :---: | :---: | :---: |
+| Membaca & Melihat Board | ✅ | ✅ | ✅ |
+| Membuat & Mengubah Kolom | ✅ | ✅ | ❌ |
+| Membuat, Mengedit, & Memindahkan Kartu | ✅ | ✅ | ❌ |
+| Mengubah Pengaturan / Menghapus Board | ✅ | ❌ | ❌ |
+| Mengundang & Mengelola Anggota Board | ✅ | ❌ | ❌ |
 
-## Lanjutan (tahap berikutnya di roadmap)
+> **Catatan Keamanan**: Akses ini ditegakkan langsung pada level database menggunakan **Supabase Row-Level Security (RLS)** melalui fungsi helper `is_board_editor` dan `is_board_admin`.
 
-- CRUD kartu di dalam kolom (drag-drop pakai `dnd-kit`)
-- Realtime sync pakai Supabase Realtime channel per board
-- Integrasi Claude API buat AI breakdown dari satu kalimat tujuan
-- UI invite member + switch role
+---
 
-## Sistem Galeri Template (School & Life)
+## 🎨 Panduan Ekstensi Template (School & Life)
 
-Aplikasi memiliki **Sistem Galeri Template** yang membantu pengguna menginisialisasi ruang kerja (board, kolom, dan kartu) dengan cepat. Galeri Template dibagi menjadi dua kategori utama:
-1. **School (Akademik & Organisasi)**: Disesuaikan untuk kebutuhan akademik, seperti *Student Planner*, *Kelompok Belajar*, *Pemburu Beasiswa*, dan *Persiapan Ujian Akhir*.
-2. **Life (Produktivitas & Gaya Hidup)**: Disesuaikan untuk kebutuhan personal dan produktivitas harian, seperti *Daily Journal & Habit Tracker*, *Monthly Finance Tracker*, *Travel Planner*, dan *Pelacak Buku & Film*.
+Kanvexa memiliki sistem seeding cerdas yang memungkinkan pembuatan board lengkap dengan kolom dan kartu contoh dalam satu klik.
 
 ### Menambahkan Template Baru
 
-Untuk menambahkan template baru ke dalam aplikasi, ikuti dua langkah berikut:
+1. **Definisikan Metadata Template**:  
+   Tambahkan entri metadata baru di [src/lib/templates-config.ts](file:///Users/user/Documents/Docs%20Bintang/Developer/Kanban/Kanvexa-Smart-Kanban-1/src/lib/templates-config.ts):
 
-1. **Definisikan Metadata Template**:
-   Buka file [templates-config.ts](file:///Users/user/Documents/Docs%20Bintang/Developer/Kanban/Kanvexa-Smart-Kanban-1/src/lib/templates-config.ts) dan tambahkan metadata template Anda di bawah kategori yang sesuai:
    ```typescript
    {
-     title: "Nama Template",
-     desc: "Deskripsi singkat kegunaan template.",
-     tags: ["Tag1", "Tag2"],
-     prompt: "Nama Template", // Harus unik, digunakan sebagai pencocokan saat seeding
-     tagColor: "#hexColor",
-     tagBg: "#hexColor"
+     title: "Nama Template Anda",
+     desc: "Deskripsi fungsi dan kegunaan template.",
+     tags: ["Kategori", "Fokus"],
+     prompt: "Nama Template Anda", // Kunci identifikasi unik saat proses seeding
+     tagColor: "#3B82F6",
+     tagBg: "#EFF6FF"
    }
    ```
 
-2. **Tambahkan Logic Seeding Kolom & Kartu**:
-   Buka file [actions.ts](file:///Users/user/Documents/Docs%20Bintang/Developer/Kanban/Kanvexa-Smart-Kanban-1/src/app/dashboard/actions.ts) dan tambahkan kondisi baru di dalam fungsi `createBoard` untuk mendefinisikan kolom dan kartu default yang akan di-seed secara otomatis:
+2. **Tambahkan Skema Seeding Kolom & Kartu**:  
+   Daftarkan preset kolom dan kartu default di [src/app/dashboard/actions.ts](file:///Users/user/Documents/Docs%20Bintang/Developer/Kanban/Kanvexa-Smart-Kanban-1/src/app/dashboard/actions.ts) pada fungsi `createBoard`:
+
    ```typescript
-   } else if (name === "Nama Template") {
+   } else if (name === "Nama Template Anda") {
      columnsToInsert = [
-       { name: "Kolom 1", position: 0, cards: ["Tugas A", "Tugas B"] },
-       { name: "Kolom 2", position: 1, cards: ["Tugas C"] },
+       { name: "To Do", position: 0, cards: ["Tugas Persiapan", "Riset Awal"] },
+       { name: "In Progress", position: 1, cards: ["Eksekusi Utama"] },
+       { name: "Completed", position: 2, cards: ["Evaluasi"] },
      ];
+   }
    ```
+
+---
+
+## 🗺 Roadmap Pengembangan
+
+- [x] Inisialisasi arsitektur Next.js 16 + Supabase Auth & RLS.
+- [x] Drag & Drop Kanban Board menggunakan `@dnd-kit`.
+- [x] Sistem Galeri Template Terintegrasi (*School & Life*).
+- [x] Endpoint API AI Breakdown & Assistant.
+- [ ] Real-time multi-user synchronization melalui Supabase Realtime Channels.
+- [ ] Antarmuka visual manajemen undangan member & pergantian role.
+- [ ] Ekspor board ke format PDF, Markdown, dan CSV.
+
+---
+
+## 🤝 Kontribusi
+
+Kontribusi selalu terbuka dan disambut hangat!
+1. Fork repository ini.
+2. Buat branch fitur baru (`git checkout -b feature/FiturKeren`).
+3. Commit perubahan Anda (`git commit -m 'feat: menambahkan fitur keren'`).
+4. Push ke branch (`git push origin feature/FiturKeren`).
+5. Buat Pull Request.
+
+---
+
+## 📄 Lisensi
+
+Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih lanjut.
