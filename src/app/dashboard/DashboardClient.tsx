@@ -648,76 +648,87 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
 
                         {/* Grid Cards */}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))", gap: 18 }}>
-                          {cat.templates.map((tpl, tplIdx) => (
-                            <button
-                              key={tplIdx}
-                              type="button"
-                              onClick={() => {
-                                setPreviewTemplate(tpl);
-                                setCustomTemplateTitle(tpl.title);
-                              }}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                textAlign: "left",
-                                padding: "20px",
-                                borderRadius: 16,
-                                background: "#ffffff",
-                                border: "1px solid #e2e8f0",
-                                cursor: "pointer",
-                                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between",
-                                gap: 16,
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                              }}
-                              className="template-card-btn"
-                            >
-                              <div>
-                                {/* Tags Badges */}
-                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                                  {tpl.tags.map((tag, tagIdx) => (
-                                    <span key={tagIdx} style={{
-                                      fontSize: 10,
-                                      fontWeight: 700,
-                                      padding: "3px 9px",
-                                      borderRadius: 20,
-                                      background: tpl.tagBg,
-                                      color: tpl.tagColor,
-                                      letterSpacing: "0.02em"
-                                    }}>
-                                      {tag}
-                                    </span>
-                                  ))}
+                          {cat.templates.map((tpl, tplIdx) => {
+                            const isSchool = cat.type === "school";
+                            const cardBg = isSchool
+                              ? "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
+                              : "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)";
+                            const cardBorder = isSchool ? "1px solid #bae6fd" : "1px solid #fde68a";
+                            const titleColor = isSchool ? "#0369a1" : "#b45309";
+                            const descColor = isSchool ? "#334155" : "#78350f";
+                            const actionColor = isSchool ? "#0284c7" : "#d97706";
+
+                            return (
+                              <button
+                                key={tplIdx}
+                                type="button"
+                                onClick={() => {
+                                  setPreviewTemplate(tpl);
+                                  setCustomTemplateTitle(tpl.title);
+                                }}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  textAlign: "left",
+                                  padding: "20px",
+                                  borderRadius: 16,
+                                  background: cardBg,
+                                  border: cardBorder,
+                                  cursor: "pointer",
+                                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  gap: 16,
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+                                }}
+                                className="template-card-btn"
+                              >
+                                <div>
+                                  {/* Tags Badges */}
+                                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                                    {tpl.tags.map((tag, tagIdx) => (
+                                      <span key={tagIdx} style={{
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        padding: "3px 9px",
+                                        borderRadius: 20,
+                                        background: isSchool ? "rgba(2, 132, 199, 0.12)" : "rgba(217, 119, 6, 0.14)",
+                                        color: isSchool ? "#0284c7" : "#b45309",
+                                        letterSpacing: "0.02em"
+                                      }}>
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                  {/* Title */}
+                                  <div style={{ fontSize: 15, fontWeight: 800, color: titleColor, marginBottom: 6, lineHeight: 1.35 }}>
+                                    {tpl.title}
+                                  </div>
+
+                                  {/* Description */}
+                                  <div style={{ fontSize: 12, color: descColor, fontWeight: 500, lineHeight: 1.5 }}>
+                                    {tpl.desc}
+                                  </div>
                                 </div>
 
-                                {/* Title */}
-                                <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6, lineHeight: 1.35 }}>
-                                  {tpl.title}
+                                {/* Footer Action */}
+                                <div style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  fontSize: 12,
+                                  fontWeight: 800,
+                                  color: actionColor,
+                                  marginTop: 4
+                                }}>
+                                  <span>Gunakan Template</span>
+                                  <Plus style={{ width: 14, height: 14 }} />
                                 </div>
-
-                                {/* Description */}
-                                <div style={{ fontSize: 12, color: "#64748b", fontWeight: 400, lineHeight: 1.5 }}>
-                                  {tpl.desc}
-                                </div>
-                              </div>
-
-                              {/* Footer Action */}
-                              <div style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 6,
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: "var(--v)",
-                                marginTop: 4
-                              }}>
-                                <span>Gunakan Template</span>
-                                <Plus style={{ width: 14, height: 14 }} />
-                              </div>
-                            </button>
-                          ))}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     );
