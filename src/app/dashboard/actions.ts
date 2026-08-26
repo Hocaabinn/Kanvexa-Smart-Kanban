@@ -40,6 +40,13 @@ export async function createBoard(formData: FormData) {
       { name: "Tindak Lanjut (Action Items)", position: 2, cards: ["Desain Spanduk & Publikasi", "Hubungi narasumber luar"] },
       { name: "Selesai", position: 3, cards: ["Booking Ruang Aula Sekolah"] },
     ];
+  } else if (name === "Student Planner (Jadwal & Tugas)") {
+    columnsToInsert = [
+      { name: "Jadwal & Kelas", position: 0, cards: ["Matematika Diskrit (Senin 08:00)", "Struktur Data (Rabu 10:00)", "Bahasa Inggris (Kamis 13:00)"] },
+      { name: "Tugas & Proyek", position: 1, cards: ["Tugas 1 Alpro (Deadline Jumat)", "Paper Etika Profesi", "Persiapan Presentasi AI"] },
+      { name: "Bahan Pelajaran", position: 2, cards: ["Slides Pertemuan 1-4", "Ebook Kalkulus Bab 3", "Link Github Asisten Praktikum"] },
+      { name: "Selesai", position: 3, cards: ["Kuis 1 Struktur Data"] },
+    ];
   } else if (name === "Mindmap Ide & Brainstorming") {
     columnsToInsert = [
       { name: "Brain Dump / Ide Acak", position: 0, cards: ["Membuat sistem filter kategori", "Integrasi payment gateway"] },
