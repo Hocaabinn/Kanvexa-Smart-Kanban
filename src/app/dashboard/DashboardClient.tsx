@@ -74,6 +74,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations);
   const [inboxUpdateTrigger, setInboxUpdateTrigger] = useState(0);
   const [openingBoardTitle, setOpeningBoardTitle] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<"all" | "school" | "life">("all");
 
   const handleOpenBoard = (boardId: string, boardName: string) => {
     setOpeningBoardTitle(boardName);
@@ -453,10 +454,46 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
               </p>
             </div>
 
+            {/* Category Tabs */}
+            <div style={{
+              display: "flex",
+              gap: 8,
+              marginBottom: 28,
+              borderBottom: "1px solid #e2e8f0",
+              paddingBottom: 12
+            }}>
+              {(["all", "school", "life"] as const).map((cat) => {
+                const isActive = activeCategory === cat;
+                const label = cat === "all" ? "Semua" : cat === "school" ? "School 🎓" : "Life 🌱";
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setActiveCategory(cat)}
+                    style={{
+                      padding: "8px 18px",
+                      borderRadius: 20,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      border: "none",
+                      background: isActive ? "var(--v)" : "transparent",
+                      color: isActive ? "#ffffff" : "#64748b",
+                      cursor: "pointer",
+                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                      boxShadow: isActive ? "0 4px 12px rgba(109, 40, 217, 0.15)" : "none",
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
               {[
                 {
                   category: "1. Kemahasiswaan & Akademik",
+                  type: "school",
                   icon: GraduationCap,
                   color: "#8b5cf6",
                   bg: "#f5f3ff",
@@ -481,6 +518,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                 },
                 {
                   category: "2. Produktivitas & Brainstorming",
+                  type: "life",
                   icon: Lightbulb,
                   color: "#d97706",
                   bg: "#fffbeb",
@@ -503,7 +541,8 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                     }
                   ]
                 }
-              ].map((cat, catIdx) => {
+              ].filter(cat => activeCategory === "all" || cat.type === activeCategory)
+               .map((cat, catIdx) => {
                 const CategoryIcon = cat.icon;
                 return (
                   <div key={catIdx} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
