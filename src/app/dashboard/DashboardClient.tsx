@@ -578,6 +578,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       prompt: "Daily Journal & Habit Tracker",
                       tagColor: "#ec4899",
                       tagBg: "#fce7f3"
+                    },
+                    {
+                      title: "Monthly Finance Tracker",
+                      desc: "Pelacak anggaran bulanan, daftar tagihan, tabungan, dan pengeluaran harian.",
+                      tags: ["Personal", "Keuangan"],
+                      prompt: "Monthly Finance Tracker",
+                      tagColor: "#10b981",
+                      tagBg: "#ecfdf5"
                     }
                   ]
                 }

@@ -89,6 +89,13 @@ export async function createBoard(formData: FormData) {
       { name: "Refleksi Harian", position: 2, cards: ["Apa pencapaian terbaik hari ini?", "Hal apa yang bisa diperbaiki besok?", "Tulis 3 hal yang patut disyukuri"] },
       { name: "Selesai Hari Ini", position: 3, cards: ["Menyiapkan pakaian & tas untuk besok"] },
     ];
+  } else if (name === "Monthly Finance Tracker") {
+    columnsToInsert = [
+      { name: "Anggaran & Kebutuhan", position: 0, cards: ["Belanja bulanan sembako", "Uang kos/kontrakan", "Beli kuota internet"] },
+      { name: "Tagihan Rutin", position: 1, cards: ["Tagihan listrik & air", "Langganan Spotify / Netflix", "Cicilan / iuran BPJS"] },
+      { name: "Tabungan & Investasi", position: 2, cards: ["Transfer tabungan darurat", "Investasi reksa dana / saham"] },
+      { name: "Pengeluaran Terlacak", position: 3, cards: ["Beli kopi & jajan sore", "Service kendaraan bulanan"] },
+    ];
   } else {
     // Default fallback columns
     columnsToInsert = [
