@@ -82,6 +82,13 @@ export async function createBoard(formData: FormData) {
       { name: "Uji Coba (Testing)", position: 2, cards: ["Unit testing auth controller", "Integrasi testing flow order"] },
       { name: "Selesai", position: 3, cards: ["Deployment ke hosting Vercel"] },
     ];
+  } else if (name === "Daily Journal & Habit Tracker") {
+    columnsToInsert = [
+      { name: "Kebiasaan Pagi", position: 0, cards: ["Minum segelas air putih", "Olahraga ringan 15 menit", "Membaca buku 10 halaman"] },
+      { name: "Kebiasaan Malam", position: 1, cards: ["Merapikan meja belajar", "Refleksi harian & jurnal", "Tidur sebelum jam 11 malam"] },
+      { name: "Refleksi Harian", position: 2, cards: ["Apa pencapaian terbaik hari ini?", "Hal apa yang bisa diperbaiki besok?", "Tulis 3 hal yang patut disyukuri"] },
+      { name: "Selesai Hari Ini", position: 3, cards: ["Menyiapkan pakaian & tas untuk besok"] },
+    ];
   } else {
     // Default fallback columns
     columnsToInsert = [
