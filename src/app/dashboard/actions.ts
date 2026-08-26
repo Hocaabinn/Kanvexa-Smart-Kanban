@@ -47,6 +47,13 @@ export async function createBoard(formData: FormData) {
       { name: "Bahan Pelajaran", position: 2, cards: ["Slides Pertemuan 1-4", "Ebook Kalkulus Bab 3", "Link Github Asisten Praktikum"] },
       { name: "Selesai", position: 3, cards: ["Kuis 1 Struktur Data"] },
     ];
+  } else if (name === "Kelompok Belajar (Study Group)") {
+    columnsToInsert = [
+      { name: "Topik Bahasan", position: 0, cards: ["Pembagian topik presentasi", "Menentukan studi kasus", "Finalisasi PowerPoint"] },
+      { name: "Tugas Anggota", position: 1, cards: ["Budi: Cari referensi bab 1", "Siti: Analisis data survei", "Andi: Desain slide deck"] },
+      { name: "Review Bersama", position: 2, cards: ["Review draft laporan", "Latihan presentasi kelompok"] },
+      { name: "Siap Kumpul", position: 3, cards: ["Upload tugas ke Google Drive"] },
+    ];
   } else if (name === "Mindmap Ide & Brainstorming") {
     columnsToInsert = [
       { name: "Brain Dump / Ide Acak", position: 0, cards: ["Membuat sistem filter kategori", "Integrasi payment gateway"] },
