@@ -80,3 +80,36 @@ Editor.
 - Realtime sync pakai Supabase Realtime channel per board
 - Integrasi Claude API buat AI breakdown dari satu kalimat tujuan
 - UI invite member + switch role
+
+## Sistem Galeri Template (School & Life)
+
+Aplikasi memiliki **Sistem Galeri Template** yang membantu pengguna menginisialisasi ruang kerja (board, kolom, dan kartu) dengan cepat. Galeri Template dibagi menjadi dua kategori utama:
+1. **School (Akademik & Organisasi)**: Disesuaikan untuk kebutuhan akademik, seperti *Student Planner*, *Kelompok Belajar*, *Pemburu Beasiswa*, dan *Persiapan Ujian Akhir*.
+2. **Life (Produktivitas & Gaya Hidup)**: Disesuaikan untuk kebutuhan personal dan produktivitas harian, seperti *Daily Journal & Habit Tracker*, *Monthly Finance Tracker*, *Travel Planner*, dan *Pelacak Buku & Film*.
+
+### Menambahkan Template Baru
+
+Untuk menambahkan template baru ke dalam aplikasi, ikuti dua langkah berikut:
+
+1. **Definisikan Metadata Template**:
+   Buka file [templates-config.ts](file:///Users/user/Documents/Docs%20Bintang/Developer/Kanban/Kanvexa-Smart-Kanban-1/src/lib/templates-config.ts) dan tambahkan metadata template Anda di bawah kategori yang sesuai:
+   ```typescript
+   {
+     title: "Nama Template",
+     desc: "Deskripsi singkat kegunaan template.",
+     tags: ["Tag1", "Tag2"],
+     prompt: "Nama Template", // Harus unik, digunakan sebagai pencocokan saat seeding
+     tagColor: "#hexColor",
+     tagBg: "#hexColor"
+   }
+   ```
+
+2. **Tambahkan Logic Seeding Kolom & Kartu**:
+   Buka file [actions.ts](file:///Users/user/Documents/Docs%20Bintang/Developer/Kanban/Kanvexa-Smart-Kanban-1/src/app/dashboard/actions.ts) dan tambahkan kondisi baru di dalam fungsi `createBoard` untuk mendefinisikan kolom dan kartu default yang akan di-seed secara otomatis:
+   ```typescript
+   } else if (name === "Nama Template") {
+     columnsToInsert = [
+       { name: "Kolom 1", position: 0, cards: ["Tugas A", "Tugas B"] },
+       { name: "Kolom 2", position: 1, cards: ["Tugas C"] },
+     ];
+   ```
