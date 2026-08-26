@@ -75,6 +75,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   const [inboxUpdateTrigger, setInboxUpdateTrigger] = useState(0);
   const [openingBoardTitle, setOpeningBoardTitle] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<"all" | "school" | "life">("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleOpenBoard = (boardId: string, boardName: string) => {
     setOpeningBoardTitle(boardName);
@@ -454,43 +455,101 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
               </p>
             </div>
 
-            {/* Category Tabs */}
+            {/* Category Tabs & Search Bar */}
             <div style={{
               display: "flex",
-              gap: 8,
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 16,
+              flexWrap: "wrap",
               marginBottom: 28,
               borderBottom: "1px solid #e2e8f0",
               paddingBottom: 12
             }}>
-              {(["all", "school", "life"] as const).map((cat) => {
-                const isActive = activeCategory === cat;
-                const label = cat === "all" ? "Semua" : cat === "school" ? "School 🎓" : "Life 🌱";
-                return (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {(["all", "school", "life"] as const).map((cat) => {
+                  const isActive = activeCategory === cat;
+                  const label = cat === "all" ? "Semua" : cat === "school" ? "School 🎓" : "Life 🌱";
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setActiveCategory(cat)}
+                      style={{
+                        padding: "8px 18px",
+                        borderRadius: 20,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        border: "none",
+                        background: isActive ? "var(--v)" : "transparent",
+                        color: isActive ? "#ffffff" : "#64748b",
+                        cursor: "pointer",
+                        transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                        boxShadow: isActive ? "0 4px 12px rgba(109, 40, 217, 0.15)" : "none",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Search Bar Input */}
+              <div style={{ position: "relative", minWidth: 260 }} className="template-search-container">
+                <input
+                  type="text"
+                  placeholder="Cari template..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 16px 8px 36px",
+                    borderRadius: 20,
+                    fontSize: 13,
+                    border: "1px solid #cbd5e1",
+                    outline: "none",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    transition: "all 0.2s ease"
+                  }}
+                />
+                <span style={{
+                  position: "absolute",
+                  left: 14,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: 13,
+                  color: "#94a3b8",
+                  pointerEvents: "none"
+                }}>
+                  🔍
+                </span>
+                {searchQuery && (
                   <button
-                    key={cat}
                     type="button"
-                    onClick={() => setActiveCategory(cat)}
+                    onClick={() => setSearchQuery("")}
                     style={{
-                      padding: "8px 18px",
-                      borderRadius: 20,
-                      fontSize: 13,
-                      fontWeight: 700,
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
                       border: "none",
-                      background: isActive ? "var(--v)" : "transparent",
-                      color: isActive ? "#ffffff" : "#64748b",
+                      color: "#94a3b8",
+                      fontSize: 16,
                       cursor: "pointer",
-                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                      boxShadow: isActive ? "0 4px 12px rgba(109, 40, 217, 0.15)" : "none",
+                      padding: 0,
+                      fontWeight: "bold"
                     }}
                   >
-                    {label}
+                    ×
                   </button>
-                );
-              })}
+                )}
+              </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-              {[
+            {(() => {
+              const allCategories = [
                 {
                   category: "1. Akademik & Organisasi (School)",
                   type: "school",
@@ -605,114 +664,152 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                     }
                   ]
                 }
-              ].filter(cat => activeCategory === "all" || cat.type === activeCategory)
-               .map((cat, catIdx) => {
-                const CategoryIcon = cat.icon;
+              ];
+
+              const filteredCategories = allCategories
+                .filter(cat => activeCategory === "all" || cat.type === activeCategory)
+                .map(cat => {
+                  const filteredTemplates = cat.templates.filter(tpl =>
+                    tpl.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    tpl.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    tpl.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+                  );
+                  return { ...cat, templates: filteredTemplates };
+                })
+                .filter(cat => cat.templates.length > 0);
+
+              if (filteredCategories.length === 0) {
                 return (
-                  <div 
-                    key={`${activeCategory}-${cat.category}`} 
-                    className="template-category-container"
-                    style={{ display: "flex", flexDirection: "column", gap: 14 }}
-                  >
-                    {/* Subheader Kategori */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: 8,
-                        background: cat.bg,
-                        color: cat.color,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0
-                      }}>
-                        <CategoryIcon style={{ width: 14, height: 14 }} />
-                      </div>
-                      <h3 style={{ fontSize: 13, fontWeight: 800, color: "#475569", margin: 0, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                        {cat.category}
-                      </h3>
-                    </div>
-
-                    {/* Grid Cards */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))", gap: 18 }}>
-                      {cat.templates.map((tpl, tplIdx) => (
-                        <form key={tplIdx} action={createBoardAction} style={{ margin: 0 }}>
-                          <input type="hidden" name="name" value={tpl.prompt} />
-                          <button
-                            type="submit"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              textAlign: "left",
-                              padding: "20px",
-                              borderRadius: 16,
-                              background: "#ffffff",
-                              border: "1px solid #e2e8f0",
-                              cursor: "pointer",
-                              transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "space-between",
-                              gap: 16,
-                              boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                            }}
-                            className="template-card-btn"
-                          >
-                            <div>
-                              {/* Tags Badges */}
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                                {tpl.tags.map((tag, tagIdx) => (
-                                  <span key={tagIdx} style={{
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    padding: "3px 9px",
-                                    borderRadius: 20,
-                                    background: tpl.tagBg,
-                                    color: tpl.tagColor,
-                                    letterSpacing: "0.02em"
-                                  }}>
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-
-                              {/* Title */}
-                              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6, lineHeight: 1.35 }}>
-                                {tpl.title}
-                              </div>
-
-                              {/* Description */}
-                              <div style={{ fontSize: 12, color: "#64748b", fontWeight: 400, lineHeight: 1.5 }}>
-                                {tpl.desc}
-                              </div>
-                            </div>
-
-                            {/* Footer Action */}
-                            <div style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 6,
-                              fontSize: 12,
-                              fontWeight: 700,
-                              color: "var(--v)",
-                              marginTop: 4
-                            }}>
-                              <span>Gunakan Template</span>
-                              <Plus style={{ width: 14, height: 14 }} />
-                            </div>
-                          </button>
-                        </form>
-                      ))}
-                    </div>
+                  <div style={{
+                    padding: "48px 24px",
+                    textAlign: "center",
+                    background: "#ffffff",
+                    borderRadius: 16,
+                    border: "1px dashed #cbd5e1",
+                    color: "#64748b",
+                    marginTop: 10
+                  }} className="template-category-container">
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>
+                      Template tidak ditemukan
+                    </h3>
+                    <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+                      Tidak ada template yang cocok dengan pencarian &quot;{searchQuery}&quot;. Coba kata kunci lain.
+                    </p>
                   </div>
                 );
-              })}
-            </div>
+              }
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
+                  {filteredCategories.map((cat, catIdx) => {
+                    const CategoryIcon = cat.icon;
+                    return (
+                      <div 
+                        key={`${activeCategory}-${searchQuery}-${cat.category}`} 
+                        className="template-category-container"
+                        style={{ display: "flex", flexDirection: "column", gap: 14 }}
+                      >
+                        {/* Subheader Kategori */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: 8,
+                            background: cat.bg,
+                            color: cat.color,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0
+                          }}>
+                            <CategoryIcon style={{ width: 14, height: 14 }} />
+                          </div>
+                          <h3 style={{ fontSize: 13, fontWeight: 800, color: "#475569", margin: 0, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                            {cat.category}
+                          </h3>
+                        </div>
+
+                        {/* Grid Cards */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))", gap: 18 }}>
+                          {cat.templates.map((tpl, tplIdx) => (
+                            <form key={tplIdx} action={createBoardAction} style={{ margin: 0 }}>
+                              <input type="hidden" name="name" value={tpl.prompt} />
+                              <button
+                                type="submit"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  textAlign: "left",
+                                  padding: "20px",
+                                  borderRadius: 16,
+                                  background: "#ffffff",
+                                  border: "1px solid #e2e8f0",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  gap: 16,
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                                }}
+                                className="template-card-btn"
+                              >
+                                <div>
+                                  {/* Tags Badges */}
+                                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                                    {tpl.tags.map((tag, tagIdx) => (
+                                      <span key={tagIdx} style={{
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        padding: "3px 9px",
+                                        borderRadius: 20,
+                                        background: tpl.tagBg,
+                                        color: tpl.tagColor,
+                                        letterSpacing: "0.02em"
+                                      }}>
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                  {/* Title */}
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6, lineHeight: 1.35 }}>
+                                    {tpl.title}
+                                  </div>
+
+                                  {/* Description */}
+                                  <div style={{ fontSize: 12, color: "#64748b", fontWeight: 400, lineHeight: 1.5 }}>
+                                    {tpl.desc}
+                                  </div>
+                                </div>
+
+                                {/* Footer Action */}
+                                <div style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  color: "var(--v)",
+                                  marginTop: 4
+                                }}>
+                                  <span>Gunakan Template</span>
+                                  <Plus style={{ width: 14, height: 14 }} />
+                                </div>
+                              </button>
+                            </form>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </main>
       </div>
-
       {/* 5. Create Board Modal Pop-up */}
       {showCreateModal && (
         <div style={{
