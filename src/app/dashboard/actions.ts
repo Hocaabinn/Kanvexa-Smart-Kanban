@@ -61,6 +61,13 @@ export async function createBoard(formData: FormData) {
       { name: "Tahap Wawancara", position: 2, cards: ["Latihan mock interview", "Cetak kartu peserta & berkas fisik"] },
       { name: "Status Akhir", position: 3, cards: ["Simpan email pengumuman"] },
     ];
+  } else if (name === "Persiapan Ujian Akhir (Exam Prep)") {
+    columnsToInsert = [
+      { name: "Materi Ujian", position: 0, cards: ["Kisi-kisi Pemrograman Web", "Bab 1-5 Teori Graf", "Kumpulan rumus Fisika II"] },
+      { name: "Sedang Di-review", position: 1, cards: ["Latihan soal UTS tahun lalu", "Membaca rangkuman Algoritma"] },
+      { name: "Siap Ujian", position: 2, cards: ["Kalkulus II (Siap 90%)", "Jaringan Komputer (Siap 85%)"] },
+      { name: "Selesai Ujian", position: 3, cards: ["Ujian Pemrograman Web"] },
+    ];
   } else if (name === "Mindmap Ide & Brainstorming") {
     columnsToInsert = [
       { name: "Brain Dump / Ide Acak", position: 0, cards: ["Membuat sistem filter kategori", "Integrasi payment gateway"] },

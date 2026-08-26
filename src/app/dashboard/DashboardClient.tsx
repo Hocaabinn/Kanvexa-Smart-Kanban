@@ -537,6 +537,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       prompt: "Pemburu Beasiswa (Scholarship Tracker)",
                       tagColor: "#3b82f6",
                       tagBg: "#dbeafe"
+                    },
+                    {
+                      title: "Persiapan Ujian Akhir (Exam Prep)",
+                      desc: "Fokus belajar menjelang UTS/UAS, review materi, dan latihan soal.",
+                      tags: ["Akademik", "Studi"],
+                      prompt: "Persiapan Ujian Akhir (Exam Prep)",
+                      tagColor: "#ec4899",
+                      tagBg: "#fce7f3"
                     }
                   ]
                 },
