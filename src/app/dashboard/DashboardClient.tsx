@@ -19,7 +19,10 @@ import {
   Lightbulb,
   Target,
   LayoutTemplate,
-  Menu
+  Menu,
+  Search,
+  Heart,
+  Leaf
 } from "lucide-react";
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 import BoardLoaderModal from "@/components/ui/BoardLoaderModal";
@@ -486,7 +489,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {(["all", "school", "life"] as const).map((cat) => {
                   const isActive = activeCategory === cat;
-                  const label = cat === "all" ? "Semua" : cat === "school" ? "School 🎓" : "Life 🌱";
+                  const label = cat === "all" ? "Semua" : cat === "school" ? "School" : "Life";
                   return (
                     <button
                       key={cat}
@@ -503,9 +506,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                         cursor: "pointer",
                         transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                         boxShadow: isActive ? "0 4px 12px rgba(109, 40, 217, 0.15)" : "none",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6
                       }}
                     >
-                      {label}
+                      {cat === "school" && <GraduationCap style={{ width: 14, height: 14 }} />}
+                      {cat === "life" && <Leaf style={{ width: 14, height: 14 }} />}
+                      <span>{label}</span>
                     </button>
                   );
                 })}
@@ -530,17 +538,16 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                     transition: "all 0.2s ease"
                   }}
                 />
-                <span style={{
+                <Search style={{
                   position: "absolute",
                   left: 14,
                   top: "50%",
                   transform: "translateY(-50%)",
-                  fontSize: 13,
+                  width: 14,
+                  height: 14,
                   color: "#94a3b8",
                   pointerEvents: "none"
-                }}>
-                  🔍
-                </span>
+                }} />
                 {searchQuery && (
                   <button
                     type="button"
@@ -589,7 +596,9 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                     color: "#64748b",
                     marginTop: 10
                   }} className="template-category-container">
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                      <Search style={{ width: 32, height: 32, color: "#94a3b8" }} />
+                    </div>
                     <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>
                       Template tidak ditemukan
                     </h3>
