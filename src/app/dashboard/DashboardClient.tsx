@@ -121,6 +121,11 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
     } catch (e) {
       console.error("Gagal memuat state pin/star:", e);
     }
+
+    return () => {
+      // Close any active Swal alerts when DashboardClient unmounts (e.g. on redirect)
+      Swal.close();
+    };
   }, []);
 
   const handlePin = (boardId: string, e: React.MouseEvent) => {
