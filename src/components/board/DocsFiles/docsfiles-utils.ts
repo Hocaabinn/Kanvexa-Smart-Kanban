@@ -26,28 +26,7 @@ export interface DocFileItem {
   updated_at: string;
 }
 
-export const INITIAL_SAMPLE_FOLDERS: DocFolderItem[] = [
-  {
-    id: "f-1",
-    name: "General Knowledge",
-    fileCount: 10,
-    subfolders: [
-      {
-        id: "f-1-1",
-        name: "Onboarding",
-        fileCount: 15,
-        subfolders: [
-          { id: "f-1-1-1", name: "Subfolder 1", fileCount: 5 },
-          { id: "f-1-1-2", name: "Subfolder 2", fileCount: 10 },
-        ],
-      },
-      { id: "f-1-2", name: "Integrations", fileCount: 5 },
-      { id: "f-1-3", name: "Technical Specs", fileCount: 8 },
-    ],
-  },
-  { id: "f-2", name: "Onboarding Design", fileCount: 4 },
-  { id: "f-3", name: "Team Interviews", fileCount: 6 },
-];
+export const INITIAL_SAMPLE_FOLDERS: DocFolderItem[] = [];
 
 export interface AIDocResponse {
   action: "generate_doc" | "summarize_doc" | "improve_doc";
@@ -82,92 +61,4 @@ export function getDocCategoryBadge(category: DocCategory): {
   }
 }
 
-export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [
-  {
-    id: "doc-1",
-    board_id: "general",
-    folder_id: "f-1-1",
-    title: "Product Requirement Document (PRD) - Kanvexa SaaS",
-    category: "PRD",
-    author_email: "andi@kanvexa.com",
-    created_at: "2025-02-14T10:00:00.000Z",
-    updated_at: "2025-02-15T10:00:00.000Z",
-    summary_highlights: [
-      "Peluncuran modul Message Board & AI Assistant",
-      "Dukungan upload file hingga 50 MB",
-      "Integrasi Kalender 7-Hari dan AI Reschedule",
-    ],
-    action_items: [
-      "Review UI split-screen bersama tim desainer",
-      "Uji alur upload file PDF 50 MB di Vercel",
-    ],
-    content_markdown: `# Product Requirement Document (PRD)
-
-## 📌 Ringkasan Proyek
-**Kanvexa** adalah platform manajemen proyek pintar yang menggabungkan *Kanban Board*, *Message Board*, *Kalender Interaktif*, dan *Docs & Files* dengan kecerdasan buatan.
-
----
-
-## 🎯 Fitur Utama
-1. **Kanban Board:** Manajemen tugas dengan drag-and-drop real-time.
-2. **Message Board:** Wadah diskusi tim + AI Rangkuman & Ekstraksi Tugas.
-3. **Calendar View:** Grid 7-Hari dengan AI Reschedule otomatis.
-4. **Docs & Files:** Hub dokumentasi tim dengan Kanvexa AI Document Assistant.
-
----
-
-## 🚀 Kriteria Keberhasilan
-- Semua file PDF/dokumen hingga **50 MB** terunggah dengan lancar.
-- AI menghasilkan rangkuman dan PRD dalam format **JSON murni**.
-- Pengguna dapat berkolaborasi melalui tautan langsung.`,
-  },
-  {
-    id: "doc-2",
-    board_id: "general",
-    folder_id: "f-1-2",
-    title: "Catatan Rapat Peluncuran Fitur Baru",
-    category: "Meeting Notes",
-    author_email: "bintangwcproger@gmail.com",
-    created_at: "2025-02-13T10:00:00.000Z",
-    updated_at: "2025-02-15T10:00:00.000Z",
-    summary_highlights: [
-      "Tim menyepakati desain gradient ungu cerah khas Kanvexa",
-      "Sinkronisasi real-time Supabase berjalan lancar",
-    ],
-    action_items: [
-      "Persiapkan deployment ke Vercel",
-      "Set environment variable OPENROUTER_API_KEY",
-    ],
-    content_markdown: `# Catatan Rapat Peluncuran Fitur Baru
-
-**Tanggal:** 15 Februari 2025  
-**Peserta:** Tim Developer & Desainer Kanvexa
-
----
-
-## 📝 Poin Pembahasan
-- Pembahasan layout **Split-Screen** untuk Message Board dan Docs & Files.
-- Penyempurnaan warna latar kartu menjadi **Gradient Ungu Cerah**.
-- Penambahan tombol **\`✦ Urai dengan AI\`** pada header.
-
----
-
-## ✅ Tindakan Lanjutan
-- [x] Implementasi 50 MB Upload Route Handler
-- [x] Penambahan fitur Share & Kolaborasi
-- [ ] Pengujian akhir sebelum push ke GitHub main branch`,
-  },
-  {
-    id: "doc-3",
-    board_id: "general",
-    folder_id: "f-1-3",
-    title: "Spesifikasi Teknis & Arsitektur API",
-    category: "Technical Spec",
-    author_email: "bintangwcproger@gmail.com",
-    created_at: "2025-02-12T10:00:00.000Z",
-    updated_at: "2025-02-15T10:00:00.000Z",
-    content_markdown: `# Spesifikasi Teknis & Arsitektur API
-
-Dokumen spesifikasi teknis platform Kanvexa SaaS untuk integrasi API dan database real-time.`,
-  },
-];
+export const INITIAL_SAMPLE_DOCS: DocFileItem[] = [];

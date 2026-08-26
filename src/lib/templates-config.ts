@@ -33,16 +33,17 @@ export const allCategories: TemplateCategory[] = [
     bg: "#f5f3ff",
     templates: [
       {
-        title: "Persiapan Seminar & Skripsi",
-        desc: "Timeline riset, pemetaan bab, list revisi dosen, dan checklist dokumen.",
+        title: "Persiapan Seminar",
+        desc: "Timeline seminar proposal/hasil, pemetaan bab, list revisi dosen penguji, dan pendaftaran sidang.",
         tags: ["Akademik", "Populer"],
-        prompt: "Persiapan Seminar & Skripsi",
+        prompt: "Persiapan Seminar",
         tagColor: "#8b5cf6",
         tagBg: "#f5f3ff",
         columnsPreview: [
-          { name: "Riset & Bab 1-3", cards: ["Penyusunan Judul & Abstrak", "Kajian Pustaka", "Draft Proposal"] },
-          { name: "Revisi Dosen", cards: ["Revisi Dosen Pembimbing 1", "Revisi Dosen Pembimbing 2"] },
-          { name: "Sidang & Berkas", cards: ["Pendaftaran Sidang", "Cetak Naskah & Bebas Pustaka"] }
+          { name: "Persiapan & Bab 1-3", cards: ["Penyusunan Judul & Abstrak", "Draft Proposal Sempro", "Persetujuan Dosen Pembimbing"] },
+          { name: "Revisi Dosen Penguji", cards: ["Revisi Catatan Penguji 1", "Revisi Catatan Penguji 2"] },
+          { name: "Pendaftaran & Berkas", cards: ["Form Pendaftaran Seminar", "Cetak Naskah & PPT Presentasi"] },
+          { name: "Selesai Seminar", cards: ["Berita Acara Seminar"] }
         ]
       },
       {

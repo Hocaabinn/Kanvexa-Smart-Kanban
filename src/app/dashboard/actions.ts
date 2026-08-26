@@ -28,12 +28,12 @@ export async function createBoard(formData: FormData) {
   let columnsToInsert: { name: string; position: number; cards?: string[] }[] = [];
   const matchTarget = templatePrompt || name;
 
-  if (matchTarget === "Persiapan Seminar & Skripsi") {
+  if (matchTarget === "Persiapan Seminar" || matchTarget === "Persiapan Seminar & Skripsi") {
     columnsToInsert = [
-      { name: "Ide & Referensi", position: 0, cards: ["Mencari 5 jurnal pendukung", "Pilih topik utama skripsi"] },
-      { name: "Checklist Dokumen", position: 1, cards: ["Draft Proposal Bab 1-3", "Form persetujuan dosen pembimbing"] },
-      { name: "Revisi Dosen", position: 2, cards: ["Revisi abstrak Bahasa Inggris", "Perbaikan metodologi penelitian"] },
-      { name: "Selesai", position: 3, cards: ["Mengisi form pendaftaran seminar proposal"] },
+      { name: "Persiapan & Bab 1-3", position: 0, cards: ["Penyusunan Judul & Abstrak", "Draft Proposal Sempro", "Persetujuan Dosen Pembimbing"] },
+      { name: "Revisi Dosen Penguji", position: 1, cards: ["Revisi Catatan Penguji 1", "Revisi Catatan Penguji 2"] },
+      { name: "Pendaftaran & Berkas", position: 2, cards: ["Form Pendaftaran Seminar", "Cetak Naskah & PPT Presentasi"] },
+      { name: "Selesai Seminar", position: 3, cards: ["Berita Acara Seminar"] },
     ];
   } else if (name === "Manajemen Rapat Organisasi / OSIS") {
     columnsToInsert = [
