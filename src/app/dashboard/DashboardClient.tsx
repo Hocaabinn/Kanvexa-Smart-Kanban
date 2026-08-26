@@ -24,6 +24,7 @@ import {
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 import BoardLoaderModal from "@/components/ui/BoardLoaderModal";
 import { showAlert, showConfirm } from "@/lib/swal";
+import Swal from "sweetalert2";
 
 interface Board {
   id: string;
@@ -80,6 +81,21 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
   const handleOpenBoard = (boardId: string, boardName: string) => {
     setOpeningBoardTitle(boardName);
     router.push(`/board/${boardId}`);
+  };
+
+  const handleApplyTemplate = (formData: FormData) => {
+    const tplTitle = formData.get("name") as string;
+    Swal.fire({
+      title: "Menerapkan Template",
+      html: `Sedang menyiapkan ruang kerja untuk <strong>${tplTitle}</strong>...`,
+      icon: "info",
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+    createBoardAction(formData);
   };
 
   // Rename & Delete state
@@ -733,7 +749,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                         {/* Grid Cards */}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))", gap: 18 }}>
                           {cat.templates.map((tpl, tplIdx) => (
-                            <form key={tplIdx} action={createBoardAction} style={{ margin: 0 }}>
+                            <form key={tplIdx} action={handleApplyTemplate} style={{ margin: 0 }}>
                               <input type="hidden" name="name" value={tpl.prompt} />
                               <button
                                 type="submit"
