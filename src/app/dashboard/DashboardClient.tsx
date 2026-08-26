@@ -513,6 +513,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       prompt: "Manajemen Rapat Organisasi / OSIS",
                       tagColor: "#2563eb",
                       tagBg: "#eff6ff"
+                    },
+                    {
+                      title: "Student Planner (Jadwal & Tugas)",
+                      desc: "Pengatur jadwal kuliah/kelas, pelacak tenggat waktu tugas, dan bahan pelajaran.",
+                      tags: ["Akademik", "Studi"],
+                      prompt: "Student Planner (Jadwal & Tugas)",
+                      tagColor: "#10b981",
+                      tagBg: "#ecfdf5"
                     }
                   ]
                 },
