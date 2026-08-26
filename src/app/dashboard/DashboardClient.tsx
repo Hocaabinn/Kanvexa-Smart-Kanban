@@ -521,6 +521,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       prompt: "Student Planner (Jadwal & Tugas)",
                       tagColor: "#10b981",
                       tagBg: "#ecfdf5"
+                    },
+                    {
+                      title: "Kelompok Belajar (Study Group)",
+                      desc: "Koordinasi tugas kelompok, pembagian tugas anggota, dan jadwal kerja bareng.",
+                      tags: ["Organisasi", "Kolaborasi"],
+                      prompt: "Kelompok Belajar (Study Group)",
+                      tagColor: "#f59e0b",
+                      tagBg: "#fffbeb"
                     }
                   ]
                 },
