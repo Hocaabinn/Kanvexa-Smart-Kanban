@@ -586,6 +586,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       prompt: "Monthly Finance Tracker",
                       tagColor: "#10b981",
                       tagBg: "#ecfdf5"
+                    },
+                    {
+                      title: "Travel & Vacation Planner",
+                      desc: "Rencana perjalanan liburan, destinasi impian, reservasi tiket, dan packing checklist.",
+                      tags: ["Personal", "Travel"],
+                      prompt: "Travel & Vacation Planner",
+                      tagColor: "#3b82f6",
+                      tagBg: "#dbeafe"
                     }
                   ]
                 }

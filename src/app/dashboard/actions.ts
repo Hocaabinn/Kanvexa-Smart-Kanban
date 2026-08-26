@@ -96,6 +96,13 @@ export async function createBoard(formData: FormData) {
       { name: "Tabungan & Investasi", position: 2, cards: ["Transfer tabungan darurat", "Investasi reksa dana / saham"] },
       { name: "Pengeluaran Terlacak", position: 3, cards: ["Beli kopi & jajan sore", "Service kendaraan bulanan"] },
     ];
+  } else if (name === "Travel & Vacation Planner") {
+    columnsToInsert = [
+      { name: "Destinasi Impian", position: 0, cards: ["Riset penginapan di Bali", "List tempat wisata kuliner", "Cari spot foto terbaik"] },
+      { name: "Reservasi & Berkas", position: 1, cards: ["Beli tiket pesawat PP", "Booking hotel/Airbnb", "Siapkan KTP/Paspor"] },
+      { name: "Rencana Perjalanan", position: 2, cards: ["Itinerary Hari 1: Pantai Kuta", "Itinerary Hari 2: Ubud tour", "Itinerary Hari 3: Belanja oleh-oleh"] },
+      { name: "Packing Checklist", position: 3, cards: ["Siapkan pakaian & baju renang", "Bawa charger & powerbank", "Siapkan obat-obatan pribadi"] },
+    ];
   } else {
     // Default fallback columns
     columnsToInsert = [
