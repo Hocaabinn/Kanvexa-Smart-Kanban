@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Image as ImageIcon, X, Trash2, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Image as ImageIcon, Trash2, Sparkles, Upload } from "lucide-react";
 
 export interface CoverData {
   type: "gradient" | "image";
@@ -25,11 +25,84 @@ export const COVER_PRESETS: { name: string; value: string }[] = [
 
 export default function BoardCoverBanner({ cover, onUpdateCover, canEdit }: Props) {
   const [showPicker, setShowPicker] = useState(false);
+  const [activeTab, setActiveTab] = useState<"presets" | "upload" | "link">("presets");
+  const [selectedCover, setSelectedCover] = useState<CoverData | null>(cover);
   const [customUrl, setCustomUrl] = useState("");
+  const [isMac, setIsMac] = useState(true);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Detect OS on client mount (Mac: ⌘+V, Windows/Linux: Ctrl+V)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMac(/Mac|iPod|iPhone|iPad/.test(navigator.userAgent || ""));
+    }
+  }, []);
+
+  // Update selectedCover when prop changes
+  useEffect(() => {
+    setSelectedCover(cover);
+  }, [cover]);
+
+  // Handle global paste event when modal is open
+  useEffect(() => {
+    if (!showPicker) return;
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (e.clipboardData) {
+        // Handle pasted image file
+        if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+          const file = e.clipboardData.files[0];
+          if (file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+              if (evt.target?.result) {
+                setSelectedCover({ type: "image", value: evt.target.result as string });
+                setActiveTab("upload");
+              }
+            };
+            reader.readAsDataURL(file);
+            return;
+          }
+        }
+
+        // Handle pasted text URL
+        const pastedText = e.clipboardData.getData("text");
+        if (pastedText && (pastedText.startsWith("http://") || pastedText.startsWith("https://") || pastedText.startsWith("data:image"))) {
+          setSelectedCover({ type: "image", value: pastedText.trim() });
+          setCustomUrl(pastedText.trim());
+          setActiveTab("link");
+        }
+      }
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [showPicker]);
 
   const activeBg = cover 
     ? (cover.type === "gradient" ? cover.value : `url('${cover.value}') center/cover no-repeat`)
     : "linear-gradient(135deg, #6d28d9 0%, #4c1d95 50%, #1e1b4b 100%)";
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        if (evt.target?.result) {
+          setSelectedCover({ type: "image", value: evt.target.result as string });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = () => {
+    onUpdateCover(selectedCover);
+    setShowPicker(false);
+  };
+
+  const shortcutText = isMac ? "⌘+V" : "Ctrl+V";
 
   return (
     <div style={{ position: "relative", width: "100%" }}>
@@ -45,7 +118,7 @@ export default function BoardCoverBanner({ cover, onUpdateCover, canEdit }: Prop
         }}
         className="board-cover-container"
       >
-        {/* Action button overlay on hover */}
+        {/* Action button overlay */}
         {canEdit && (
           <div style={{
             position: "absolute",
@@ -53,18 +126,25 @@ export default function BoardCoverBanner({ cover, onUpdateCover, canEdit }: Prop
             right: 20,
             display: "flex",
             gap: 8,
-            zIndex: 10
+            zIndex: 35,
+            pointerEvents: "auto"
           }}>
             <button
               type="button"
-              onClick={() => setShowPicker(true)}
+              onClick={() => {
+                setSelectedCover(cover);
+                setShowPicker(true);
+              }}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
-                padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                background: "rgba(15, 23, 42, 0.65)", backdropFilter: "blur(8px)",
-                color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.2)",
-                cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+                padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                background: "rgba(15, 23, 42, 0.75)", backdropFilter: "blur(10px)",
+                color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.25)",
+                cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+                transition: "transform 0.15s ease, background 0.15s ease"
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(15, 23, 42, 0.9)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(15, 23, 42, 0.75)")}
             >
               <ImageIcon width={14} height={14} />
               <span>Ubah Sampul</span>
@@ -74,10 +154,11 @@ export default function BoardCoverBanner({ cover, onUpdateCover, canEdit }: Prop
               <button
                 type="button"
                 onClick={() => onUpdateCover(null)}
+                title="Hapus Sampul"
                 style={{
                   display: "flex", alignItems: "center", gap: 6,
-                  padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                  background: "rgba(239, 68, 68, 0.75)", backdropFilter: "blur(8px)",
+                  padding: "7px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                  background: "rgba(239, 68, 68, 0.8)", backdropFilter: "blur(10px)",
                   color: "#ffffff", border: "none", cursor: "pointer"
                 }}
               >
@@ -88,96 +169,214 @@ export default function BoardCoverBanner({ cover, onUpdateCover, canEdit }: Prop
         )}
       </div>
 
-      {/* Cover Picker Modal */}
+      {/* Notion-Style Dark Mode Cover Picker Modal */}
       {showPicker && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(15, 23, 42, 0.5)", backdropFilter: "blur(6px)",
+          background: "rgba(0, 0, 0, 0.65)", backdropFilter: "blur(8px)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1100, padding: 20
+          zIndex: 1200, padding: 20
         }}>
           <div style={{
-            background: "#ffffff", borderRadius: 20, border: "1px solid #e2e8f0",
-            width: "100%", maxWidth: 480, boxShadow: "0 20px 40px -15px rgba(0,0,0,0.2)",
-            overflow: "hidden", animation: "modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
+            background: "#202020", borderRadius: 14, border: "1px solid #2f2f2f",
+            width: "100%", maxWidth: 500, boxShadow: "0 24px 48px rgba(0,0,0,0.5)",
+            overflow: "hidden", color: "#e3e3e3", fontFamily: "sans-serif"
           }}>
+            {/* Top Navigation Bar */}
             <div style={{
-              padding: "16px 20px", borderBottom: "1px solid #f1f5f9",
-              display: "flex", justifyContent: "space-between", alignItems: "center"
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 20px 0", borderBottom: "1px solid #2f2f2f"
             }}>
-              <h3 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                <Sparkles width={16} height={16} style={{ color: "#6d28d9" }} />
-                <span>Pilih Sampul Papan</span>
-              </h3>
+              <div style={{ display: "flex", gap: 20 }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("presets")}
+                  style={{
+                    background: "none", border: "none", padding: "0 0 10px 0",
+                    fontSize: 14, fontWeight: 600, cursor: "pointer",
+                    color: activeTab === "presets" ? "#ffffff" : "#9b9b9b",
+                    borderBottom: activeTab === "presets" ? "2px solid #ffffff" : "2px solid transparent"
+                  }}
+                >
+                  Presets
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("upload")}
+                  style={{
+                    background: "none", border: "none", padding: "0 0 10px 0",
+                    fontSize: 14, fontWeight: 600, cursor: "pointer",
+                    color: activeTab === "upload" ? "#ffffff" : "#9b9b9b",
+                    borderBottom: activeTab === "upload" ? "2px solid #ffffff" : "2px solid transparent"
+                  }}
+                >
+                  Upload
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("link")}
+                  style={{
+                    background: "none", border: "none", padding: "0 0 10px 0",
+                    fontSize: 14, fontWeight: 600, cursor: "pointer",
+                    color: activeTab === "link" ? "#ffffff" : "#9b9b9b",
+                    borderBottom: activeTab === "link" ? "2px solid #ffffff" : "2px solid transparent"
+                  }}
+                >
+                  Link
+                </button>
+              </div>
+
+              {/* Remove button on the top right */}
               <button
-                onClick={() => setShowPicker(false)}
+                type="button"
+                onClick={() => {
+                  setSelectedCover(null);
+                }}
                 style={{
-                  background: "#f1f5f9", border: "none", cursor: "pointer",
-                  color: "#64748b", width: 28, height: 28, borderRadius: 14,
-                  display: "flex", alignItems: "center", justifyContent: "center"
+                  background: "none", border: "none", padding: "0 0 10px 0",
+                  fontSize: 13, fontWeight: 500, color: "#9b9b9b", cursor: "pointer"
                 }}
               >
-                <X width={16} height={16} />
+                Remove
               </button>
             </div>
 
-            <div style={{ padding: 20, maxHeight: 360, overflowY: "auto" }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                Preset Mesh Gradient Khas Kanvexa:
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 20 }}>
-                {COVER_PRESETS.map((preset, idx) => (
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleFileUpload}
+            />
+
+            {/* Content Area */}
+            <div style={{ padding: 20, minHeight: 180 }}>
+              {/* Presets Tab */}
+              {activeTab === "presets" && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#9b9b9b", marginBottom: 12, textTransform: "uppercase" }}>
+                    Kanvexa Mesh Gradients:
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+                    {COVER_PRESETS.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCover({ type: "gradient", value: preset.value });
+                        }}
+                        style={{
+                          height: 56, borderRadius: 8, background: preset.value,
+                          border: selectedCover?.value === preset.value ? "2px solid #38bdf8" : "1px solid #3f3f46",
+                          cursor: "pointer", display: "flex", alignItems: "flex-end", padding: "6px 10px"
+                        }}
+                      >
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "#ffffff", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
+                          {preset.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Tab (Notion Style) */}
+              {activeTab === "upload" && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "10px 0" }}>
+                  {selectedCover?.type === "image" && selectedCover.value.startsWith("data:image") ? (
+                    <div style={{ width: "100%", marginBottom: 14, textAlign: "center" }}>
+                      <img
+                        src={selectedCover.value}
+                        alt="Preview"
+                        style={{ width: "100%", height: 110, borderRadius: 8, objectFit: "cover", border: "1px solid #3f3f46" }}
+                      />
+                    </div>
+                  ) : null}
+
                   <button
-                    key={idx}
                     type="button"
-                    onClick={() => {
-                      onUpdateCover({ type: "gradient", value: preset.value });
-                      setShowPicker(false);
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      width: "100%", padding: "18px 24px", borderRadius: 8,
+                      background: "#2c2c2c", border: "1px solid #3a3a3a",
+                      color: "#e3e3e3", fontSize: 14, fontWeight: 500,
+                      cursor: "pointer", display: "flex", alignItems: "center",
+                      justifyContent: "center", gap: 10, transition: "background 0.15s ease"
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#333333")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#2c2c2c")}
+                  >
+                    <Upload width={18} height={18} />
+                    <span>Upload an image</span>
+                  </button>
+
+                  <div style={{ fontSize: 13, color: "#787878", marginTop: 14 }}>
+                    or <span style={{ color: "#d4d4d4", fontWeight: 600 }}>{shortcutText}</span> to paste an image or link
+                  </div>
+                </div>
+              )}
+
+              {/* Link Tab */}
+              {activeTab === "link" && (
+                <div style={{ padding: "10px 0" }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#9b9b9b", marginBottom: 8 }}>
+                    Paste an image link below:
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/..."
+                    value={customUrl}
+                    onChange={(e) => {
+                      setCustomUrl(e.target.value);
+                      if (e.target.value.trim()) {
+                        setSelectedCover({ type: "image", value: e.target.value.trim() });
+                      }
                     }}
                     style={{
-                      height: 64, borderRadius: 12, background: preset.value,
-                      border: "2px solid #ffffff", cursor: "pointer",
-                      display: "flex", alignItems: "flex-end", padding: "8px 10px",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)", textAlign: "left"
+                      width: "100%", padding: "10px 14px", borderRadius: 8,
+                      background: "#2c2c2c", border: "1px solid #3a3a3a",
+                      color: "#ffffff", fontSize: 13, outline: "none"
                     }}
-                  >
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
-                      {preset.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
+                  />
+                  <div style={{ fontSize: 12, color: "#787878", marginTop: 8 }}>
+                    or <span style={{ color: "#d4d4d4", fontWeight: 600 }}>{shortcutText}</span> to paste anywhere in modal
+                  </div>
+                </div>
+              )}
+            </div>
 
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#64748b", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                Atau Pakai Tautan Gambar Kustom:
-              </div>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                if (customUrl.trim()) {
-                  onUpdateCover({ type: "image", value: customUrl.trim() });
-                  setShowPicker(false);
-                }
-              }} style={{ display: "flex", gap: 8 }}>
-                <input
-                  type="url"
-                  placeholder="https://example.com/banner-image.jpg"
-                  value={customUrl}
-                  onChange={(e) => setCustomUrl(e.target.value)}
-                  style={{
-                    flex: 1, padding: "8px 12px", borderRadius: 10, fontSize: 12,
-                    border: "1px solid #cbd5e1", outline: "none"
-                  }}
-                />
-                <button
-                  type="submit"
-                  style={{
-                    padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700,
-                    background: "var(--v)", color: "#fff", border: "none", cursor: "pointer"
-                  }}
-                >
-                  Terapkan
-                </button>
-              </form>
+            {/* Bottom Footer Bar */}
+            <div style={{
+              padding: "12px 20px", borderTop: "1px solid #2f2f2f",
+              display: "flex", justifyContent: "space-between", alignItems: "center"
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowPicker(false)}
+                style={{
+                  background: "none", border: "none", fontSize: 14, fontWeight: 500,
+                  color: "#9b9b9b", cursor: "pointer"
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                style={{
+                  padding: "7px 18px", borderRadius: 6, fontSize: 13, fontWeight: 600,
+                  background: "#2383e2", color: "#ffffff", border: "none", cursor: "pointer",
+                  transition: "background 0.15s ease"
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#1d74ca")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#2383e2")}
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
