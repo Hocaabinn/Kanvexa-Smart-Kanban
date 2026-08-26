@@ -492,7 +492,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
             <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
               {[
                 {
-                  category: "1. Kemahasiswaan & Akademik",
+                  category: "1. Akademik & Organisasi (School)",
                   type: "school",
                   icon: GraduationCap,
                   color: "#8b5cf6",
@@ -549,7 +549,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                   ]
                 },
                 {
-                  category: "2. Produktivitas & Brainstorming",
+                  category: "2. Produktivitas & Gaya Hidup (Life)",
                   type: "life",
                   icon: Lightbulb,
                   color: "#d97706",
