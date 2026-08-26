@@ -529,6 +529,14 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                       prompt: "Kelompok Belajar (Study Group)",
                       tagColor: "#f59e0b",
                       tagBg: "#fffbeb"
+                    },
+                    {
+                      title: "Pemburu Beasiswa (Scholarship Tracker)",
+                      desc: "Melacak pendaftaran beasiswa, persyaratan berkas, wawancara, dan pengumuman.",
+                      tags: ["Akademik", "Pribadi"],
+                      prompt: "Pemburu Beasiswa (Scholarship Tracker)",
+                      tagColor: "#3b82f6",
+                      tagBg: "#dbeafe"
                     }
                   ]
                 },
