@@ -54,6 +54,13 @@ export async function createBoard(formData: FormData) {
       { name: "Review Bersama", position: 2, cards: ["Review draft laporan", "Latihan presentasi kelompok"] },
       { name: "Siap Kumpul", position: 3, cards: ["Upload tugas ke Google Drive"] },
     ];
+  } else if (name === "Pemburu Beasiswa (Scholarship Tracker)") {
+    columnsToInsert = [
+      { name: "Daftar Beasiswa", position: 0, cards: ["Beasiswa Bank Indonesia", "Djarum Beasiswa Plus", "Beasiswa KIP Kuliah"] },
+      { name: "Persyaratan Berkas", position: 1, cards: ["Legalisir Transkrip Nilai", "Surat Rekomendasi Dosen", "Essay: Kontribusi bagi Bangsa"] },
+      { name: "Tahap Wawancara", position: 2, cards: ["Latihan mock interview", "Cetak kartu peserta & berkas fisik"] },
+      { name: "Status Akhir", position: 3, cards: ["Simpan email pengumuman"] },
+    ];
   } else if (name === "Mindmap Ide & Brainstorming") {
     columnsToInsert = [
       { name: "Brain Dump / Ide Acak", position: 0, cards: ["Membuat sistem filter kategori", "Integrasi payment gateway"] },
