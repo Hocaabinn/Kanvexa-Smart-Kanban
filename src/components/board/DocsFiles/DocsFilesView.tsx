@@ -364,14 +364,28 @@ export default function DocsFilesView({ boardId, userEmail, canEdit, initialFold
     });
   };
 
-  const startNewDoc = async () => {
+  const startNewDocWithTemplate = async (categoryPreset: DocCategory = "PRD") => {
+    let templateTitle = "Dokumen Baru Tanpa Judul";
+    let templateMarkdown = "# Dokumen Baru\n\nTuliskan spesifikasi, ringkasan, atau catatan proyek di sini...";
+
+    if (categoryPreset === "PRD") {
+      templateTitle = "Spesifikasi Produk (PRD)";
+      templateMarkdown = `# 📄 Product Requirement Document (PRD)\n\n### 🎯 Latar Belakang & Masalah\n- Jelaskan alasan fitur/produk ini dibangun.\n\n### 🚀 Fitur Utama & Alur Kerja\n1. Fitur 1\n2. Fitur 2\n\n### ⚙️ Kebutuhan Teknis & Spesifikasi\n- [ ] Database Schema\n- [ ] API Endpoint\n\n### 📈 Metrik Keberhasilan\n- Target KPI dan pengguna.`;
+    } else if (categoryPreset === "Meeting Notes") {
+      templateTitle = "Catatan Rapat Tim";
+      templateMarkdown = `# 📝 Catatan Rapat\n\n**Tanggal:** ${new Date().toLocaleDateString("id-ID")}\n**Peserta:** Team Members\n\n### 📌 Poin Diskusi\n1. Topik 1\n2. Topik 2\n\n### 💡 Keputusan Utama\n- Keputusan A\n\n### 🎯 Action Items (Tugas Selanjutnya)\n- [ ] Task 1 - @Assignee\n- [ ] Task 2 - @Assignee`;
+    } else if (categoryPreset === "Technical Spec") {
+      templateTitle = "Spesifikasi Teknis Architecture";
+      templateMarkdown = `# ⚙️ Technical Specification Document\n\n### 🏗️ Arsitektur Sistem\n- Deskripsi stack & komponen utama.\n\n### 🔌 API Endpoints\n\`\`\`json\nGET /api/v1/resource\n\`\`\`\n\n### 🔐 Keamanan & Autentikasi\n- Standard JWT / Supabase Auth.`;
+    }
+
     const newDoc: DocFileItem = {
       id: `doc-${Date.now()}`,
       board_id: boardId,
       folder_id: selectedFolderId,
-      title: "Dokumen Baru Tanpa Judul",
-      category: "PRD",
-      content_markdown: "# Dokumen Baru\n\nTuliskan spesifikasi, ringkasan, atau catatan proyek di sini...",
+      title: templateTitle,
+      category: categoryPreset,
+      content_markdown: templateMarkdown,
       author_email: userEmail || "Anonim",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -393,6 +407,8 @@ export default function DocsFilesView({ boardId, userEmail, canEdit, initialFold
       author_email: newDoc.author_email,
     });
   };
+
+  const startNewDoc = () => startNewDocWithTemplate("PRD");
 
   const openDocPreview = (doc: DocFileItem) => {
     setSelectedDocId(doc.id);
