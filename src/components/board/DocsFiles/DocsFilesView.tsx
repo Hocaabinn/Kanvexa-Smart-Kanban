@@ -201,14 +201,18 @@ export default function DocsFilesView({ boardId, userEmail, canEdit, initialFold
 
   const selectedDoc = docs.find((d) => d.id === selectedDocId) || null;
 
-  // Filter docs based on selected folder & search
+  // Filter docs based on selected folder, search & tag filter
   const currentFolderDocs = docs.filter((d) => {
     const matchesFolder =
       selectedFolderId === "f-1" || d.folder_id === selectedFolderId || (!d.folder_id && selectedFolderId === "f-1");
     const matchesSearch =
       d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.content_markdown.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFolder && matchesSearch;
+    const matchesTag =
+      !selectedTag ||
+      d.category.toLowerCase().replace(/\s+/g, "-").includes(selectedTag.toLowerCase()) ||
+      d.title.toLowerCase().includes(selectedTag.toLowerCase());
+    return matchesFolder && matchesSearch && matchesTag;
   });
 
   const toggleFolderExpand = (folderId: string, e: React.MouseEvent) => {
