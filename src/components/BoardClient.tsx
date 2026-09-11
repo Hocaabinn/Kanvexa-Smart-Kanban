@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -92,9 +92,19 @@ export default function BoardClient({
   canEdit
 }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Tab state: "kanban" vs "messageboard" vs "calendar" vs "docs" vs "graph"
-  const [activeTab, setActiveTab] = useState<"kanban" | "messageboard" | "calendar" | "docs" | "graph">("kanban");
+  const tabParam = searchParams.get("tab");
+  const initialTab = (tabParam === "docs" || tabParam === "calendar" || tabParam === "messageboard" || tabParam === "graph") ? tabParam : "kanban";
+  const [activeTab, setActiveTab] = useState<"kanban" | "messageboard" | "calendar" | "docs" | "graph">(initialTab);
+
+  const handleTabChange = (tab: "kanban" | "messageboard" | "calendar" | "docs" | "graph") => {
+    setActiveTab(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState({}, "", url.toString());
+  };
 
   // Derived state from props to allow server-side updates / revalidations to reflect in client state
   const [prevInitialColumns, setPrevInitialColumns] = useState(initialColumns);
@@ -658,7 +668,7 @@ export default function BoardClient({
           maxWidth: "100%",
         }} className="board-tabs-scroll scrollbar-hide">
           <button
-            onClick={() => setActiveTab("kanban")}
+            onClick={() => handleTabChange("kanban")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -682,7 +692,7 @@ export default function BoardClient({
           </button>
 
           <button
-            onClick={() => setActiveTab("messageboard")}
+            onClick={() => handleTabChange("messageboard")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -718,7 +728,7 @@ export default function BoardClient({
           </button>
 
           <button
-            onClick={() => setActiveTab("calendar")}
+            onClick={() => handleTabChange("calendar")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -742,7 +752,7 @@ export default function BoardClient({
           </button>
 
           <button
-            onClick={() => setActiveTab("docs")}
+            onClick={() => handleTabChange("docs")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -766,7 +776,7 @@ export default function BoardClient({
           </button>
 
           <button
-            onClick={() => setActiveTab("graph")}
+            onClick={() => handleTabChange("graph")}
             style={{
               display: "flex",
               alignItems: "center",
