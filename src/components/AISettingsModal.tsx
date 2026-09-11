@@ -18,6 +18,45 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
   const [showKey, setShowKey] = useState(false);
   const [geminiKey, setGeminiKey] = useState("");
   const [claudeKey, setClaudeKey] = useState("");
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    setTestResult(null);
+
+    let endpoint = customUrl.trim();
+    if (!endpoint.endsWith("/chat/completions")) {
+      if (endpoint.endsWith("/")) endpoint = endpoint.slice(0, -1);
+      endpoint = `${endpoint}/chat/completions`;
+    }
+
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${customKey}`
+        },
+        body: JSON.stringify({
+          model: customModel,
+          messages: [{ role: "user", content: "ping" }],
+          max_tokens: 5
+        })
+      });
+
+      if (res.ok) {
+        setTestResult({ success: true, message: "Koneksi API Berhasil! Model merespons dengan baik." });
+      } else {
+        const text = await res.text();
+        setTestResult({ success: false, message: `Gagal (${res.status}): ${text.slice(0, 80)}` });
+      }
+    } catch (err: any) {
+      setTestResult({ success: false, message: `Koneksi gagal: ${err.message}` });
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   useEffect(() => {
     setSelectedModel(localStorage.getItem("kanvexa_selected_model") || "google/gemini-2.5-flash");
@@ -480,6 +519,34 @@ export default function AISettingsModal({ onClose }: AISettingsModalProps) {
                     <span style={{ fontSize: 9, color: "#94a3b8", marginTop: 2, display: "block" }}>
                       Contoh: <code>llama-3.3-70b-versatile</code>, <code>gpt-4o-mini</code>, dll.
                     </span>
+                  </div>
+
+                  {/* Test Connection Button */}
+                  <div style={{ marginTop: 4 }}>
+                    <button
+                      type="button"
+                      onClick={handleTestConnection}
+                      disabled={testingConnection}
+                      style={{
+                        padding: "7px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700,
+                        background: "#ffffff", border: "1px solid #6d28d9", color: "#6d28d9",
+                        cursor: testingConnection ? "wait" : "pointer", display: "inline-flex",
+                        alignItems: "center", gap: 6
+                      }}
+                    >
+                      {testingConnection ? "⚡ Menghubungkan..." : "🔌 Tes Koneksi API"}
+                    </button>
+
+                    {testResult && (
+                      <div style={{
+                        marginTop: 8, padding: "8px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                        background: testResult.success ? "#f0fdf4" : "#fef2f2",
+                        color: testResult.success ? "#166534" : "#991b1b",
+                        border: `1px solid ${testResult.success ? "#bbf7d0" : "#fecaca"}`
+                      }}>
+                        {testResult.success ? "✅ " : "❌ "}{testResult.message}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
