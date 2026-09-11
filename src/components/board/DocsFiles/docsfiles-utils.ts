@@ -6,6 +6,8 @@ export interface DocFolderItem {
   id: string;
   name: string;
   fileCount: number;
+  color?: string;
+  icon?: string;
   subfolders?: DocFolderItem[];
 }
 
