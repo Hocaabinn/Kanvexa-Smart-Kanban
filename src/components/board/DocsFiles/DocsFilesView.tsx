@@ -490,6 +490,11 @@ export default function DocsFilesView({ boardId, userEmail, canEdit, initialFold
     URL.revokeObjectURL(url);
   };
 
+  const getWordCount = (text: string) => {
+    if (!text.trim()) return 0;
+    return text.trim().split(/\s+/).length;
+  };
+
   const handleInsertFormat = (prefix: string, suffix: string = "", defaultPlaceholder: string = "teks") => {
     const textarea = document.getElementById("doc-editor-textarea") as HTMLTextAreaElement | null;
     if (!textarea) return;
@@ -1509,32 +1514,40 @@ export default function DocsFilesView({ boardId, userEmail, canEdit, initialFold
                     </div>
                   )}
 
-                  {/* Save Button Bar */}
+                  {/* Save Button Bar & Stats */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 8 }}>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(false)}
-                      style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "#ffffff", color: "#64748b", border: "1px solid #cbd5e1", cursor: "pointer" }}
-                    >
-                      Batal
-                    </button>
+                    <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600, display: "flex", gap: 12 }}>
+                      <span>📝 {getWordCount(editContent)} Kata</span>
+                      <span>• {editContent.length} Karakter</span>
+                      <span>• ~{Math.max(1, Math.ceil(getWordCount(editContent) / 200))} Menit Baca</span>
+                    </div>
 
-                    <button
-                      onClick={saveCurrentDoc}
-                      style={{
-                        padding: "10px 20px",
-                        borderRadius: 10,
-                        fontSize: 13,
-                        fontWeight: 700,
-                        background: "var(--v)",
-                        color: "#ffffff",
-                        border: "none",
-                        cursor: "pointer",
-                        boxShadow: "0 4px 12px rgba(109, 40, 217, 0.3)"
-                      }}
-                    >
-                      Simpan Perubahan
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(false)}
+                        style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "#ffffff", color: "#64748b", border: "1px solid #cbd5e1", cursor: "pointer" }}
+                      >
+                        Batal
+                      </button>
+
+                      <button
+                        onClick={saveCurrentDoc}
+                        style={{
+                          padding: "10px 20px",
+                          borderRadius: 10,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          background: "var(--v)",
+                          color: "#ffffff",
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "0 4px 12px rgba(109, 40, 217, 0.3)"
+                        }}
+                      >
+                        Simpan Perubahan
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
