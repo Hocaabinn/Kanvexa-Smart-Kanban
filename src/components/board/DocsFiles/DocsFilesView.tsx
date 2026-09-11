@@ -477,6 +477,19 @@ export default function DocsFilesView({ boardId, userEmail, canEdit, initialFold
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleExportMarkdown = () => {
+    if (!selectedDoc) return;
+    const blob = new Blob([selectedDoc.content_markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${selectedDoc.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleInsertFormat = (prefix: string, suffix: string = "", defaultPlaceholder: string = "teks") => {
     const textarea = document.getElementById("doc-editor-textarea") as HTMLTextAreaElement | null;
     if (!textarea) return;
@@ -1189,6 +1202,11 @@ export default function DocsFilesView({ boardId, userEmail, canEdit, initialFold
                 <button onClick={handleCopyMarkdown} style={{ padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "#ffffff", color: "#6d28d9", border: "1px solid #d8b4fe", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
                   {copied ? <Check width={14} height={14} /> : <Copy width={14} height={14} />}
                   <span>{copied ? "Tersalin!" : "Salin"}</span>
+                </button>
+
+                <button onClick={handleExportMarkdown} title="Unduh File Markdown (.md)" style={{ padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "#ffffff", color: "#059669", border: "1px solid #a7f3d0", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                  <Download width={14} height={14} />
+                  <span>Unduh .md</span>
                 </button>
 
                 {canEdit && (
