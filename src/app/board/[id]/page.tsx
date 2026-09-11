@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import BoardClient from "@/components/BoardClient";
 
+import { getDocsAndFolders } from "./docs-actions";
+
 export default async function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
@@ -48,6 +50,8 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
     .eq("board_id", id)
     .order("created_at", { ascending: true });
 
+  const docsData = await getDocsAndFolders(id);
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "transparent", position: "relative", zIndex: 1 }}>
       {/* TOPBAR */}
@@ -90,6 +94,8 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
         initialCards={cards ?? []}
         initialPosts={posts ?? []}
         initialComments={comments ?? []}
+        initialFolders={docsData.folders}
+        initialDocs={docsData.docs}
         isAdmin={isAdmin}
         canEdit={canEdit}
       />

@@ -53,6 +53,8 @@ interface Props {
   initialCards: Card[];
   initialPosts?: BoardPost[];
   initialComments?: BoardPostComment[];
+  initialFolders?: any[];
+  initialDocs?: any[];
   isAdmin: boolean;
   canEdit: boolean;
 }
@@ -84,6 +86,8 @@ export default function BoardClient({
   initialCards,
   initialPosts = [],
   initialComments = [],
+  initialFolders = [],
+  initialDocs = [],
   isAdmin,
   canEdit
 }: Props) {
@@ -893,6 +897,8 @@ export default function BoardClient({
           boardId={boardId}
           userEmail={userEmail}
           canEdit={canEdit}
+          initialFolders={initialFolders}
+          initialDocs={initialDocs}
         />
       ) : activeTab === "graph" ? (
         <GraphView
