@@ -28,7 +28,24 @@ import {
   Eye,
   Filter,
   MoreVertical,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Quote,
+  Link as LinkIcon,
+  Table as TableIcon,
+  Minus,
+  Code as CodeIcon,
+  Type,
+  CheckSquare,
 } from "lucide-react";
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import { AnimatedFolder } from "@/components/ui/3d-folder";
 import {
   DocCategory,
@@ -42,28 +59,43 @@ import {
 import AIDocsAssistantModal from "./AIDocsAssistantModal";
 import { formatFileSize } from "../MessageBoard/messageboard-utils";
 import { showConfirm, showAlert } from "@/lib/swal";
+import {
+  createBoardFolder,
+  renameBoardFolder,
+  deleteBoardFolder,
+  createBoardDoc,
+  updateBoardDoc,
+  deleteBoardDoc,
+} from "@/app/board/[id]/docs-actions";
 
 interface Props {
   boardId: string;
   userEmail: string;
   canEdit: boolean;
+  initialFolders?: DocFolderItem[];
+  initialDocs?: DocFileItem[];
 }
 
-export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
+export default function DocsFilesView({ boardId, userEmail, canEdit, initialFolders = [], initialDocs = [] }: Props) {
   const FOLDERS_STORAGE_KEY = `kanvexa_folders_${boardId}`;
   const DOCS_STORAGE_KEY = `kanvexa_docs_${boardId}`;
 
   const [folders, setFolders] = useState<DocFolderItem[]>([]);
   const [docs, setDocs] = useState<DocFileItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      let mergedFolders = initialFolders;
+      let mergedDocs = initialDocs;
+
       const savedFolders = localStorage.getItem(FOLDERS_STORAGE_KEY);
       if (savedFolders) {
         try {
           const parsed: DocFolderItem[] = JSON.parse(savedFolders);
-          const dummyFolderIds = ["f-1", "f-2", "f-3", "f-1-1", "f-1-2", "f-1-3"];
-          setFolders(parsed.filter(f => !dummyFolderIds.includes(f.id)));
+          const existingIds = new Set(mergedFolders.map(f => f.id));
+          const extraLocal = parsed.filter(f => !existingIds.has(f.id));
+          mergedFolders = [...mergedFolders, ...extraLocal];
         } catch (e) {
           console.error("Failed to parse saved folders", e);
         }
@@ -73,33 +105,39 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
       if (savedDocs) {
         try {
           const parsed: DocFileItem[] = JSON.parse(savedDocs);
-          setDocs(parsed.filter(d => d.author_email !== "andi@kanvexa.com" && d.board_id !== "general"));
+          const existingDocIds = new Set(mergedDocs.map(d => d.id));
+          const extraLocalDocs = parsed.filter(d => !existingDocIds.has(d.id));
+          mergedDocs = [...mergedDocs, ...extraLocalDocs];
         } catch (e) {
           console.error("Failed to parse saved docs", e);
         }
       }
+
+      setFolders(mergedFolders);
+      setDocs(mergedDocs);
+      setIsLoaded(true);
     }
-  }, [FOLDERS_STORAGE_KEY, DOCS_STORAGE_KEY]);
+  }, [FOLDERS_STORAGE_KEY, DOCS_STORAGE_KEY, initialFolders, initialDocs]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (isLoaded && typeof window !== "undefined") {
       try {
         localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders));
       } catch (e) {
         console.error("Failed to save folders", e);
       }
     }
-  }, [folders, FOLDERS_STORAGE_KEY]);
+  }, [folders, FOLDERS_STORAGE_KEY, isLoaded]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (isLoaded && typeof window !== "undefined") {
       try {
         localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(docs));
       } catch (e) {
         console.error("Failed to save docs", e);
       }
     }
-  }, [docs, DOCS_STORAGE_KEY]);
+  }, [docs, DOCS_STORAGE_KEY, isLoaded]);
   
   const [selectedFolderId, setSelectedFolderId] = useState<string>("f-1");
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -127,6 +165,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
 
   // Editor mode state
   const [isEditing, setIsEditing] = useState(false);
+  const [editorTab, setEditorTab] = useState<"edit" | "preview">("edit");
   const [editTitle, setEditTitle] = useState("");
   const [editCategory, setEditCategory] = useState<DocCategory>("PRD");
   const [editContent, setEditContent] = useState("");
@@ -244,7 +283,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
     return result;
   };
 
-  const handleCreateFolder = (e: React.FormEvent) => {
+  const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
 
@@ -258,6 +297,8 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
     setSelectedFolderId(newFolder.id);
     setNewFolderName("");
     setShowCreateFolderModal(false);
+
+    await createBoardFolder(boardId, newFolder.id, newFolder.name);
   };
 
   const handleStartRename = (id: string, currentName: string) => {
@@ -265,14 +306,17 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
     setRenameInput(currentName);
   };
 
-  const handleSaveRename = (e: React.FormEvent) => {
+  const handleSaveRename = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!renameFolderModal || !renameInput.trim()) return;
 
+    const folderId = renameFolderModal.id;
+    const newName = renameInput.trim();
+
     const renameRecursive = (items: DocFolderItem[]): DocFolderItem[] => {
       return items.map((item) => {
-        if (item.id === renameFolderModal.id) {
-          return { ...item, name: renameInput.trim() };
+        if (item.id === folderId) {
+          return { ...item, name: newName };
         }
         if (item.subfolders && item.subfolders.length > 0) {
           return { ...item, subfolders: renameRecursive(item.subfolders) };
@@ -283,6 +327,8 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
 
     setFolders(renameRecursive(folders));
     setRenameFolderModal(null);
+
+    await renameBoardFolder(boardId, folderId, newName);
   };
 
   const handleDeleteFolder = (id: string, folderName: string) => {
@@ -291,7 +337,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
       `Apakah Anda yakin ingin menghapus folder "${folderName}" beserta seluruh isinya?`,
       "Hapus",
       "Batal"
-    ).then((result) => {
+    ).then(async (result) => {
       if (result.isConfirmed) {
         const deleteRecursive = (items: DocFolderItem[]): DocFolderItem[] => {
           return items
@@ -309,11 +355,12 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
           setSelectedFolderId("f-1");
         }
         showAlert("Sukses", "Folder berhasil dihapus.", "success");
+        await deleteBoardFolder(boardId, id);
       }
     });
   };
 
-  const startNewDoc = () => {
+  const startNewDoc = async () => {
     const newDoc: DocFileItem = {
       id: `doc-${Date.now()}`,
       board_id: boardId,
@@ -332,6 +379,15 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
     setEditContent(newDoc.content_markdown);
     setIsEditing(true);
     setShowDocDrawer(true);
+
+    await createBoardDoc(boardId, {
+      id: newDoc.id,
+      folder_id: newDoc.folder_id,
+      title: newDoc.title,
+      category: newDoc.category,
+      content_markdown: newDoc.content_markdown,
+      author_email: newDoc.author_email,
+    });
   };
 
   const openDocPreview = (doc: DocFileItem) => {
@@ -343,14 +399,15 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
     setShowDocDrawer(true);
   };
 
-  const saveCurrentDoc = () => {
+  const saveCurrentDoc = async () => {
     if (!selectedDoc) return;
+    const newTitle = editTitle.trim() || "Dokumen Tanpa Judul";
     setDocs(
       docs.map((d) =>
         d.id === selectedDoc.id
           ? {
               ...d,
-              title: editTitle.trim() || "Dokumen Tanpa Judul",
+              title: newTitle,
               category: editCategory,
               content_markdown: editContent,
               updated_at: new Date().toISOString(),
@@ -359,6 +416,8 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
       )
     );
     setIsEditing(false);
+
+    await updateBoardDoc(boardId, selectedDoc.id, newTitle, editCategory, editContent);
   };
 
   const deleteCurrentDoc = (id: string) => {
@@ -367,7 +426,7 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
       "Apakah Anda yakin ingin menghapus dokumen ini?",
       "Hapus",
       "Batal"
-    ).then((result) => {
+    ).then(async (result) => {
       if (result.isConfirmed) {
         const updated = docs.filter((d) => d.id !== id);
         setDocs(updated);
@@ -376,11 +435,12 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
           setShowDocDrawer(false);
         }
         showAlert("Sukses", "Dokumen berhasil dihapus.", "success");
+        await deleteBoardDoc(boardId, id);
       }
     });
   };
 
-  const handleApplyAIResult = (aiData: AIDocResponse["data"]) => {
+  const handleApplyAIResult = async (aiData: AIDocResponse["data"]) => {
     const newDoc: DocFileItem = {
       id: `doc-${Date.now()}`,
       board_id: boardId,
@@ -397,6 +457,17 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
     setDocs([newDoc, ...docs]);
     setSelectedDocId(newDoc.id);
     openDocPreview(newDoc);
+
+    await createBoardDoc(boardId, {
+      id: newDoc.id,
+      folder_id: newDoc.folder_id,
+      title: newDoc.title,
+      category: newDoc.category,
+      content_markdown: newDoc.content_markdown,
+      summary_highlights: newDoc.summary_highlights,
+      action_items: newDoc.action_items,
+      author_email: newDoc.author_email,
+    });
   };
 
   const handleCopyMarkdown = () => {
@@ -404,6 +475,27 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
     navigator.clipboard.writeText(selectedDoc.content_markdown);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleInsertFormat = (prefix: string, suffix: string = "", defaultPlaceholder: string = "teks") => {
+    const textarea = document.getElementById("doc-editor-textarea") as HTMLTextAreaElement | null;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = editContent.substring(start, end);
+    const textToInsert = selected || defaultPlaceholder;
+
+    const newContent = editContent.substring(0, start) + prefix + textToInsert + suffix + editContent.substring(end);
+    setEditContent(newContent);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + prefix.length,
+        start + prefix.length + textToInsert.length
+      );
+    }, 30);
   };
 
   // Tree View Helper Component: Document File Item in Tree
@@ -1063,6 +1155,37 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
                 </h3>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {isEditing && (
+                  <div style={{ display: "flex", background: "#e2e8f0", padding: 3, borderRadius: 8, gap: 2 }}>
+                    <button
+                      type="button"
+                      onClick={() => setEditorTab("edit")}
+                      style={{
+                        padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, border: "none",
+                        background: editorTab === "edit" ? "#ffffff" : "transparent",
+                        color: editorTab === "edit" ? "#6d28d9" : "#64748b",
+                        cursor: "pointer", display: "flex", alignItems: "center", gap: 4
+                      }}
+                    >
+                      <Edit3 width={12} height={12} />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditorTab("preview")}
+                      style={{
+                        padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, border: "none",
+                        background: editorTab === "preview" ? "#ffffff" : "transparent",
+                        color: editorTab === "preview" ? "#6d28d9" : "#64748b",
+                        cursor: "pointer", display: "flex", alignItems: "center", gap: 4
+                      }}
+                    >
+                      <Eye width={12} height={12} />
+                      <span>Live Preview</span>
+                    </button>
+                  </div>
+                )}
+
                 <button onClick={handleCopyMarkdown} style={{ padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "#ffffff", color: "#6d28d9", border: "1px solid #d8b4fe", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
                   {copied ? <Check width={14} height={14} /> : <Copy width={14} height={14} />}
                   <span>{copied ? "Tersalin!" : "Salin"}</span>
@@ -1084,35 +1207,364 @@ export default function DocsFilesView({ boardId, userEmail, canEdit }: Props) {
             <div style={{ flex: 1, padding: 24, overflowY: "auto", display: "flex", flexDirection: "column", gap: 18 }}>
               {isEditing ? (
                 <>
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", padding: "8px 12px", borderRadius: 8, border: "1px solid #c084fc", outline: "none" }}
-                  />
-                  <textarea
-                    rows={16}
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    style={{ width: "100%", padding: 14, borderRadius: 10, border: "1px solid #c084fc", fontSize: 13, fontFamily: "monospace", lineHeight: 1.6, outline: "none", boxSizing: "border-box" }}
-                  />
-                  <button onClick={saveCurrentDoc} style={{ padding: "10px 18px", borderRadius: 10, fontSize: 13, fontWeight: 700, background: "var(--v)", color: "#ffffff", border: "none", cursor: "pointer", alignSelf: "flex-end" }}>
-                    Simpan Perubahan
-                  </button>
+                  {/* Category Selector & Title Input */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Kategori:</label>
+                      <select
+                        value={editCategory}
+                        onChange={(e) => setEditCategory(e.target.value as DocCategory)}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 8,
+                          border: "1px solid #cbd5e1",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#334155",
+                          background: "#ffffff",
+                          outline: "none",
+                          cursor: "pointer"
+                        }}
+                      >
+                        <option value="PRD">PRD (Product Spec)</option>
+                        <option value="Meeting Notes">Catatan Rapat</option>
+                        <option value="Briefing">Briefing Tim</option>
+                        <option value="Technical Spec">Spesifikasi Teknis</option>
+                        <option value="General">Umum</option>
+                      </select>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="Judul Dokumen..."
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 800,
+                        color: "#0f172a",
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        border: "1px solid #cbd5e1",
+                        outline: "none",
+                        width: "100%",
+                        boxSizing: "border-box"
+                      }}
+                    />
+                  </div>
+
+                  {editorTab === "edit" ? (
+                    <>
+                      {/* Word-style Rich Formatting Toolbar */}
+                      <div style={{
+                        background: "#f8fafc",
+                        border: "1px solid #cbd5e1",
+                        borderRadius: 12,
+                        padding: "8px 10px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        flexWrap: "wrap",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
+                      }}>
+                        {/* Text Styling: Bold, Italic, Underline, Strikethrough */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <button
+                            type="button"
+                            title="Teks Tebal (Bold)"
+                            onClick={() => handleInsertFormat("**", "**", "teks tebal")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontWeight: 700, fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <Bold width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Teks Miring (Italic)"
+                            onClick={() => handleInsertFormat("*", "*", "teks miring")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontWeight: 700, fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <Italic width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Garis Bawah (Underline)"
+                            onClick={() => handleInsertFormat("<u>", "</u>", "teks garis bawah")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontWeight: 700, fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <Underline width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Teks Dicoret (Strikethrough)"
+                            onClick={() => handleInsertFormat("~~", "~~", "teks dicoret")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontWeight: 700, fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <Strikethrough width={14} height={14} />
+                          </button>
+                        </div>
+
+                        <div style={{ width: 1, height: 20, background: "#cbd5e1", margin: "0 4px" }} />
+
+                        {/* Headings H1, H2, H3 */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <button
+                            type="button"
+                            title="Judul 1 (Heading 1)"
+                            onClick={() => handleInsertFormat("\n# ", "\n", "Judul Utama")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#6d28d9", fontWeight: 800, fontSize: 11,
+                              cursor: "pointer", display: "flex", alignItems: "center", gap: 2
+                            }}
+                          >
+                            <Heading1 width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Judul 2 (Heading 2)"
+                            onClick={() => handleInsertFormat("\n## ", "\n", "Sub Judul")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#6d28d9", fontWeight: 800, fontSize: 11,
+                              cursor: "pointer", display: "flex", alignItems: "center", gap: 2
+                            }}
+                          >
+                            <Heading2 width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Judul 3 (Heading 3)"
+                            onClick={() => handleInsertFormat("\n### ", "\n", "Sub Judul Kecil")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#6d28d9", fontWeight: 800, fontSize: 11,
+                              cursor: "pointer", display: "flex", alignItems: "center", gap: 2
+                            }}
+                          >
+                            <Heading3 width={14} height={14} />
+                          </button>
+                        </div>
+
+                        <div style={{ width: 1, height: 20, background: "#cbd5e1", margin: "0 4px" }} />
+
+                        {/* Lists, Quote, Table, Code */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <button
+                            type="button"
+                            title="Daftar Poin (Bullet List)"
+                            onClick={() => handleInsertFormat("\n- ", "\n", "Poin daftar")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <List width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Daftar Angka (Numbered List)"
+                            onClick={() => handleInsertFormat("\n1. ", "\n", "Poin nomor")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <ListOrdered width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Checklist Tugas"
+                            onClick={() => handleInsertFormat("\n- [ ] ", "\n", "Tugas baru")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <CheckSquare width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Kutipan (Quote)"
+                            onClick={() => handleInsertFormat("\n> ", "\n", "Kutipan / Catatan penting")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <Quote width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Sisipkan Tabel"
+                            onClick={() => handleInsertFormat("\n| Judul 1 | Judul 2 |\n| --- | --- |\n| Data 1 | Data 2 |\n", "")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <TableIcon width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Sisipkan Blok Kode (Code)"
+                            onClick={() => handleInsertFormat("\n```javascript\n", "\n```\n", "// tulis kode di sini")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <CodeIcon width={14} height={14} />
+                          </button>
+                          <button
+                            type="button"
+                            title="Sisipkan Tautan (Link)"
+                            onClick={() => handleInsertFormat("[", "](https://example.com)", "Judul Tautan")}
+                            style={{
+                              padding: "6px 9px", borderRadius: 6, border: "1px solid #e2e8f0",
+                              background: "#ffffff", color: "#0f172a", fontSize: 13,
+                              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <LinkIcon width={14} height={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Document Textarea */}
+                      <textarea
+                        id="doc-editor-textarea"
+                        rows={14}
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        placeholder="Ketik isi dokumen Anda di sini..."
+                        style={{
+                          width: "100%",
+                          padding: 16,
+                          borderRadius: 12,
+                          border: "1px solid #cbd5e1",
+                          fontSize: 14,
+                          fontFamily: "var(--font-sans), system-ui, sans-serif",
+                          lineHeight: 1.7,
+                          outline: "none",
+                          boxSizing: "border-box",
+                          background: "#ffffff",
+                          color: "#1e293b",
+                          resize: "vertical"
+                        }}
+                      />
+                    </>
+                  ) : (
+                    /* Live Preview Box */
+                    <div style={{
+                      background: "#fafafa",
+                      borderRadius: 12,
+                      border: "1px solid #cbd5e1",
+                      padding: 20,
+                      minHeight: 300
+                    }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#6d28d9", marginBottom: 12, textTransform: "uppercase" }}>
+                        👁️ Live Preview Dokumen
+                      </div>
+                      <MarkdownRenderer content={editContent} />
+                    </div>
+                  )}
+
+                  {/* Save Button Bar */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "#ffffff", color: "#64748b", border: "1px solid #cbd5e1", cursor: "pointer" }}
+                    >
+                      Batal
+                    </button>
+
+                    <button
+                      onClick={saveCurrentDoc}
+                      style={{
+                        padding: "10px 20px",
+                        borderRadius: 10,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        background: "var(--v)",
+                        color: "#ffffff",
+                        border: "none",
+                        cursor: "pointer",
+                        boxShadow: "0 4px 12px rgba(109, 40, 217, 0.3)"
+                      }}
+                    >
+                      Simpan Perubahan
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 12, color: "#64748b" }}>Dibuat oleh {selectedDoc.author_email}</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: 12 }}>
+                    <div>
+                      <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>Dibuat oleh <strong>{selectedDoc.author_email}</strong></span>
+                      <span style={{ fontSize: 12, color: "#94a3b8", marginLeft: 12 }}>
+                        • {new Date(selectedDoc.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                      </span>
+                    </div>
                     {canEdit && (
-                      <button onClick={() => setIsEditing(true)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700, background: "rgba(109, 40, 217, 0.1)", color: "#6d28d9", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                        <Edit3 width={13} height={13} />
-                        <span>Edit</span>
+                      <button
+                        onClick={() => {
+                          setIsEditing(true);
+                          setEditorTab("edit");
+                        }}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: 8,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          background: "var(--v)",
+                          color: "#ffffff",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          boxShadow: "0 2px 8px rgba(109,40,217,0.25)"
+                        }}
+                      >
+                        <Edit3 width={14} height={14} />
+                        <span>Edit Dokumen</span>
                       </button>
                     )}
                   </div>
-                  <div style={{ fontSize: 14, lineHeight: 1.7, color: "#334155", whiteSpace: "pre-wrap" }}>
-                    {selectedDoc.content_markdown}
+
+                  {/* Formatted Document Content Preview */}
+                  <div style={{
+                    fontSize: 15,
+                    lineHeight: 1.8,
+                    color: "#1e293b",
+                    background: "#ffffff",
+                    padding: "12px 4px",
+                    wordBreak: "break-word"
+                  }}>
+                    <MarkdownRenderer content={selectedDoc.content_markdown} />
                   </div>
                 </>
               )}
