@@ -388,31 +388,184 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                         flex: 1, border: "none", outline: "none", fontSize: 14,
                         background: "transparent", color: "var(--text-1)",
                       }}
-                    />
-                    <button type="submit" style={{
-                      padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-                      background: "var(--v)", color: "#fff", border: "none",
-                      cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-                    }}>
-                      Buat dengan AI
+                    >
+                      View Sprint <ArrowRight style={{ width: 14, height: 14 }} />
                     </button>
                   </div>
-                </form>
+                </div>
 
-                <p style={{ fontSize: 12, color: "var(--text-3)" }}>
-                  atau{" "}
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    style={{
-                      background: "none", border: "none", fontSize: 12,
-                      color: "var(--v)", cursor: "pointer", textDecoration: "underline",
-                      padding: 0,
-                    }}
-                  >
-                    buat board manual
-                  </button>
-                  {" "}dari modal
-                </p>
+                {/* Kanban Summary Widget */}
+                <div id="kanban-summary-section" style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between"
+                }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: "0 0 16px" }}>
+                      Kanban Summary
+                    </h3>
+
+                    {/* Columns Badges Row */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
+                      <div style={{ background: "#f8fafc", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>To Do</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{kanbanStats.todo}</div>
+                      </div>
+                      <div style={{ background: "#eff6ff", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "#2563eb", marginBottom: 4 }}>In Progress</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: "#1d4ed8" }}>{kanbanStats.inProgress}</div>
+                      </div>
+                      <div style={{ background: "#fff7ed", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "#ea580c", marginBottom: 4 }}>Review</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: "#c2410c" }}>{kanbanStats.review}</div>
+                      </div>
+                      <div style={{ background: "#ecfdf5", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "#059669", marginBottom: 4 }}>Done</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: "#047857" }}>{kanbanStats.done}</div>
+                      </div>
+                    </div>
+
+                    {/* Total Tasks & Completion Rate with Circle Progress */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", background: "#f8fafc", borderRadius: 14 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>Total Tasks</div>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>{kanbanStats.total}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>Completion Rate</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{kanbanStats.completionRate}%</div>
+                        </div>
+                        {/* SVG Ring Progress */}
+                        <div style={{ position: "relative", width: 40, height: 40 }}>
+                          <svg width="40" height="40" viewBox="0 0 36 36">
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#e2e8f0"
+                              strokeWidth="3.8"
+                            />
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#4f46e5"
+                              strokeWidth="3.8"
+                              strokeDasharray={`${kanbanStats.completionRate}, 100`}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById("active-projects-section");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#4f46e5",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: 0
+                      }}
+                    >
+                      View Board <ArrowRight style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Time Tracking Widget */}
+                <div id="time-tracking-section" style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between"
+                }}>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0 }}>
+                        Time Tracking
+                      </h3>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#64748b", background: "#f1f5f9", padding: "4px 10px", borderRadius: 8 }}>
+                        {timeFilter}
+                      </span>
+                    </div>
+
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 26, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>
+                        28h 45m
+                      </div>
+                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 500 }}>
+                        Tracked Time
+                      </div>
+                    </div>
+
+                    {/* Bar Chart Visualization (Mon - Sun) */}
+                    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 80, gap: 8, padding: "0 4px" }}>
+                      {[
+                        { day: "Mon", height: 42, active: false },
+                        { day: "Tue", height: 55, active: false },
+                        { day: "Wed", height: 78, active: true },
+                        { day: "Thu", height: 48, active: false },
+                        { day: "Fri", height: 68, active: false },
+                        { day: "Sat", height: 28, active: false },
+                        { day: "Sun", height: 36, active: false },
+                      ].map((item, idx) => (
+                        <div key={idx} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: 1 }}>
+                          <div style={{
+                            width: "100%",
+                            maxWidth: 16,
+                            height: `${item.height}px`,
+                            background: item.active ? "#4f46e5" : "#e0e7ff",
+                            borderRadius: 6,
+                            transition: "all 0.2s"
+                          }} />
+                          <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>{item.day}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+                    <button
+                      type="button"
+                      onClick={() => showAlert("Time Logs", "Total jam produktivitas kerja sprint minggu ini: 28h 45m dengan efisiensi 94%.", "info")}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#4f46e5",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: 0
+                      }}
+                    >
+                      View Time Logs <ArrowRight style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {foldersCard}
