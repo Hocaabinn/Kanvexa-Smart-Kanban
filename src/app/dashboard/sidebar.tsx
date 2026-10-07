@@ -26,7 +26,14 @@ import {
   Mail,
   User,
   Sliders,
-  Sparkles
+  Sparkles,
+  CheckSquare,
+  Calendar,
+  BarChart3,
+  Users2,
+  Building2,
+  FileText,
+  Rocket
 } from "lucide-react";
 import { showAlert } from "@/lib/swal";
 import { KanvexaIcon, KanvexaLogo } from "@/components/ui/KanvexaLogo";
@@ -538,7 +545,7 @@ export default function Sidebar({
           )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            {/* Dasbor Utama */}
+            {/* Dasbor Utama / Dashboard */}
             <Link href="/dashboard" style={{ textDecoration: "none" }}>
               <div 
                 style={{
@@ -549,16 +556,16 @@ export default function Sidebar({
                   borderRadius: "10px",
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  background: isDashboardActive ? "#f1f5f9" : "transparent",
+                  background: isDashboardActive ? "#ede9fe" : "transparent",
                   justifyContent: isSidebarCollapsed ? "center" : "flex-start"
                 }}
                 className="sidebar-nav-item"
-                title="Dasbor Utama"
+                title="Dashboard"
               >
                 <LayoutDashboard style={{ width: "16px", height: "16px", color: isDashboardActive ? "var(--v)" : "#64748b", flexShrink: 0 }} />
                 {!isSidebarCollapsed && (
                   <span style={{ fontSize: "13px", fontWeight: isDashboardActive ? "700" : "600", color: isDashboardActive ? "var(--v)" : "#334155" }}>
-                    Dasbor Utama
+                    Dashboard
                   </span>
                 )}
               </div>
