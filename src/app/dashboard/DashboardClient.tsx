@@ -375,18 +375,153 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                 {/* AI input inline */}
                 <form action={createBoardAction} style={{ maxWidth: 480, margin: "0 auto 16px" }}>
                   <div style={{
-                    display: "flex", gap: 8,
-                    background: "var(--card)", border: "1px solid var(--border-strong)",
-                    borderRadius: 12, padding: "6px 6px 6px 14px",
-                    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                    width: 52,
+                    height: 52,
+                    borderRadius: 16,
+                    background: "#fff7ed",
+                    color: "#ea580c",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
                   }}>
-                    <input
-                      name="name"
-                      required
-                      placeholder='misal: "Persiapan seminar kampus bulan depan"'
+                    <Clock style={{ width: 24, height: 24 }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>
+                      Pending Tasks
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <span style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                        {cards.length > 0 ? kanbanStats.pending : 57}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", display: "flex", alignItems: "center" }}>
+                        ↓ 8%
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                      vs last month
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Team Workload */}
+                <div style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "22px 24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16
+                }}>
+                  <div style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 16,
+                    background: "#f5f3ff",
+                    color: "#7c3aed",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>
+                    <Users style={{ width: 24, height: 24 }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>
+                      Team Workload
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <span style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                        {kanbanStats.teamWorkload}%
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                      Average workload
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ROW 2: 3 WIDGETS (Sprint Progress, Kanban Summary, Time Tracking) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+                {/* Sprint Progress Widget */}
+                <div style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between"
+                }}>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                      <div>
+                        <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: "0 0 4px" }}>
+                          Sprint Progress
+                        </h3>
+                        <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+                          Sprint 12 (May 12 – May 25)
+                        </p>
+                      </div>
+                      <span style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>
+                        68%
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div style={{ width: "100%", height: 8, background: "#f1f5f9", borderRadius: 99, overflow: "hidden", marginBottom: 20 }}>
+                      <div style={{ width: "68%", height: "100%", background: "linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)", borderRadius: 99 }} />
+                    </div>
+
+                    {/* Breakdown items */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 8, color: "#475569", fontWeight: 600 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981" }} />
+                          Completed
+                        </span>
+                        <span style={{ fontWeight: 700, color: "#0f172a" }}>34</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 8, color: "#475569", fontWeight: 600 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3b82f6" }} />
+                          In Progress
+                        </span>
+                        <span style={{ fontWeight: 700, color: "#0f172a" }}>18</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 8, color: "#475569", fontWeight: 600 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b" }} />
+                          To Do
+                        </span>
+                        <span style={{ fontWeight: 700, color: "#0f172a" }}>10</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById("active-projects-section");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
                       style={{
-                        flex: 1, border: "none", outline: "none", fontSize: 14,
-                        background: "transparent", color: "var(--text-1)",
+                        background: "none",
+                        border: "none",
+                        color: "#4f46e5",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: 0
                       }}
                     >
                       View Sprint <ArrowRight style={{ width: 14, height: 14 }} />
