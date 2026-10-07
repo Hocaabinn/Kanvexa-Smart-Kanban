@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
 
@@ -28,6 +28,7 @@ export default function LoginPage() {
   // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -169,7 +170,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <FieldInput
                 label="Alamat Email"
-                placeholder="nama@perusahaan.com"
+                placeholder="nama email anda@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
@@ -181,8 +182,22 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="flex items-center justify-center text-slate-400 hover:text-violet-600 transition-colors p-1"
+                    aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                }
               />
 
               {error && (
@@ -267,6 +282,7 @@ function FieldInput({
   onChange,
   type = "text",
   required = false,
+  rightElement,
 }: {
   label: string;
   placeholder: string;
@@ -274,6 +290,7 @@ function FieldInput({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   type?: string;
   required?: boolean;
+  rightElement?: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5 text-left">
@@ -287,8 +304,9 @@ function FieldInput({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className="w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
+          className="w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 pr-2"
         />
+        {rightElement}
       </div>
     </div>
   );
