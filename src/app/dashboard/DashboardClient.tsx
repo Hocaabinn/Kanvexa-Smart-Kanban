@@ -327,19 +327,142 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
           </div>
         )}
 
-        <main style={{ maxWidth: 1080, margin: "0 auto", padding: "48px 2rem 80px" }} className="dashboard-main-content">
-          {/* HEADING & INBOX HEADER */}
-          <div style={{ marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-            <div>
-              <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: "#0f172a", margin: "0 0 6px" }}>
-                {activeView === "templates" ? "Galeri Template" : "Dasbor Utama"}
-              </h1>
-              <p style={{ fontSize: 14, color: "#64748b", margin: 0, fontWeight: 500 }}>
-                {activeView === "templates" 
-                  ? "Pilih template yang sudah disesuaikan dengan kebutuhan akademik, organisasi, hingga produktivitas kerja Anda."
-                  : <>Selamat datang kembali, <strong style={{ color: "#334155" }}>{userEmail}</strong></>
-                }
-              </p>
+        {/* Top Header Navigation matching Referensi.png */}
+        <header style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 40,
+          background: "#ffffff",
+          borderBottom: "1px solid #f1f5f9",
+          padding: "16px 32px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+        }}>
+          {/* Left: Mobile hamburger + Page Title */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button
+              onClick={() => setIsMobileOpen(true)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "6px",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#475569",
+              }}
+              className="lg:hidden"
+              title="Menu"
+            >
+              <Menu style={{ width: 20, height: 20 }} />
+            </button>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.02em" }}>
+              {activeView === "templates" ? "Galeri Template" : activeView === "projects" ? "Projects" : "Dashboard"}
+            </h1>
+          </div>
+
+          {/* Right: Search, Notifications bell with count, and User profile widget */}
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            {/* Search Input */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }} className="hidden sm:flex">
+              <Search style={{
+                position: "absolute",
+                left: 12,
+                width: 16,
+                height: 16,
+                color: "#94a3b8",
+                pointerEvents: "none"
+              }} />
+              <input
+                type="text"
+                placeholder="Cari proyek atau tugas..."
+                value={topSearch}
+                onChange={(e) => setTopSearch(e.target.value)}
+                style={{
+                  padding: "8px 14px 8px 36px",
+                  borderRadius: 12,
+                  border: "1px solid #e2e8f0",
+                  background: "#f8fafc",
+                  fontSize: 13,
+                  color: "#0f172a",
+                  outline: "none",
+                  width: 220,
+                  transition: "all 0.2s ease"
+                }}
+              />
+            </div>
+
+            {/* Notification Bell */}
+            <button
+              onClick={() => setShowInbox(true)}
+              style={{
+                position: "relative",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                width: 38,
+                height: 38,
+                borderRadius: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "#475569",
+                transition: "all 0.2s ease"
+              }}
+              title="Notifikasi & Undangan"
+            >
+              <Bell style={{ width: 17, height: 17 }} />
+              {invitations.length > 0 && (
+                <span style={{
+                  position: "absolute",
+                  top: -4,
+                  right: -4,
+                  background: "#4f46e5",
+                  color: "#ffffff",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 5px rgba(79, 70, 229, 0.4)"
+                }}>
+                  {invitations.length}
+                </span>
+              )}
+            </button>
+
+            {/* User Profile Pill */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 4 }}>
+              <div style={{
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 13,
+                fontWeight: 700,
+                boxShadow: "0 2px 8px rgba(99, 102, 241, 0.25)"
+              }}>
+                {userEmail.slice(0, 2).toUpperCase()}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }} className="hidden md:flex">
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>
+                  {userEmail.split("@")[0]}
+                </span>
+                <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>
+                  Project Manager
+                </span>
+              </div>
             </div>
           </div>
 
@@ -631,7 +754,9 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
                       <div style={{ background: "#f8fafc", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>To Do</div>
+        </header>
                         <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{kanbanStats.todo}</div>
+        <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 32px 80px" }} className="dashboard-main-content">
                       </div>
                       <div style={{ background: "#eff6ff", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: "#2563eb", marginBottom: 4 }}>In Progress</div>
