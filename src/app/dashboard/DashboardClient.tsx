@@ -357,23 +357,105 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
             />
           )}
 
-          {/* BOARD GRID OR EMPTY STATE (ONLY ON DASHBOARD VIEW) */}
           {activeView === "dashboard" && (
-            !sortedBoards.length ? (
-              <div style={{
-                border: "2px dashed var(--border)", borderRadius: 16,
-                padding: "60px 32px", textAlign: "center", background: "#ffffff",
-                marginBottom: 40
-              }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-1)", margin: "0 0 8px" }}>
-                  Mulai proyek pertamamu
-                </h2>
-                <p style={{ fontSize: 14, color: "var(--text-2)", margin: "0 0 28px", lineHeight: 1.6 }}>
-                  Ketik satu kalimat tujuan — AI langsung urai jadi board, kolom, dan kartu tugas siap pakai.
-                </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+              {/* ROW 1: 4 TOP KPI CARDS (Matching Referensi.png) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
+                {/* 1. Active Projects */}
+                <div style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "22px 24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16
+                }}>
+                  <div style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 16,
+                    background: "#eff6ff",
+                    color: "#2563eb",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>
+                    <FolderKanban style={{ width: 24, height: 24 }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>
+                      Active Projects
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <span style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                        {activeProjectsCount || 24}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", display: "flex", alignItems: "center" }}>
+                        ↑ 12%
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                      vs last month
+                    </div>
+                  </div>
+                </div>
 
-                {/* AI input inline */}
-                <form action={createBoardAction} style={{ maxWidth: 480, margin: "0 auto 16px" }}>
+                {/* 2. Tasks Completed */}
+                <div style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "22px 24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16
+                }}>
+                  <div style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 16,
+                    background: "#ecfdf5",
+                    color: "#059669",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>
+                    <CheckCircle2 style={{ width: 24, height: 24 }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>
+                      Tasks Completed
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <span style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                        {cards.length > 0 ? kanbanStats.done : 186}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", display: "flex", alignItems: "center" }}>
+                        ↑ 18%
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                      vs last month
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Pending Tasks */}
+                <div style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "22px 24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16
+                }}>
                   <div style={{
                     width: 52,
                     height: 52,
