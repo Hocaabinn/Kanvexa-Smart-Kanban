@@ -1,0 +1,22 @@
+import { createClient } from "@/lib/supabase/server";
+import { createBoard } from "../dashboard/actions";
+import DashboardClient from "../dashboard/DashboardClient";
+
+export default async function ProjectsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: boards } = await supabase
+    .from("boards")
+    .select("id, name, created_at")
+    .order("created_at", { ascending: false });
+
+  return (
+    <DashboardClient 
+      userEmail={user?.email ?? "Guest"}
+      initialBoards={boards ?? []}
+      createBoardAction={createBoard}
+      activeView="projects"
+    />
+  );
+}
