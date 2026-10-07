@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
 
@@ -28,6 +28,7 @@ export default function SignupPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -47,13 +48,20 @@ export default function SignupPage() {
       setError("Anda harus menyetujui Syarat Layanan dan Kebijakan Privasi.");
       return;
     }
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail.endsWith("@gmail.com")) {
+      setError("Alamat email harus menggunakan @gmail.com (contoh: namaemail@gmail.com).");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       const supabase = createClient();
       const fullName = `${firstName} ${lastName}`.trim();
-      const { error } = await supabase.auth.signUp({
-        email,
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -62,9 +70,27 @@ export default function SignupPage() {
       });
       setLoading(false);
       if (error) {
-        setError(error.message);
+        if (
+          error.message?.toLowerCase().includes("user already registered") ||
+          error.message?.toLowerCase().includes("already registered")
+        ) {
+          setError(
+            "Email ini sudah terdaftar sebelumnya. Silakan masuk (login) ke akun Anda."
+          );
+        } else {
+          setError(error.message);
+        }
         return;
       }
+
+      // Supabase returns an empty identities array if user is already registered (when email confirmation is enabled)
+      if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        setError(
+          "Email ini sudah terdaftar sebelumnya. Silakan langsung masuk ke akun Anda."
+        );
+        return;
+      }
+
       setSubmitted(true);
     } catch (err: any) {
       setLoading(false);
@@ -222,7 +248,7 @@ export default function SignupPage() {
 
               <FieldInput
                 label="Alamat Email"
-                placeholder="nama@perusahaan.com"
+                placeholder="nama email anda@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
