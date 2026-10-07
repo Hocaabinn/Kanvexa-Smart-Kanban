@@ -234,14 +234,25 @@ export default function SignupPage() {
                 placeholder="Minimal 6 karakter"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 minLength={6}
               />
 
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-600">
-                  {error}
+                  <p>{error}</p>
+                  {error.includes("sudah terdaftar") && (
+                    <div className="mt-2.5 pt-2 border-t border-red-100 flex items-center justify-between">
+                      <span>Sudah punya akun?</span>
+                      <Link
+                        href="/login"
+                        className="inline-flex items-center gap-1 font-bold text-violet-700 underline underline-offset-2 hover:text-violet-900"
+                      >
+                        Buka Halaman Masuk <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -263,6 +274,20 @@ export default function SignupPage() {
                     </a>{" "}
                     dan{" "}
                     <a
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="flex items-center justify-center text-slate-400 hover:text-violet-600 transition-colors p-1"
+                    aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                }
                       href="#"
                       className="font-bold text-violet-600 underline underline-offset-2 hover:text-violet-700"
                     >
@@ -372,9 +397,12 @@ function FieldInput({
           placeholder={placeholder}
           required={required}
           minLength={minLength}
-          className="w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
+          className="w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 pr-2"
         />
       </div>
     </div>
+  rightElement,
   );
 }
+  rightElement?: React.ReactNode;
+        {rightElement}
