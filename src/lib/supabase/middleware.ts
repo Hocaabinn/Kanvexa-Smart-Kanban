@@ -48,7 +48,22 @@ export async function updateSession(request: NextRequest) {
   // Refreshing the session — do not remove. Calling getUser() (not
   // getSession()) re-validates the token against Supabase Auth on
   // every request instead of trusting a possibly-stale cookie.
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error) {
+      user = data.user;
+    } else if (error.code === "refresh_token_not_found" || error.status === 400) {
+      // Invalidate stale Supabase cookies so subsequent requests do not spam the console
+      request.cookies.getAll().forEach((cookie) => {
+        if (cookie.name.startsWith("sb-")) {
+          supabaseResponse.cookies.set(cookie.name, "", { maxAge: 0, path: "/" });
+        }
+      });
+    }
+  } catch {
+    user = null;
+  }
 
   if (!user && protectedPath) {
     const url = request.nextUrl.clone();
