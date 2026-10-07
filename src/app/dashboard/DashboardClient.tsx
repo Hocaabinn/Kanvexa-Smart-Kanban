@@ -52,7 +52,10 @@ interface Props {
   initialBoards: Board[];
   initialInvitations?: Invitation[];
   createBoardAction: (formData: FormData) => Promise<void>;
-  activeView?: "dashboard" | "templates";
+  activeView?: "dashboard" | "templates" | "projects";
+  cards?: CardItem[];
+  columns?: ColumnItem[];
+  recentComments?: CommentItem[];
 }
 
 function getRelativeTime(dateStr: string) {
@@ -66,7 +69,16 @@ function getRelativeTime(dateStr: string) {
   return `${diffDays} hari yang lalu`;
 }
 
-export default function DashboardClient({ userEmail, initialBoards, initialInvitations = [], createBoardAction, activeView = "dashboard" }: Props) {
+export default function DashboardClient({ 
+  userEmail, 
+  initialBoards, 
+  initialInvitations = [], 
+  createBoardAction, 
+  activeView = "dashboard",
+  cards = [],
+  columns = [],
+  recentComments = []
+}: Props) {
   const router = useRouter();
 
   const [pinnedBoardIds, setPinnedBoardIds] = useState<string[]>([]);
@@ -119,6 +131,7 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
       const storedStars = localStorage.getItem("starred_boards");
       if (storedStars) {
         setStarredBoardIds(JSON.parse(storedStars));
+  const [topSearch, setTopSearch] = useState("");
       }
     } catch (e) {
       console.error("Gagal memuat state pin/star:", e);
