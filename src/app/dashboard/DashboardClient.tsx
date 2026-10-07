@@ -414,44 +414,183 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                   {" "}dari modal
                 </p>
               </div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(310px, 100%), 1fr))", gap: 24, marginBottom: 40 }}>
-                {sortedBoards.map((board) => {
-                  const dateFormatted = new Date(board.created_at).toLocaleString("id-ID", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
 
-                  const isPinned = pinnedBoardIds.includes(board.id);
-                  const isStarred = starredBoardIds.includes(board.id);
+              {foldersCard}
 
-                  return (
-                    <Link 
-                      key={board.id} 
-                      href={`/board/${board.id}`} 
-                      style={{ textDecoration: "none" }}
-                      onClick={() => setOpeningBoardTitle(board.name)}
+              {/* ROW 3: PROJECT TIMELINE & UPCOMING DEADLINES (Matching Referensi.png) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
+                {/* Project Timeline Gantt-style Widget */}
+                <div id="project-timeline-section" style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  gridColumn: "span 2",
+                }} className="timeline-card-wrapper">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0 }}>
+                        Project Timeline
+                      </h3>
+                      <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 12, color: "#64748b", fontWeight: 600 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ width: 14, height: 2, background: "#cbd5e1", borderTop: "2px dashed #94a3b8" }} />
+                          Planned
+                        </span>
+                        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ width: 14, height: 4, background: "#4f46e5", borderRadius: 2 }} />
+                          Actual
+                        </span>
+                      </div>
+                    </div>
+
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#64748b", background: "#f8fafc", padding: "4px 10px", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                      {timelineFilter}
+                    </span>
+                  </div>
+
+                  {/* Timeline Header Dates */}
+                  <div style={{ display: "grid", gridTemplateColumns: "180px repeat(5, 1fr)", paddingBottom: 12, borderBottom: "1px solid #f1f5f9", fontSize: 12, fontWeight: 600, color: "#94a3b8" }}>
+                    <span>Project Name</span>
+                    <span style={{ textAlign: "center" }}>May 5</span>
+                    <span style={{ textAlign: "center" }}>May 12</span>
+                    <span style={{ textAlign: "center" }}>May 19</span>
+                    <span style={{ textAlign: "center" }}>May 26</span>
+                    <span style={{ textAlign: "center" }}>Jun 2</span>
+                  </div>
+
+                  {/* Timeline Rows */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16, position: "relative" }}>
+                    {/* Vertical "Today" line indicator */}
+                    <div style={{
+                      position: "absolute",
+                      left: "60%",
+                      top: 0,
+                      bottom: -20,
+                      width: "1.5px",
+                      background: "#ef4444",
+                      zIndex: 10,
+                      pointerEvents: "none"
+                    }}>
+                      <span style={{
+                        position: "absolute",
+                        bottom: -20,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        fontSize: 10,
+                        fontWeight: 800,
+                        color: "#ef4444"
+                      }}>
+                        Today
+                      </span>
+                    </div>
+
+                    {[
+                      { name: "Website Redesign", date: "May 5 – May 25", barWidth: "62%", left: "0%", color: "#6366f1", icon: "🌐" },
+                      { name: "Mobile App Development", date: "May 8 – Jun 5", barWidth: "75%", left: "8%", color: "#3b82f6", icon: "📱" },
+                      { name: "CRM Integration", date: "May 12 – Jun 2", barWidth: "60%", left: "18%", color: "#10b981", icon: "🧩" },
+                      { name: "Marketing Campaign", date: "May 15 – May 30", barWidth: "45%", left: "25%", color: "#a855f7", icon: "📢" },
+                    ].map((row, idx) => (
+                      <div key={idx} style={{ display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: 6 }}>
+                            <span>{row.icon}</span>
+                            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{row.name}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: "#94a3b8" }}>{row.date}</div>
+                        </div>
+
+                        {/* Gantt Bar Lane */}
+                        <div style={{ position: "relative", height: 28, background: "#f8fafc", borderRadius: 8, overflow: "hidden", display: "flex", alignItems: "center" }}>
+                          <div style={{
+                            position: "absolute",
+                            left: row.left,
+                            width: row.barWidth,
+                            height: 12,
+                            background: row.color,
+                            borderRadius: 99,
+                            boxShadow: `0 2px 8px ${row.color}40`,
+                            transition: "all 0.3s ease"
+                          }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Upcoming Deadlines Widget */}
+                <div style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between"
+                }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: "0 0 16px" }}>
+                      Upcoming Deadlines
+                    </h3>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                      {[
+                        { title: "Homepage Design", project: "Website Redesign", date: "May 20", badgeColor: "#fee2e2", textColor: "#dc2626", dot: "#6366f1" },
+                        { title: "API Integration", project: "Mobile App", date: "May 22", badgeColor: "#ffedd5", textColor: "#ea580c", dot: "#3b82f6" },
+                        { title: "User Testing", project: "Mobile App", date: "May 24", badgeColor: "#fef3c7", textColor: "#d97706", dot: "#8b5cf6" },
+                        { title: "Deployment", project: "CRM Integration", date: "May 28", badgeColor: "#dcfce7", textColor: "#16a34a", dot: "#10b981" },
+                      ].map((item, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: item.dot, flexShrink: 0 }} />
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                                {item.title}
+                              </div>
+                              <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                                {item.project}
+                              </div>
+                            </div>
+                          </div>
+                          <span style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            padding: "3px 8px",
+                            borderRadius: 8,
+                            background: item.badgeColor,
+                            color: item.textColor,
+                            whiteSpace: "nowrap"
+                          }}>
+                            {item.date}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+                    <button
+                      type="button"
+                      onClick={() => showAlert("Deadlines List", "Semua milestone dan tanggal tenggat tercatat dalam kalender tim.", "info")}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#4f46e5",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: 0
+                      }}
                     >
-                      <AnimatedFolder
-                        title={board.name}
-                        subtitle={`${board.owner_email || "Kanvexa"} • ${dateFormatted}`}
-                        isPinned={isPinned}
-                        isStarred={isStarred}
-                        showOpenButton={true}
-                        onClickFolder={() => handleOpenBoard(board.id, board.name)}
-                        projects={[
-                          { id: `${board.id}-1`, image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=60&w=150&auto=format&fit=crop", title: "Kanban Board" },
-                          { id: `${board.id}-2`, image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=60&w=150&auto=format&fit=crop", title: "Docs & Files" },
-                          { id: `${board.id}-3`, image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=60&w=150&auto=format&fit=crop", title: "Calendar View" },
-                        ]}
-                      />
-                    </Link>
-                  );
-                })}
+                      View All Deadlines <ArrowRight style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* ROW 4: 3 BOTTOM CARDS (Recent Comments, Team Members, Active Projects Progress) */}
