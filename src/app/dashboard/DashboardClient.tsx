@@ -131,60 +131,9 @@ export default function DashboardClient({
   const [openingBoardTitle, setOpeningBoardTitle] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<"all" | "school" | "life">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [topSearch, setTopSearch] = useState("");
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [customTemplateTitle, setCustomTemplateTitle] = useState("");
-
-  const handleOpenBoard = (boardId: string, boardName: string) => {
-    setOpeningBoardTitle(boardName);
-    router.push(`/board/${boardId}`);
-  };
-
-  const handleApplyTemplate = (formData: FormData) => {
-    const tplTitle = formData.get("name") as string;
-    Swal.fire({
-      title: "Menerapkan Template",
-      html: `Sedang menyiapkan ruang kerja untuk <strong>${tplTitle}</strong>...`,
-      icon: "info",
-      showConfirmButton: false,
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      }
-    });
-    createBoardAction(formData);
-  };
-
-  // Rename & Delete state
-  const [boardToRename, setBoardToRename] = useState<{ id: string; name: string } | null>(null);
-  const [renameInput, setRenameInput] = useState("");
-  const [renaming, setRenaming] = useState(false);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    try {
-      const storedPins = localStorage.getItem("pinned_boards");
-      if (storedPins) {
-        setPinnedBoardIds(JSON.parse(storedPins));
-      }
-      const storedStars = localStorage.getItem("starred_boards");
-      if (storedStars) {
-        setStarredBoardIds(JSON.parse(storedStars));
-  const [topSearch, setTopSearch] = useState("");
-      }
-    } catch (e) {
-      console.error("Gagal memuat state pin/star:", e);
-    }
-
-    return () => {
-      // Close any active Swal alerts when DashboardClient unmounts (e.g. on redirect)
-      Swal.close();
-    };
-  }, []);
-
-  const handlePin = (boardId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
   const [timeFilter, setTimeFilter] = useState("This Week");
   const [timelineFilter, setTimelineFilter] = useState("This Month");
 
@@ -250,6 +199,57 @@ export default function DashboardClient({
       teamWorkload
     };
   }, [cards, columns]);
+
+  const handleOpenBoard = (boardId: string, boardName: string) => {
+    setOpeningBoardTitle(boardName);
+    router.push(`/board/${boardId}`);
+  };
+
+  const handleApplyTemplate = (formData: FormData) => {
+    const tplTitle = formData.get("name") as string;
+    Swal.fire({
+      title: "Menerapkan Template",
+      html: `Sedang menyiapkan ruang kerja untuk <strong>${tplTitle}</strong>...`,
+      icon: "info",
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+    createBoardAction(formData);
+  };
+
+  // Rename & Delete state
+  const [boardToRename, setBoardToRename] = useState<{ id: string; name: string } | null>(null);
+  const [renameInput, setRenameInput] = useState("");
+  const [renaming, setRenaming] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedPins = localStorage.getItem("pinned_boards");
+      if (storedPins) {
+        setPinnedBoardIds(JSON.parse(storedPins));
+      }
+      const storedStars = localStorage.getItem("starred_boards");
+      if (storedStars) {
+        setStarredBoardIds(JSON.parse(storedStars));
+      }
+    } catch (e) {
+      console.error("Gagal memuat state pin/star:", e);
+    }
+
+    return () => {
+      // Close any active Swal alerts when DashboardClient unmounts (e.g. on redirect)
+      Swal.close();
+    };
+  }, []);
+
+  const handlePin = (boardId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (pinnedBoardIds.includes(boardId)) {
       const updated = pinnedBoardIds.filter(id => id !== boardId);
       setPinnedBoardIds(updated);
@@ -350,57 +350,6 @@ export default function DashboardClient({
     });
   }, [initialBoards, pinnedBoardIds]);
 
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
-      {/* Sidebar Component */}
-      <Sidebar 
-        key={inboxUpdateTrigger}
-        userEmail={userEmail}
-        boards={sortedBoards}
-        pinnedBoardIds={pinnedBoardIds}
-        starredBoardIds={starredBoardIds}
-        signOutAction={signOut}
-        onCreateBoardClick={() => setShowCreateModal(true)}
-        isSidebarCollapsed={isSidebarCollapsed}
-        setIsSidebarCollapsed={setIsSidebarCollapsed}
-        onPinAction={handlePin}
-        onStarAction={handleStar}
-        onRenameAction={openRenameModal}
-        onDeleteAction={openDeleteModal}
-        isMobileOpen={isMobileOpen}
-        setIsMobileOpen={setIsMobileOpen}
-        onInboxClick={() => setShowInbox(true)}
-        onOpenBoard={(name) => setOpeningBoardTitle(name)}
-      />
-
-      {/* Main Content Pane */}
-      <div style={{ flex: 1, height: "100vh", overflowY: "auto" }}>
-        {/* Mobile hamburger button */}
-        <div className="mobile-sidebar-toggle" style={{
-          display: "none",
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid #e2e8f0",
-          padding: "10px 16px",
-          alignItems: "center",
-          gap: 10,
-        }}>
-          <button
-            onClick={() => setIsMobileOpen(true)}
-            style={{
-              background: "none",
-              border: "1px solid #e2e8f0",
-              borderRadius: 8,
-              padding: "6px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#475569",
-            }}
   const foldersCard = (
               <div style={{
                 background: "#ffffff",
@@ -574,6 +523,57 @@ export default function DashboardClient({
               </div>
   );
 
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+      {/* Sidebar Component */}
+      <Sidebar 
+        key={inboxUpdateTrigger}
+        userEmail={userEmail}
+        boards={sortedBoards}
+        pinnedBoardIds={pinnedBoardIds}
+        starredBoardIds={starredBoardIds}
+        signOutAction={signOut}
+        onCreateBoardClick={() => setShowCreateModal(true)}
+        isSidebarCollapsed={isSidebarCollapsed}
+        setIsSidebarCollapsed={setIsSidebarCollapsed}
+        onPinAction={handlePin}
+        onStarAction={handleStar}
+        onRenameAction={openRenameModal}
+        onDeleteAction={openDeleteModal}
+        isMobileOpen={isMobileOpen}
+        setIsMobileOpen={setIsMobileOpen}
+        onInboxClick={() => setShowInbox(true)}
+        onOpenBoard={(name) => setOpeningBoardTitle(name)}
+      />
+
+      {/* Main Content Pane */}
+      <div style={{ flex: 1, height: "100vh", overflowY: "auto" }}>
+        {/* Mobile hamburger button */}
+        <div className="mobile-sidebar-toggle" style={{
+          display: "none",
+          position: "sticky",
+          top: 0,
+          zIndex: 40,
+          background: "rgba(255,255,255,0.85)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid #e2e8f0",
+          padding: "10px 16px",
+          alignItems: "center",
+          gap: 10,
+        }}>
+          <button
+            onClick={() => setIsMobileOpen(true)}
+            style={{
+              background: "none",
+              border: "1px solid #e2e8f0",
+              borderRadius: 8,
+              padding: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#475569",
+            }}
           >
             <Menu style={{ width: 20, height: 20 }} />
           </button>
@@ -754,7 +754,9 @@ export default function DashboardClient({
               </div>
             </div>
           </div>
+        </header>
 
+        <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 32px 80px" }} className="dashboard-main-content">
           {/* Inbox Modal */}
           {showInbox && (
             <InboxNotificationModal
@@ -1043,9 +1045,7 @@ export default function DashboardClient({
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
                       <div style={{ background: "#f8fafc", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>To Do</div>
-        </header>
                         <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{kanbanStats.todo}</div>
-        <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 32px 80px" }} className="dashboard-main-content">
                       </div>
                       <div style={{ background: "#eff6ff", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: "#2563eb", marginBottom: 4 }}>In Progress</div>
@@ -1935,6 +1935,7 @@ export default function DashboardClient({
               );
             })()}
           </div>
+          )}
         </main>
       </div>
       {/* Template Preview & Customization Modal */}
@@ -2326,4 +2327,3 @@ export default function DashboardClient({
     </div>
   );
 }
-          )}

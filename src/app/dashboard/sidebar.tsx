@@ -623,13 +623,6 @@ export default function Sidebar({
               </div>
             </Link>
 
-            {/* Kotak Masuk (Inbox) */}
-            <div
-              onClick={() => {
-                if (onInboxClick) onInboxClick();
-                else setShowInboxModal(true);
-              }}
-              style={{
             {/* Time Tracking */}
             <div 
               onClick={() => {
@@ -740,6 +733,13 @@ export default function Sidebar({
               )}
             </div>
 
+            {/* Kotak Masuk (Inbox) */}
+            <div
+              onClick={() => {
+                if (onInboxClick) onInboxClick();
+                else setShowInboxModal(true);
+              }}
+              style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
@@ -1001,13 +1001,6 @@ export default function Sidebar({
           </div>
         </div>
 
-      </div>
-
-      {/* 4. Avatar + Logout (Sticky Bottom) */}
-      <div style={{ 
-        padding: isSidebarCollapsed ? "16px 12px" : "16px 20px", 
-        borderTop: "1px solid #e2e8f0", 
-        display: "flex", 
         {/* Upgrade to Pro Banner (from Referensi.png) */}
         {!isSidebarCollapsed && (
           <div style={{
@@ -1059,6 +1052,13 @@ export default function Sidebar({
           </div>
         )}
 
+      </div>
+
+      {/* 4. Avatar + Logout (Sticky Bottom) */}
+      <div style={{ 
+        padding: isSidebarCollapsed ? "16px 12px" : "16px 20px", 
+        borderTop: "1px solid #e2e8f0", 
+        display: "flex", 
         alignItems: "center", 
         justifyContent: isSidebarCollapsed ? "center" : "space-between", 
         background: "#f8fafc",

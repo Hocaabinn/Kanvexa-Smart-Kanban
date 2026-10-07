@@ -263,6 +263,20 @@ export default function SignupPage() {
                 type={showPassword ? "text" : "password"}
                 required
                 minLength={6}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="flex items-center justify-center text-slate-400 hover:text-violet-600 transition-colors p-1"
+                    aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                }
               />
 
               {error && (
@@ -300,20 +314,6 @@ export default function SignupPage() {
                     </a>{" "}
                     dan{" "}
                     <a
-                rightElement={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="flex items-center justify-center text-slate-400 hover:text-violet-600 transition-colors p-1"
-                    aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                }
                       href="#"
                       className="font-bold text-violet-600 underline underline-offset-2 hover:text-violet-700"
                     >
@@ -401,6 +401,7 @@ function FieldInput({
   type = "text",
   required = false,
   minLength,
+  rightElement,
 }: {
   label: string;
   placeholder: string;
@@ -409,6 +410,7 @@ function FieldInput({
   type?: string;
   required?: boolean;
   minLength?: number;
+  rightElement?: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5 text-left">
@@ -425,10 +427,8 @@ function FieldInput({
           minLength={minLength}
           className="w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 pr-2"
         />
+        {rightElement}
       </div>
     </div>
-  rightElement,
   );
 }
-  rightElement?: React.ReactNode;
-        {rightElement}
