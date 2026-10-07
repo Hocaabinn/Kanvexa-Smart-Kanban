@@ -564,7 +564,33 @@ export default function Sidebar({
               </div>
             </Link>
 
-            {/* Galeri Template */}
+            {/* Projects */}
+            <Link href="/projects" style={{ textDecoration: "none" }}>
+            <div 
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                background: "transparent",
+                justifyContent: isSidebarCollapsed ? "center" : "flex-start"
+              }}
+              className="sidebar-nav-item"
+              title="Projects"
+            >
+              <FolderKanban style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
+              {!isSidebarCollapsed && (
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
+                  Projects
+                </span>
+              )}
+            </div>
+            </Link>
+
+            {/* Template (Halaman Galeri Template) */}
             <Link href="/Galeri-Template" style={{ textDecoration: "none" }}>
               <div 
                 style={{
@@ -575,16 +601,16 @@ export default function Sidebar({
                   borderRadius: "10px",
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  background: isTemplatesActive ? "#f1f5f9" : "transparent",
+                  background: isTemplatesActive ? "#ede9fe" : "transparent",
                   justifyContent: isSidebarCollapsed ? "center" : "flex-start"
                 }}
                 className="sidebar-nav-item"
-                title="Galeri Template"
+                title="Template"
               >
                 <LayoutTemplate style={{ width: "16px", height: "16px", color: isTemplatesActive ? "var(--v)" : "#64748b", flexShrink: 0 }} />
                 {!isSidebarCollapsed && (
                   <span style={{ fontSize: "13px", fontWeight: isTemplatesActive ? "700" : "600", color: isTemplatesActive ? "var(--v)" : "#334155" }}>
-                    Galeri Template
+                    Template
                   </span>
                 )}
               </div>
@@ -597,6 +623,116 @@ export default function Sidebar({
                 else setShowInboxModal(true);
               }}
               style={{
+            {/* Time Tracking */}
+            <div 
+              onClick={() => {
+                const el = document.getElementById("time-tracking-section");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                background: "transparent",
+                justifyContent: isSidebarCollapsed ? "center" : "flex-start"
+              }}
+              className="sidebar-nav-item"
+              title="Time Tracking"
+            >
+              <Clock style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
+              {!isSidebarCollapsed && (
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
+                  Time Tracking
+                </span>
+              )}
+            </div>
+
+            {/* Team */}
+            <div 
+              onClick={() => {
+                const el = document.getElementById("team-members-section");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                background: "transparent",
+                justifyContent: isSidebarCollapsed ? "center" : "flex-start"
+              }}
+              className="sidebar-nav-item"
+              title="Team"
+            >
+              <Users2 style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
+              {!isSidebarCollapsed && (
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
+                  Team
+                </span>
+              )}
+            </div>
+
+            {/* Settings */}
+            <div 
+              onClick={() => {
+                showAlert("Settings", `• Akun: ${userEmail}\n• Tipe Langganan: Pro Plan\n• Integrasi AI: Aktif`, "info");
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                background: "transparent",
+                justifyContent: isSidebarCollapsed ? "center" : "flex-start"
+              }}
+              className="sidebar-nav-item"
+              title="Settings"
+            >
+              <Settings style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
+              {!isSidebarCollapsed && (
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
+                  Settings
+                </span>
+              )}
+            </div>
+
+            {/* Settings */}
+            <div 
+              onClick={() => {
+                showAlert("Settings", `• Akun: ${userEmail}\n• Tipe Langganan: Pro Plan\n• Integrasi AI: Aktif`, "info");
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                background: "transparent",
+                justifyContent: isSidebarCollapsed ? "center" : "flex-start"
+              }}
+              className="sidebar-nav-item"
+              title="Settings"
+            >
+              <Settings style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
+              {!isSidebarCollapsed && (
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
+                  Settings
+                </span>
+              )}
+            </div>
+
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
@@ -865,6 +1001,57 @@ export default function Sidebar({
         padding: isSidebarCollapsed ? "16px 12px" : "16px 20px", 
         borderTop: "1px solid #e2e8f0", 
         display: "flex", 
+        {/* Upgrade to Pro Banner (from Referensi.png) */}
+        {!isSidebarCollapsed && (
+          <div style={{
+            margin: "12px 4px 4px",
+            padding: "16px",
+            borderRadius: "16px",
+            background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+            color: "#ffffff",
+            position: "relative",
+            overflow: "hidden",
+            boxShadow: "0 10px 25px -5px rgba(79, 70, 229, 0.4)",
+          }}>
+            <div style={{
+              position: "absolute",
+              right: "-6px",
+              bottom: "8px",
+              opacity: 0.9,
+              fontSize: "32px",
+              lineHeight: 1,
+            }}>
+              🚀
+            </div>
+            <div style={{ fontSize: "13px", fontWeight: "800", marginBottom: "4px", letterSpacing: "-0.01em" }}>
+              Upgrade to Pro
+            </div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)", lineHeight: 1.4, marginBottom: "12px", maxWidth: "160px" }}>
+              Unlock advanced features and boost productivity.
+            </div>
+            <button
+              type="button"
+              onClick={() => showAlert("Upgrade to Pro", "Fitur Pro Kanvexa: Unlimited Kanban boards, AI sprint planning otomatis, 100GB cloud storage, dan integrasi webhook real-time.", "info")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: "10px",
+                fontSize: "11px",
+                fontWeight: "700",
+                background: "#ffffff",
+                color: "#4f46e5",
+                border: "none",
+                cursor: "pointer",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              Upgrade Now
+            </button>
+          </div>
+        )}
+
         alignItems: "center", 
         justifyContent: isSidebarCollapsed ? "center" : "space-between", 
         background: "#f8fafc",
