@@ -914,7 +914,7 @@ export default function LandingPage() {
         <motion.nav
           className="flex items-center justify-between font-body w-full"
           animate={{
-            maxWidth: isScrolled ? 760 : 9999,
+            maxWidth: isScrolled ? 760 : 1920,
             paddingLeft: isScrolled ? 24 : (isMobileNav ? 20 : 80),
             paddingRight: isScrolled ? 24 : (isMobileNav ? 20 : 80),
             paddingTop: isScrolled ? 10 : 20,
