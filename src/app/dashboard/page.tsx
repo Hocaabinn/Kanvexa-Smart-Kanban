@@ -11,6 +11,21 @@ export default async function DashboardPage() {
     .select("id, name, created_at, owner_email")
     .order("created_at", { ascending: false });
 
+  // Fetch cards, posts, and comments to calculate accurate dashboard metrics
+  const { data: cards } = await supabase
+    .from("cards")
+    .select("id, title, column_id, position, created_at, board_id");
+
+  const { data: columns } = await supabase
+    .from("board_columns")
+    .select("id, name, board_id");
+
+  const { data: recentComments } = await supabase
+    .from("board_post_comments")
+    .select("id, content, created_at, author_email, post_id")
+    .order("created_at", { ascending: false })
+    .limit(6);
+
   // Fetch pending invitations for the currently logged-in user
   let initialInvitations: any[] = [];
   if (user && user.email) {
@@ -30,14 +45,15 @@ export default async function DashboardPage() {
     }
   }
 
-  console.log("DashboardPage server user email:", user?.email, "boards:", boards?.length, "invitations:", initialInvitations.length);
-
   return (
     <DashboardClient 
       userEmail={user?.email ?? "Guest"}
       initialBoards={boards ?? []}
       initialInvitations={initialInvitations}
       createBoardAction={createBoard}
+      cards={cards ?? []}
+      columns={columns ?? []}
+      recentComments={recentComments ?? []}
     />
   );
 }
