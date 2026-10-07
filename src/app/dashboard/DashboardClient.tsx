@@ -22,7 +22,22 @@ import {
   Menu,
   Search,
   Heart,
-  Leaf
+  Leaf,
+  Bell,
+  CheckCircle2,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  CheckSquare,
+  Clock,
+  Calendar,
+  BarChart3,
+  ChevronDown,
+  Sparkles,
+  FileText,
+  MessageSquare,
+  Activity,
+  Layers
 } from "lucide-react";
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 import BoardLoaderModal from "@/components/ui/BoardLoaderModal";
@@ -45,6 +60,29 @@ interface Invitation {
   invited_by_email: string;
   role: string;
   created_at: string;
+}
+
+interface CardItem {
+  id: string;
+  title: string;
+  column_id: string;
+  position: number;
+  created_at: string;
+  board_id: string;
+}
+
+interface ColumnItem {
+  id: string;
+  name: string;
+  board_id: string;
+}
+
+interface CommentItem {
+  id: string;
+  content: string;
+  created_at: string;
+  author_email: string;
+  post_id: string;
 }
 
 interface Props {
