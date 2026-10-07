@@ -453,11 +453,286 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
                   );
                 })}
               </div>
-            )
+
+              {/* ROW 4: 3 BOTTOM CARDS (Recent Comments, Team Members, Active Projects Progress) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+                {/* 1. Recent Comments Widget */}
+                <div id="recent-comments-section" style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between"
+                }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: "0 0 16px" }}>
+                      Recent Comments
+                    </h3>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                      {(recentComments.length > 0 ? recentComments.slice(0, 3) : [
+                        { author_email: "James Anderson", content: "Looks great! Let's move this to review. 🚀", time: "2h ago", on: "Homepage Design" },
+                        { author_email: "Sophie Bennett", content: "Can we update the CTA text here?", time: "5h ago", on: "Landing Page" },
+                        { author_email: "Liam Carter", content: "I have attached the new assets.", time: "1d ago", on: "Marketing Campaign" },
+                      ]).map((c: any, idx: number) => {
+                        const name = c.author_email?.includes("@") ? c.author_email.split("@")[0] : c.author_email;
+                        return (
+                          <div key={idx} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                            <div style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: "50%",
+                              background: "#f1f5f9",
+                              color: "#475569",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0
+                            }}>
+                              {name?.slice(0, 2).toUpperCase() || "US"}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{name}</span>
+                                <span style={{ fontSize: 11, color: "#94a3b8" }}>{c.time || "Recently"}</span>
+                              </div>
+                              <p style={{ fontSize: 12, color: "#475569", margin: "2px 0 3px", lineHeight: 1.4 }}>
+                                {c.content}
+                              </p>
+                              <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}>
+                                On: {c.on || "Project Board"}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+                    <button
+                      type="button"
+                      onClick={() => showAlert("Comments", "Seluruh diskusi komentar papan proyek terhubung di tab Message Board.", "info")}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#4f46e5",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: 0
+                      }}
+                    >
+                      View All Comments <ArrowRight style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Team Members Widget */}
+                <div id="team-members-section" style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between"
+                }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: "0 0 16px" }}>
+                      Team Members
+                    </h3>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {[
+                        { name: "Emma Johnson", role: "Project Manager", workload: "85%", tagColor: "#fee2e2", textColor: "#dc2626" },
+                        { name: "Liam Carter", role: "UI/UX Designer", workload: "70%", tagColor: "#fef3c7", textColor: "#d97706" },
+                        { name: "Sophie Bennett", role: "Frontend Developer", workload: "65%", tagColor: "#ecfdf5", textColor: "#059669" },
+                        { name: "Noah Williams", role: "Backend Developer", workload: "90%", tagColor: "#fee2e2", textColor: "#dc2626" },
+                        { name: "Olivia Davis", role: "QA Engineer", workload: "60%", tagColor: "#ecfdf5", textColor: "#059669" },
+                      ].map((member, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: "50%",
+                              background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
+                              color: "#4338ca",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center"
+                            }}>
+                              {member.name.split(" ").map(n => n[0]).join("")}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                                {member.name}
+                              </div>
+                              <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                                {member.role}
+                              </div>
+                            </div>
+                          </div>
+                          <span style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            padding: "3px 8px",
+                            borderRadius: 8,
+                            background: member.tagColor,
+                            color: member.textColor
+                          }}>
+                            {member.workload}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+                    <button
+                      type="button"
+                      onClick={() => showAlert("Team Members", "Tim kerja Anda beranggotakan 5 spesialis aktif.", "info")}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#4f46e5",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: 0
+                      }}
+                    >
+                      View All Team <ArrowRight style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Active Projects Progress Bars Widget */}
+                <div id="active-projects-section" style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #f1f5f9",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between"
+                }}>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0 }}>
+                        Active Projects
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateModal(true)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#4f46e5",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}
+                      >
+                        View All <ArrowRight style={{ width: 13, height: 13 }} />
+                      </button>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      {(sortedBoards.length > 0 ? sortedBoards.slice(0, 4) : [
+                        { id: "1", name: "Website Redesign", due: "Due May 25", progress: 68, icon: "🌐", color: "#4f46e5" },
+                        { id: "2", name: "Mobile App Development", due: "Due Jun 5", progress: 55, icon: "📱", color: "#3b82f6" },
+                        { id: "3", name: "CRM Integration", due: "Due Jun 2", progress: 45, icon: "🧩", color: "#06b6d4" },
+                        { id: "4", name: "Marketing Campaign", due: "Due May 30", progress: 75, icon: "📢", color: "#8b5cf6" },
+                      ]).map((item: any, idx: number) => {
+                        const progress = item.progress || [68, 55, 45, 75][idx % 4];
+                        const due = item.due || "Due in 2 weeks";
+                        const icon = item.icon || "📂";
+                        const color = item.color || "#4f46e5";
+
+                        return (
+                          <div 
+                            key={item.id || idx} 
+                            onClick={() => handleOpenBoard(item.id, item.name)}
+                            style={{ cursor: "pointer" }}
+                            className="hover:opacity-90 transition-opacity"
+                          >
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span style={{ fontSize: 16 }}>{icon}</span>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{item.name}</div>
+                                  <div style={{ fontSize: 11, color: "#94a3b8" }}>{due}</div>
+                                </div>
+                              </div>
+                              <span style={{ fontSize: 12, fontWeight: 800, color: "#0f172a" }}>{progress}%</span>
+                            </div>
+                            <div style={{ width: "100%", height: 6, background: "#f1f5f9", borderRadius: 99, overflow: "hidden" }}>
+                              <div style={{ width: `${progress}%`, height: "100%", background: color, borderRadius: 99 }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModal(true)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: 12,
+                        background: "#f8fafc",
+                        border: "1px dashed #cbd5e1",
+                        color: "#4f46e5",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6
+                      }}
+                    >
+                      <Plus style={{ width: 14, height: 14 }} /> Buat Proyek Baru
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* GALERI TEMPLATE SECTION */}
-          <div id="preset-templates-section" style={{ marginTop: 40, paddingTop: 40, borderTop: "1px solid #e2e8f0" }}>
+          {activeView === "projects" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+              {/* CARD WRAPPER: RUANG KERJA & FOLDER PROYEK */}
+              {foldersCard}
+            </div>
+          )}
+
+          {/* GALERI TEMPLATE SECTION (Only visible on /Galeri-Template view) */}
+          {activeView === "templates" && (
+            <div id="preset-templates-section" style={{ marginTop: 20 }}>
             <div style={{ marginBottom: 28, textAlign: "left" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                 <div style={{
@@ -1128,3 +1403,4 @@ export default function DashboardClient({ userEmail, initialBoards, initialInvit
     </div>
   );
 }
+          )}
