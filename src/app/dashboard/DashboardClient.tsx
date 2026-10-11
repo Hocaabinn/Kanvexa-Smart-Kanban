@@ -1049,7 +1049,7 @@ export default function DashboardClient({
                         {kanbanStats.pending}
                       </span>
                       <span style={{ fontSize: 12, fontWeight: 700, color: kanbanStats.pending > 0 ? "#ea580c" : "#16a34a", display: "flex", alignItems: "center" }}>
-                        {"Tuntas"}
+                        {kanbanStats.pending > 0 ? "Pending" : "Tuntas"}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
