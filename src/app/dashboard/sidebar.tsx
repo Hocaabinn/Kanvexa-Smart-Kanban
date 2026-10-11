@@ -876,7 +876,7 @@ export default function Sidebar({
               )}
             </div>
 
-            {/* 3. Terakhir Dibuka */}
+            {/* 3. Riwayat */}
             <div>
               <div 
                 onClick={() => {
