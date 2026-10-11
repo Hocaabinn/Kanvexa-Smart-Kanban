@@ -2622,7 +2622,10 @@ export default function DashboardClient({
           box-shadow: 0 10px 25px -5px rgba(109, 40, 217, 0.1), 0 8px 10px -6px rgba(109, 40, 217, 0.05) !important;
           transform: translateY(-2px);
         }
-        /* Tablet responsive grid styling placeholder */
+        .dashboard-widgets-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+        }
         @media (max-width: 1024px) {
           .timeline-card-wrapper {
             grid-column: span 1 !important;
