@@ -6,10 +6,19 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: boards } = await supabase
+  const { data: rawBoards } = await supabase
     .from("boards")
-    .select("id, name, created_at, owner_email")
+    .select("id, name, created_at, owner_email, created_by")
     .order("created_at", { ascending: false });
+
+  // Get boards that belong to current user
+  let userEmailLower = user?.email?.toLowerCase() || "";
+  let userBoards = (rawBoards ?? []).filter(b => {
+    if (!user) return true;
+    if (b.created_by && b.created_by === user.id) return true;
+    if (b.owner_email && b.owner_email.toLowerCase() === userEmailLower) return true;
+    return false;
+  });
 
   // Fetch cards, posts, and comments to calculate accurate dashboard metrics
   const { data: cards } = await supabase
@@ -48,7 +57,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient 
       userEmail={user?.email ?? "Guest"}
-      initialBoards={boards ?? []}
+      initialBoards={userBoards}
       initialInvitations={initialInvitations}
       createBoardAction={createBoard}
       cards={cards ?? []}
