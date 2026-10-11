@@ -35,14 +35,25 @@ export default async function DashboardPage() {
     }
   }
 
-  // Fetch cards, posts, and comments to calculate accurate dashboard metrics
-  const { data: cards } = await supabase
-    .from("cards")
-    .select("id, title, column_id, position, created_at, board_id");
+  const boardIds = userBoards.map(b => b.id);
 
-  const { data: columns } = await supabase
-    .from("board_columns")
-    .select("id, name, board_id");
+  // Fetch cards and columns ONLY for user's boards
+  let cards: any[] = [];
+  let columns: any[] = [];
+
+  if (boardIds.length > 0) {
+    const { data: cData } = await supabase
+      .from("cards")
+      .select("id, title, column_id, position, created_at, board_id")
+      .in("board_id", boardIds);
+    cards = cData ?? [];
+
+    const { data: colData } = await supabase
+      .from("board_columns")
+      .select("id, name, board_id, position")
+      .in("board_id", boardIds);
+    columns = colData ?? [];
+  }
 
   const { data: recentComments } = await supabase
     .from("board_post_comments")
