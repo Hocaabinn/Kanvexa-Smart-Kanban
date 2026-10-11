@@ -1101,7 +1101,7 @@ export default function DashboardClient({
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                      {kanbanStats.total > 0 ? `${kanbanStats.inProgress} tugas aktif • ${actualTeamMembers.length} anggota` : "Beban kerja 0% (belum ada tugas)"}
+                      {kanbanStats.total > 0 ? `${kanbanStats.inProgress} tugas aktif • ${actualTeamMembers.length} anggota` : "Beban kerja 0%"}
                     </div>
                   </div>
                 </div>
