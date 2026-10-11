@@ -1097,7 +1097,7 @@ export default function DashboardClient({
                         display: "flex", 
                         alignItems: "center" 
                       }}>
-                        {"Optimal"}
+                        {kanbanStats.teamWorkload === 0 ? "Santai" : kanbanStats.teamWorkload > 80 ? "Tinggi" : kanbanStats.teamWorkload > 50 ? "Sedang" : "Optimal"}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
