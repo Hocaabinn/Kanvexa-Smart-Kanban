@@ -36,6 +36,10 @@
 - 🔐 **Autentikasi & RBAC Multi-Tenant**:
   - Otentikasi aman melalui Supabase Auth & SSR middleware.
   - Granular Per-Board Role Access Control (*Admin*, *Member*, *Viewer*) yang dilindungi Supabase Row-Level Security (RLS).
+- 📊 **Smart Dashboard & Accurate Analytics**:
+  - Live KPI metrics (Active Projects, Tasks Completed, Pending Tasks, Team Workload).
+  - Responsive Time Tracking widget with daily bar chart visualizations.
+  - Interactive Upgrade to Pro showcase with animated Framer Motion AlertCard.
 - 🎨 **Modern Minimalist UI/UX**:
   - Animasi responsif berbasis Framer Motion, shader visual kontemporer, dan umpan balik interaktif (SweetAlert2 & Canvas Confetti).
 
