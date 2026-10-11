@@ -17,7 +17,7 @@ import {
   BookOpen,
   Users,
   Lightbulb,
-  Target,
+  LayoutDashboard,
   LayoutTemplate,
   Menu,
   Search,
@@ -94,6 +94,7 @@ interface Props {
   cards?: CardItem[];
   columns?: ColumnItem[];
   recentComments?: CommentItem[];
+  teamMembers?: any[];
 }
 
 function getRelativeTime(dateStr: string) {
@@ -115,7 +116,8 @@ export default function DashboardClient({
   activeView = "dashboard",
   cards = [],
   columns = [],
-  recentComments = []
+  recentComments = [],
+  teamMembers = []
 }: Props) {
   const router = useRouter();
 
@@ -137,31 +139,71 @@ export default function DashboardClient({
   const [timeFilter, setTimeFilter] = useState("This Week");
   const [timelineFilter, setTimelineFilter] = useState("This Month");
 
-  // Metrics calculation matching Referensi.png
+  // Metrics calculation from actual user data
   const activeProjectsCount = initialBoards.length;
   
-  // Categorize cards by column names
+  // Strictly filter cards to only belong to user's active boards
+  const userCards = useMemo(() => {
+    const validBoardIds = new Set(initialBoards.map(b => b.id));
+    return cards.filter(c => validBoardIds.has(c.board_id));
+  }, [cards, initialBoards]);
+  
+  // Categorize cards by column names accurately
+  const columnMap = useMemo(() => {
+    const map: Record<string, "done" | "review" | "inProgress" | "todo"> = {};
+    columns.forEach(col => {
+      const lower = (col.name || "").toLowerCase().trim();
+      if (
+        lower.includes("selesai") || 
+        lower.includes("done") || 
+        lower.includes("berhasil") || 
+        lower.includes("finish") || 
+        lower.includes("completed") ||
+        lower.includes("siap kumpul") ||
+        lower.includes("status akhir") ||
+        lower.includes("pengeluaran terlacak") ||
+        lower.includes("packing checklist") ||
+        lower.includes("kutipan favorit") ||
+        lower.includes("siap eksekusi") ||
+        lower.includes("arsip") ||
+        lower.includes("closed")
+      ) {
+        map[col.id] = "done";
+      } else if (
+        lower.includes("review") || 
+        lower.includes("uji") || 
+        lower.includes("evaluasi") || 
+        lower.includes("revisi") || 
+        lower.includes("testing") ||
+        lower.includes("tahap wawancara")
+      ) {
+        map[col.id] = "review";
+      } else if (
+        lower.includes("proses") || 
+        lower.includes("sedang") || 
+        lower.includes("progress") || 
+        lower.includes("bahas") || 
+        lower.includes("tugas") ||
+        lower.includes("tindak lanjut") ||
+        lower.includes("action") ||
+        lower.includes("reservasi") ||
+        lower.includes("sedang di-review")
+      ) {
+        map[col.id] = "inProgress";
+      } else {
+        map[col.id] = "todo";
+      }
+    });
+    return map;
+  }, [columns]);
+
   const kanbanStats = useMemo(() => {
     let todo = 0;
     let inProgress = 0;
     let review = 0;
     let done = 0;
 
-    const columnMap: Record<string, string> = {};
-    columns.forEach(col => {
-      const lower = col.name.toLowerCase();
-      if (lower.includes("selesai") || lower.includes("done") || lower.includes("berhasil")) {
-        columnMap[col.id] = "done";
-      } else if (lower.includes("review") || lower.includes("uji") || lower.includes("evaluasi") || lower.includes("revisi")) {
-        columnMap[col.id] = "review";
-      } else if (lower.includes("proses") || lower.includes("sedang") || lower.includes("progress") || lower.includes("bahas") || lower.includes("tugas")) {
-        columnMap[col.id] = "inProgress";
-      } else {
-        columnMap[col.id] = "todo";
-      }
-    });
-
-    cards.forEach(card => {
+    userCards.forEach(card => {
       const type = columnMap[card.column_id] || "todo";
       if (type === "done") done++;
       else if (type === "review") review++;
@@ -169,24 +211,31 @@ export default function DashboardClient({
       else todo++;
     });
 
-    // Provide default representative values if project is brand new
-    if (cards.length === 0) {
+    const total = userCards.length;
+    // For users with 0 cards: everything is 0!
+    if (total === 0) {
       return {
-        todo: 23,
-        inProgress: 15,
-        review: 8,
-        done: 31,
-        total: 77,
-        completionRate: 62,
-        pending: 57,
-        teamWorkload: 72,
+        todo: 0,
+        inProgress: 0,
+        review: 0,
+        done: 0,
+        total: 0,
+        completionRate: 0,
+        pending: 0,
+        teamWorkload: 0,
       };
     }
 
-    const total = cards.length;
-    const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
+    const completionRate = Math.round((done / total) * 100);
     const pending = todo + inProgress + review;
-    const teamWorkload = Math.min(95, Math.max(45, Math.round((pending / (total || 1)) * 85)));
+
+    // Real-world Agile Workload Calculation:
+    // In Progress = 1.0 (active ongoing tasks)
+    // Review = 0.6 (verification & quality check load)
+    // To Do = 0.15 (backlog queue planning capacity)
+    // Done = 0.0 (completed, zero ongoing effort)
+    const activeLoadWeight = (inProgress * 1.0) + (review * 0.6) + (todo * 0.15);
+    const teamWorkload = Math.min(100, Math.max(0, Math.round((activeLoadWeight / total) * 100)));
 
     return {
       todo,
@@ -198,7 +247,165 @@ export default function DashboardClient({
       pending,
       teamWorkload
     };
-  }, [cards, columns]);
+  }, [userCards, columnMap]);
+
+  // Actual time tracking metrics
+  const timeTrackingData = useMemo(() => {
+    if (userCards.length === 0) {
+      return {
+        totalTimeFormatted: "0h 0m",
+        days: [
+          { day: "Sen", height: 4, active: false, count: 0 },
+          { day: "Sel", height: 4, active: false, count: 0 },
+          { day: "Rab", height: 4, active: false, count: 0 },
+          { day: "Kam", height: 4, active: false, count: 0 },
+          { day: "Jum", height: 4, active: false, count: 0 },
+          { day: "Sab", height: 4, active: false, count: 0 },
+          { day: "Min", height: 4, active: false, count: 0 },
+        ]
+      };
+    }
+
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    const now = new Date();
+
+    userCards.forEach(card => {
+      if (card.created_at) {
+        const cardDate = new Date(card.created_at);
+        const jsDay = cardDate.getDay();
+        const monIdx = jsDay === 0 ? 6 : jsDay - 1;
+        dayCounts[monIdx]++;
+      }
+    });
+
+    const maxCount = Math.max(...dayCounts, 1);
+    const daysLabels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+    const currentDayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+
+    const days = daysLabels.map((day, idx) => {
+      const count = dayCounts[idx];
+      const height = count === 0 ? 4 : Math.min(80, Math.max(16, Math.round((count / maxCount) * 75)));
+      return {
+        day,
+        height,
+        active: idx === currentDayIdx && count > 0,
+        count
+      };
+    });
+
+    const totalMinutes = (kanbanStats.done * 90) + ((kanbanStats.inProgress + kanbanStats.todo) * 35);
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+
+    return {
+      totalTimeFormatted: `${hours}h ${mins}m`,
+      days
+    };
+  }, [userCards, kanbanStats.done, kanbanStats.inProgress, kanbanStats.todo]);
+
+  // Actual team members
+  const actualTeamMembers = useMemo(() => {
+    if (initialBoards.length === 0) return [];
+
+    const list: { name: string; role: string; workload: string; tagColor: string; textColor: string }[] = [];
+    const userName = userEmail.includes("@") ? userEmail.split("@")[0] : userEmail;
+    const cleanUserName = userName.charAt(0).toUpperCase() + userName.slice(1);
+
+    list.push({
+      name: cleanUserName,
+      role: "Project Owner",
+      workload: `${kanbanStats.teamWorkload}%`,
+      tagColor: kanbanStats.teamWorkload > 80 ? "#fee2e2" : kanbanStats.teamWorkload > 50 ? "#fef3c7" : "#ecfdf5",
+      textColor: kanbanStats.teamWorkload > 80 ? "#dc2626" : kanbanStats.teamWorkload > 50 ? "#d97706" : "#059669"
+    });
+
+    const seen = new Set<string>([userEmail.toLowerCase()]);
+    teamMembers.forEach(m => {
+      const email = (m.invited_email || "").toLowerCase();
+      if (email && !seen.has(email)) {
+        seen.add(email);
+        const mName = email.split("@")[0];
+        list.push({
+          name: mName.charAt(0).toUpperCase() + mName.slice(1),
+          role: m.role ? (m.role.charAt(0).toUpperCase() + m.role.slice(1)) : "Anggota Tim",
+          workload: `${Math.min(90, Math.max(15, Math.round(kanbanStats.teamWorkload * 0.8)))}%`,
+          tagColor: "#eff6ff",
+          textColor: "#2563eb"
+        });
+      }
+    });
+
+    return list;
+  }, [initialBoards.length, userEmail, kanbanStats.teamWorkload, teamMembers]);
+
+  // Actual active boards progress
+  const activeBoardsProgress = useMemo(() => {
+    return initialBoards.slice(0, 4).map((b, idx) => {
+      const boardCards = userCards.filter(c => c.board_id === b.id);
+      const total = boardCards.length;
+      const done = boardCards.filter(c => columnMap[c.column_id] === "done").length;
+      const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+      const colors = ["#4f46e5", "#3b82f6", "#06b6d4", "#8b5cf6", "#10b981"];
+      return {
+        id: b.id,
+        name: b.name,
+        due: total > 0 ? `${total} tugas (${done} selesai)` : "0 tugas",
+        progress,
+        color: colors[idx % colors.length]
+      };
+    });
+  }, [initialBoards, userCards, columnMap]);
+
+  // Actual project timeline
+  const timelineProjects = useMemo(() => {
+    return initialBoards.slice(0, 4).map((b, idx) => {
+      const boardCards = userCards.filter(c => c.board_id === b.id);
+      const total = boardCards.length;
+      const doneCount = boardCards.filter(c => columnMap[c.column_id] === "done").length;
+      const progress = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+      const createdDate = new Date(b.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+      const colors = ["#6366f1", "#3b82f6", "#10b981", "#a855f7"];
+      return {
+        id: b.id,
+        name: b.name,
+        date: `${createdDate} • ${total} tugas`,
+        barWidth: `${Math.max(progress, total > 0 ? 12 : 4)}%`,
+        left: "0%",
+        color: colors[idx % colors.length],
+        progress
+      };
+    });
+  }, [initialBoards, userCards, columnMap]);
+
+  // Actual upcoming tasks
+  const upcomingTasks = useMemo(() => {
+    const pendingCards = userCards.filter(c => columnMap[c.column_id] !== "done");
+    if (pendingCards.length === 0) return [];
+
+    const boardNameMap: Record<string, string> = {};
+    initialBoards.forEach(b => { boardNameMap[b.id] = b.name; });
+
+    const colors = [
+      { dot: "#6366f1", badgeColor: "#fee2e2", textColor: "#dc2626" },
+      { dot: "#3b82f6", badgeColor: "#ffedd5", textColor: "#ea580c" },
+      { dot: "#8b5cf6", badgeColor: "#fef3c7", textColor: "#d97706" },
+      { dot: "#10b981", badgeColor: "#dcfce7", textColor: "#16a34a" },
+    ];
+
+    return pendingCards.slice(0, 4).map((card, idx) => {
+      const cardDate = new Date(card.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+      const colStyle = colors[idx % colors.length];
+      return {
+        id: card.id,
+        title: card.title,
+        project: boardNameMap[card.board_id] || "Papan Proyek",
+        date: cardDate,
+        badgeColor: colStyle.badgeColor,
+        textColor: colStyle.textColor,
+        dot: colStyle.dot
+      };
+    });
+  }, [userCards, columnMap, initialBoards]);
 
   const handleOpenBoard = (boardId: string, boardName: string) => {
     setOpeningBoardTitle(boardName);
@@ -491,6 +698,7 @@ export default function DashboardClient({
                       return (
                         <div
                           key={board.id}
+                          className="dashboard-folder-card"
                           style={{
                             flex: "0 0 290px",
                             width: 290,
@@ -547,41 +755,7 @@ export default function DashboardClient({
       />
 
       {/* Main Content Pane */}
-      <div style={{ flex: 1, height: "100vh", overflowY: "auto" }}>
-        {/* Mobile hamburger button */}
-        <div className="mobile-sidebar-toggle" style={{
-          display: "none",
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid #e2e8f0",
-          padding: "10px 16px",
-          alignItems: "center",
-          gap: 10,
-        }}>
-          <button
-            onClick={() => setIsMobileOpen(true)}
-            style={{
-              background: "none",
-              border: "1px solid #e2e8f0",
-              borderRadius: 8,
-              padding: "6px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#475569",
-            }}
-          >
-            <Menu style={{ width: 20, height: 20 }} />
-          </button>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
-            {activeView === "templates" ? "Galeri Template" : activeView === "projects" ? "Projects" : "Dasbor Utama"}
-          </span>
-        </div>
-
+      <div style={{ flex: 1, height: "100vh", overflowY: "auto", overflowX: "hidden" }}>
         {/* Floating Alert Reminder */}
         {errorMessage && (
           <div style={{
@@ -616,12 +790,13 @@ export default function DashboardClient({
           </div>
         )}
 
-        {/* Top Header Navigation matching Referensi.png */}
-        <header style={{
+        {/* Top Header Navigation */}
+        <header className="dashboard-top-header" style={{
           position: "sticky",
           top: 0,
           zIndex: 40,
-          background: "#ffffff",
+          background: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(12px)",
           borderBottom: "1px solid #f1f5f9",
           padding: "16px 32px",
           display: "flex",
@@ -629,26 +804,8 @@ export default function DashboardClient({
           justifyContent: "space-between",
           gap: 16,
         }}>
-          {/* Left: Mobile hamburger + Page Title */}
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <button
-              onClick={() => setIsMobileOpen(true)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "6px",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#475569",
-              }}
-              className="lg:hidden"
-              title="Menu"
-            >
-              <Menu style={{ width: 20, height: 20 }} />
-            </button>
+          {/* Left: Page Title - Pure and clean without hamburger icon next to Dashboard */}
+          <div style={{ display: "flex", alignItems: "center" }}>
             <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.02em" }}>
               {activeView === "templates" ? "Galeri Template" : activeView === "projects" ? "Projects" : "Dashboard"}
             </h1>
@@ -773,10 +930,10 @@ export default function DashboardClient({
 
           {activeView === "dashboard" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-              {/* ROW 1: 4 TOP KPI CARDS (Matching Referensi.png) */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
+              {/* ROW 1: 4 TOP KPI CARDS */}
+              <div className="dashboard-kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 20 }}>
                 {/* 1. Active Projects */}
-                <div style={{
+                <div className="dashboard-kpi-card" style={{
                   background: "#ffffff",
                   borderRadius: 20,
                   padding: "22px 24px",
@@ -786,7 +943,7 @@ export default function DashboardClient({
                   alignItems: "center",
                   gap: 16
                 }}>
-                  <div style={{
+                  <div className="dashboard-kpi-icon" style={{
                     width: 52,
                     height: 52,
                     borderRadius: 16,
@@ -804,21 +961,21 @@ export default function DashboardClient({
                       Active Projects
                     </div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                      <span style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
-                        {activeProjectsCount || 24}
+                      <span className="dashboard-kpi-val" style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                        {activeProjectsCount}
                       </span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", display: "flex", alignItems: "center" }}>
-                        ↑ 12%
+                      <span style={{ fontSize: 12, fontWeight: 700, color: activeProjectsCount > 0 ? "#16a34a" : "#94a3b8", display: "flex", alignItems: "center" }}>
+                        {activeProjectsCount > 0 ? "Aktif" : "0"}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                      vs last month
+                      {activeProjectsCount > 0 ? `${activeProjectsCount} proyek berjalan` : "Belum ada proyek"}
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Tasks Completed */}
-                <div style={{
+                <div className="dashboard-kpi-card" style={{
                   background: "#ffffff",
                   borderRadius: 20,
                   padding: "22px 24px",
@@ -828,7 +985,7 @@ export default function DashboardClient({
                   alignItems: "center",
                   gap: 16
                 }}>
-                  <div style={{
+                  <div className="dashboard-kpi-icon" style={{
                     width: 52,
                     height: 52,
                     borderRadius: 16,
@@ -846,21 +1003,21 @@ export default function DashboardClient({
                       Tasks Completed
                     </div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                      <span style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
-                        {cards.length > 0 ? kanbanStats.done : 186}
+                      <span className="dashboard-kpi-val" style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                        {kanbanStats.done}
                       </span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", display: "flex", alignItems: "center" }}>
-                        ↑ 18%
+                      <span style={{ fontSize: 12, fontWeight: 700, color: kanbanStats.done > 0 ? "#16a34a" : "#94a3b8", display: "flex", alignItems: "center" }}>
+                        {kanbanStats.total > 0 ? `${kanbanStats.completionRate}%` : "0%"}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                      vs last month
+                      {kanbanStats.total > 0 ? `${kanbanStats.done} dari ${kanbanStats.total} tugas` : "0 tugas selesai"}
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Pending Tasks */}
-                <div style={{
+                <div className="dashboard-kpi-card" style={{
                   background: "#ffffff",
                   borderRadius: 20,
                   padding: "22px 24px",
@@ -870,7 +1027,7 @@ export default function DashboardClient({
                   alignItems: "center",
                   gap: 16
                 }}>
-                  <div style={{
+                  <div className="dashboard-kpi-icon" style={{
                     width: 52,
                     height: 52,
                     borderRadius: 16,
@@ -888,21 +1045,21 @@ export default function DashboardClient({
                       Pending Tasks
                     </div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                      <span style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
-                        {cards.length > 0 ? kanbanStats.pending : 57}
+                      <span className="dashboard-kpi-val" style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                        {kanbanStats.pending}
                       </span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", display: "flex", alignItems: "center" }}>
-                        ↓ 8%
+                      <span style={{ fontSize: 12, fontWeight: 700, color: kanbanStats.pending > 0 ? "#ea580c" : "#16a34a", display: "flex", alignItems: "center" }}>
+                        {"Tuntas"}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                      vs last month
+                      {kanbanStats.pending > 0 ? `${kanbanStats.inProgress} in progress • ${kanbanStats.todo} to do` : "Semua tugas telah tuntas"}
                     </div>
                   </div>
                 </div>
 
                 {/* 4. Team Workload */}
-                <div style={{
+                <div className="dashboard-kpi-card" style={{
                   background: "#ffffff",
                   borderRadius: 20,
                   padding: "22px 24px",
@@ -912,7 +1069,7 @@ export default function DashboardClient({
                   alignItems: "center",
                   gap: 16
                 }}>
-                  <div style={{
+                  <div className="dashboard-kpi-icon" style={{
                     width: 52,
                     height: 52,
                     borderRadius: 16,
@@ -930,19 +1087,28 @@ export default function DashboardClient({
                       Team Workload
                     </div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                      <span style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                      <span className="dashboard-kpi-val" style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
                         {kanbanStats.teamWorkload}%
+                      </span>
+                      <span style={{ 
+                        fontSize: 12, 
+                        fontWeight: 700, 
+                        color: kanbanStats.teamWorkload > 80 ? "#dc2626" : kanbanStats.teamWorkload > 50 ? "#ea580c" : kanbanStats.teamWorkload > 0 ? "#16a34a" : "#94a3b8", 
+                        display: "flex", 
+                        alignItems: "center" 
+                      }}>
+                        {"Optimal"}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                      Average workload
+                      {kanbanStats.total > 0 ? `${kanbanStats.inProgress} tugas aktif • ${actualTeamMembers.length} anggota` : "Beban kerja 0%"}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* ROW 2: 3 WIDGETS (Sprint Progress, Kanban Summary, Time Tracking) */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+              <div className="dashboard-widgets-grid" style={{ gap: 20 }}>
                 {/* Sprint Progress Widget */}
                 <div style={{
                   background: "#ffffff",
@@ -961,17 +1127,17 @@ export default function DashboardClient({
                           Sprint Progress
                         </h3>
                         <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
-                          Sprint 12 (May 12 – May 25)
+                          Sprint {new Date().toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
                         </p>
                       </div>
                       <span style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>
-                        68%
+                        {kanbanStats.completionRate}%
                       </span>
                     </div>
 
                     {/* Progress Bar */}
                     <div style={{ width: "100%", height: 8, background: "#f1f5f9", borderRadius: 99, overflow: "hidden", marginBottom: 20 }}>
-                      <div style={{ width: "68%", height: "100%", background: "linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)", borderRadius: 99 }} />
+                      <div style={{ width: `${kanbanStats.completionRate}%`, height: "100%", background: "linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)", borderRadius: 99, transition: "width 0.4s ease" }} />
                     </div>
 
                     {/* Breakdown items */}
@@ -981,21 +1147,21 @@ export default function DashboardClient({
                           <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981" }} />
                           Completed
                         </span>
-                        <span style={{ fontWeight: 700, color: "#0f172a" }}>34</span>
+                        <span style={{ fontWeight: 700, color: "#0f172a" }}>{kanbanStats.done}</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
                         <span style={{ display: "flex", alignItems: "center", gap: 8, color: "#475569", fontWeight: 600 }}>
                           <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3b82f6" }} />
                           In Progress
                         </span>
-                        <span style={{ fontWeight: 700, color: "#0f172a" }}>18</span>
+                        <span style={{ fontWeight: 700, color: "#0f172a" }}>{kanbanStats.inProgress}</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
                         <span style={{ display: "flex", alignItems: "center", gap: 8, color: "#475569", fontWeight: 600 }}>
                           <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b" }} />
                           To Do
                         </span>
-                        <span style={{ fontWeight: 700, color: "#0f172a" }}>10</span>
+                        <span style={{ fontWeight: 700, color: "#0f172a" }}>{kanbanStats.todo}</span>
                       </div>
                     </div>
                   </div>
@@ -1042,21 +1208,21 @@ export default function DashboardClient({
                     </h3>
 
                     {/* Columns Badges Row */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
-                      <div style={{ background: "#f8fafc", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>To Do</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 20 }}>
+                      <div style={{ background: "#f8fafc", borderRadius: 12, padding: "10px 4px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#64748b", marginBottom: 4, whiteSpace: "nowrap" }}>To Do</div>
                         <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{kanbanStats.todo}</div>
                       </div>
-                      <div style={{ background: "#eff6ff", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: "#2563eb", marginBottom: 4 }}>In Progress</div>
+                      <div style={{ background: "#eff6ff", borderRadius: 12, padding: "10px 4px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#2563eb", marginBottom: 4, whiteSpace: "nowrap" }}>In Progress</div>
                         <div style={{ fontSize: 18, fontWeight: 800, color: "#1d4ed8" }}>{kanbanStats.inProgress}</div>
                       </div>
-                      <div style={{ background: "#fff7ed", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: "#ea580c", marginBottom: 4 }}>Review</div>
+                      <div style={{ background: "#fff7ed", borderRadius: 12, padding: "10px 4px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#ea580c", marginBottom: 4, whiteSpace: "nowrap" }}>Review</div>
                         <div style={{ fontSize: 18, fontWeight: 800, color: "#c2410c" }}>{kanbanStats.review}</div>
                       </div>
-                      <div style={{ background: "#ecfdf5", borderRadius: 12, padding: "12px 6px", textAlign: "center" }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: "#059669", marginBottom: 4 }}>Done</div>
+                      <div style={{ background: "#ecfdf5", borderRadius: 12, padding: "10px 4px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#059669", marginBottom: 4, whiteSpace: "nowrap" }}>Done</div>
                         <div style={{ fontSize: 18, fontWeight: 800, color: "#047857" }}>{kanbanStats.done}</div>
                       </div>
                     </div>
@@ -1121,7 +1287,7 @@ export default function DashboardClient({
                 </div>
 
                 {/* Time Tracking Widget */}
-                <div id="time-tracking-section" style={{
+                <div id="time-tracking-section" className="dashboard-time-tracking-widget" style={{
                   background: "#ffffff",
                   borderRadius: 20,
                   padding: "24px",
@@ -1132,7 +1298,7 @@ export default function DashboardClient({
                   justifyContent: "space-between"
                 }}>
                   <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                       <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", margin: 0 }}>
                         Time Tracking
                       </h3>
@@ -1141,45 +1307,40 @@ export default function DashboardClient({
                       </span>
                     </div>
 
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ fontSize: 26, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>
-                        28h 45m
-                      </div>
-                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 500 }}>
-                        Tracked Time
-                      </div>
-                    </div>
-
-                    {/* Bar Chart Visualization (Mon - Sun) */}
-                    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 80, gap: 8, padding: "0 4px" }}>
-                      {[
-                        { day: "Mon", height: 42, active: false },
-                        { day: "Tue", height: 55, active: false },
-                        { day: "Wed", height: 78, active: true },
-                        { day: "Thu", height: 48, active: false },
-                        { day: "Fri", height: 68, active: false },
-                        { day: "Sat", height: 28, active: false },
-                        { day: "Sun", height: 36, active: false },
-                      ].map((item, idx) => (
-                        <div key={idx} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: 1 }}>
-                          <div style={{
-                            width: "100%",
-                            maxWidth: 16,
-                            height: `${item.height}px`,
-                            background: item.active ? "#4f46e5" : "#e0e7ff",
-                            borderRadius: 6,
-                            transition: "all 0.2s"
-                          }} />
-                          <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>{item.day}</span>
+                    <div className="time-tracking-content-wrapper" style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 16 }}>
+                      <div className="time-tracking-metric-block">
+                        <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>
+                          {timeTrackingData.totalTimeFormatted}
                         </div>
-                      ))}
+                        <div style={{ fontSize: 12, color: "#64748b", fontWeight: 500, marginTop: 2 }}>
+                          Tracked Time
+                        </div>
+                      </div>
+
+                      {/* Bar Chart Visualization (Mon - Sun) */}
+                      <div className="time-tracking-chart-wrapper" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 85, gap: 8, padding: "0 4px", width: "100%" }}>
+                        {timeTrackingData.days.map((item, idx) => (
+                          <div key={idx} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: 1, height: "100%", justifyContent: "flex-end" }}>
+                            <div className="time-tracking-bar" style={{
+                              width: "100%",
+                              maxWidth: 18,
+                              height: `${item.height}px`,
+                              minHeight: 4,
+                              background: item.active ? "linear-gradient(180deg, #6366f1 0%, #4f46e5 100%)" : "#e0e7ff",
+                              borderRadius: 6,
+                              transition: "all 0.2s"
+                            }} />
+                            <span style={{ fontSize: 10, color: item.active ? "#4f46e5" : "#94a3b8", fontWeight: item.active ? 700 : 600 }}>{item.day}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
                   <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
                     <button
                       type="button"
-                      onClick={() => showAlert("Time Logs", "Total jam produktivitas kerja sprint minggu ini: 28h 45m dengan efisiensi 94%.", "info")}
+                      onClick={() => showAlert("Time Logs", `Total estimasi waktu kerja terselesaikan: ${timeTrackingData.totalTimeFormatted}.`, "info")}
                       style={{
                         background: "none",
                         border: "none",
@@ -1201,7 +1362,7 @@ export default function DashboardClient({
 
               {foldersCard}
 
-              {/* ROW 3: PROJECT TIMELINE & UPCOMING DEADLINES (Matching Referensi.png) */}
+              {/* ROW 3: PROJECT TIMELINE & UPCOMING DEADLINES */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
                 {/* Project Timeline Gantt-style Widget */}
                 <div id="project-timeline-section" style={{
@@ -1234,72 +1395,96 @@ export default function DashboardClient({
                     </span>
                   </div>
 
-                  {/* Timeline Header Dates */}
-                  <div style={{ display: "grid", gridTemplateColumns: "180px repeat(5, 1fr)", paddingBottom: 12, borderBottom: "1px solid #f1f5f9", fontSize: 12, fontWeight: 600, color: "#94a3b8" }}>
-                    <span>Project Name</span>
-                    <span style={{ textAlign: "center" }}>May 5</span>
-                    <span style={{ textAlign: "center" }}>May 12</span>
-                    <span style={{ textAlign: "center" }}>May 19</span>
-                    <span style={{ textAlign: "center" }}>May 26</span>
-                    <span style={{ textAlign: "center" }}>Jun 2</span>
-                  </div>
-
-                  {/* Timeline Rows */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16, position: "relative" }}>
-                    {/* Vertical "Today" line indicator */}
-                    <div style={{
-                      position: "absolute",
-                      left: "60%",
-                      top: 0,
-                      bottom: -20,
-                      width: "1.5px",
-                      background: "#ef4444",
-                      zIndex: 10,
-                      pointerEvents: "none"
-                    }}>
-                      <span style={{
-                        position: "absolute",
-                        bottom: -20,
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        fontSize: 10,
-                        fontWeight: 800,
-                        color: "#ef4444"
-                      }}>
-                        Today
-                      </span>
-                    </div>
-
-                    {[
-                      { name: "Website Redesign", date: "May 5 – May 25", barWidth: "62%", left: "0%", color: "#6366f1", icon: "🌐" },
-                      { name: "Mobile App Development", date: "May 8 – Jun 5", barWidth: "75%", left: "8%", color: "#3b82f6", icon: "📱" },
-                      { name: "CRM Integration", date: "May 12 – Jun 2", barWidth: "60%", left: "18%", color: "#10b981", icon: "🧩" },
-                      { name: "Marketing Campaign", date: "May 15 – May 30", barWidth: "45%", left: "25%", color: "#a855f7", icon: "📢" },
-                    ].map((row, idx) => (
-                      <div key={idx} style={{ display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: 6 }}>
-                            <span>{row.icon}</span>
-                            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{row.name}</span>
-                          </div>
-                          <div style={{ fontSize: 11, color: "#94a3b8" }}>{row.date}</div>
-                        </div>
-
-                        {/* Gantt Bar Lane */}
-                        <div style={{ position: "relative", height: 28, background: "#f8fafc", borderRadius: 8, overflow: "hidden", display: "flex", alignItems: "center" }}>
-                          <div style={{
-                            position: "absolute",
-                            left: row.left,
-                            width: row.barWidth,
-                            height: 12,
-                            background: row.color,
-                            borderRadius: 99,
-                            boxShadow: `0 2px 8px ${row.color}40`,
-                            transition: "all 0.3s ease"
-                          }} />
-                        </div>
+                  {/* Gantt Table with horizontal scroll container for mobile & tablet */}
+                  <div className="timeline-table-scroll" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 4 }}>
+                    <div className="timeline-table-inner" style={{ minWidth: 540 }}>
+                      {/* Timeline Header */}
+                      <div style={{ display: "grid", gridTemplateColumns: "200px repeat(4, 1fr)", paddingBottom: 12, borderBottom: "1px solid #f1f5f9", fontSize: 12, fontWeight: 600, color: "#94a3b8" }}>
+                        <span>Nama Proyek</span>
+                        <span style={{ textAlign: "center" }}>Minggu 1</span>
+                        <span style={{ textAlign: "center" }}>Minggu 2</span>
+                        <span style={{ textAlign: "center" }}>Minggu 3</span>
+                        <span style={{ textAlign: "center" }}>Minggu 4</span>
                       </div>
-                    ))}
+
+                      {/* Timeline Rows */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16, position: "relative" }}>
+                        {timelineProjects.length === 0 ? (
+                          <div style={{ textAlign: "center", padding: "32px 16px", color: "#94a3b8", fontSize: 13 }}>
+                            Belum ada proyek aktif di timeline. Buat proyek baru untuk memulai pelacakan.
+                          </div>
+                        ) : (
+                          <>
+                            {/* Vertical "Today" line indicator */}
+                            <div style={{
+                              position: "absolute",
+                              left: "50%",
+                              top: 0,
+                              bottom: -20,
+                              width: "1.5px",
+                              background: "#ef4444",
+                              zIndex: 10,
+                              pointerEvents: "none"
+                            }}>
+                              <span style={{
+                                position: "absolute",
+                                bottom: -20,
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                fontSize: 10,
+                                fontWeight: 800,
+                                color: "#ef4444"
+                              }}>
+                                Today
+                              </span>
+                            </div>
+
+                            {timelineProjects.map((row, idx) => (
+                              <div 
+                                key={row.id || idx} 
+                                onClick={() => handleOpenBoard(row.id, row.name)}
+                                style={{ display: "grid", gridTemplateColumns: "200px 1fr", alignItems: "center", cursor: "pointer" }}
+                                className="hover:opacity-90 transition-opacity"
+                              >
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: 8 }}>
+                                    <div style={{
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: 6,
+                                      background: `${row.color}15`,
+                                      color: row.color,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      flexShrink: 0
+                                    }}>
+                                      <FolderKanban style={{ width: 13, height: 13 }} />
+                                    </div>
+                                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{row.name}</span>
+                                  </div>
+                                  <div style={{ fontSize: 11, color: "#94a3b8", paddingLeft: 32, marginTop: 2 }}>{row.date}</div>
+                                </div>
+
+                                {/* Gantt Bar Lane */}
+                                <div style={{ position: "relative", height: 28, background: "#f8fafc", borderRadius: 8, overflow: "hidden", display: "flex", alignItems: "center" }}>
+                                  <div style={{
+                                    position: "absolute",
+                                    left: row.left,
+                                    width: row.barWidth,
+                                    height: 12,
+                                    background: row.color,
+                                    borderRadius: 99,
+                                    boxShadow: `0 2px 8px ${row.color}40`,
+                                    transition: "all 0.3s ease"
+                                  }} />
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1320,44 +1505,62 @@ export default function DashboardClient({
                     </h3>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                      {[
-                        { title: "Homepage Design", project: "Website Redesign", date: "May 20", badgeColor: "#fee2e2", textColor: "#dc2626", dot: "#6366f1" },
-                        { title: "API Integration", project: "Mobile App", date: "May 22", badgeColor: "#ffedd5", textColor: "#ea580c", dot: "#3b82f6" },
-                        { title: "User Testing", project: "Mobile App", date: "May 24", badgeColor: "#fef3c7", textColor: "#d97706", dot: "#8b5cf6" },
-                        { title: "Deployment", project: "CRM Integration", date: "May 28", badgeColor: "#dcfce7", textColor: "#16a34a", dot: "#10b981" },
-                      ].map((item, idx) => (
-                        <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: item.dot, flexShrink: 0 }} />
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                                {item.title}
+                      {upcomingTasks.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "28px 12px", color: "#94a3b8", fontSize: 13 }}>
+                          Tidak ada tenggat tugas tertunda saat ini.
+                        </div>
+                      ) : (
+                        upcomingTasks.map((item, idx) => (
+                          <div key={item.id || idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                              <div style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 10,
+                                background: item.badgeColor,
+                                color: item.textColor,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0
+                              }}>
+                                <Clock style={{ width: 15, height: 15 }} />
                               </div>
-                              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                                {item.project}
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {item.title}
+                                </div>
+                                <div style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {item.project}
+                                </div>
                               </div>
                             </div>
+                            <span style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: "4px 9px",
+                              borderRadius: 8,
+                              background: item.badgeColor,
+                              color: item.textColor,
+                              whiteSpace: "nowrap",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 5,
+                              flexShrink: 0
+                            }}>
+                              <Calendar style={{ width: 12, height: 12 }} />
+                              {item.date}
+                            </span>
                           </div>
-                          <span style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            padding: "3px 8px",
-                            borderRadius: 8,
-                            background: item.badgeColor,
-                            color: item.textColor,
-                            whiteSpace: "nowrap"
-                          }}>
-                            {item.date}
-                          </span>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
 
                   <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
                     <button
                       type="button"
-                      onClick={() => showAlert("Deadlines List", "Semua milestone dan tanggal tenggat tercatat dalam kalender tim.", "info")}
+                      onClick={() => showAlert("Deadlines List", `Terdapat ${upcomingTasks.length} tugas tertunda dalam pipeline.`, "info")}
                       style={{
                         background: "none",
                         border: "none",
@@ -1378,7 +1581,7 @@ export default function DashboardClient({
               </div>
 
               {/* ROW 4: 3 BOTTOM CARDS (Recent Comments, Team Members, Active Projects Progress) */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 20 }}>
                 {/* 1. Recent Comments Widget */}
                 <div id="recent-comments-section" style={{
                   background: "#ffffff",
@@ -1396,51 +1599,53 @@ export default function DashboardClient({
                     </h3>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                      {(recentComments.length > 0 ? recentComments.slice(0, 3) : [
-                        { author_email: "James Anderson", content: "Looks great! Let's move this to review. 🚀", time: "2h ago", on: "Homepage Design" },
-                        { author_email: "Sophie Bennett", content: "Can we update the CTA text here?", time: "5h ago", on: "Landing Page" },
-                        { author_email: "Liam Carter", content: "I have attached the new assets.", time: "1d ago", on: "Marketing Campaign" },
-                      ]).map((c: any, idx: number) => {
-                        const name = c.author_email?.includes("@") ? c.author_email.split("@")[0] : c.author_email;
-                        return (
-                          <div key={idx} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                            <div style={{
-                              width: 34,
-                              height: 34,
-                              borderRadius: "50%",
-                              background: "#f1f5f9",
-                              color: "#475569",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexShrink: 0
-                            }}>
-                              {name?.slice(0, 2).toUpperCase() || "US"}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{name}</span>
-                                <span style={{ fontSize: 11, color: "#94a3b8" }}>{c.time || "Recently"}</span>
+                      {recentComments.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "28px 12px", color: "#94a3b8", fontSize: 13 }}>
+                          Belum ada komentar terbaru pada proyek Anda.
+                        </div>
+                      ) : (
+                        recentComments.slice(0, 3).map((c: any, idx: number) => {
+                          const name = c.author_email?.includes("@") ? c.author_email.split("@")[0] : c.author_email;
+                          return (
+                            <div key={c.id || idx} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                              <div style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: "50%",
+                                background: "#f1f5f9",
+                                color: "#475569",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0
+                              }}>
+                                {name?.slice(0, 2).toUpperCase() || "US"}
                               </div>
-                              <p style={{ fontSize: 12, color: "#475569", margin: "2px 0 3px", lineHeight: 1.4 }}>
-                                {c.content}
-                              </p>
-                              <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}>
-                                On: {c.on || "Project Board"}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{name}</span>
+                                  <span style={{ fontSize: 11, color: "#94a3b8" }}>{c.time || "Baru saja"}</span>
+                                </div>
+                                <p style={{ fontSize: 12, color: "#475569", margin: "2px 0 3px", lineHeight: 1.4, wordBreak: "break-word" }}>
+                                  {c.content}
+                                </p>
+                                <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}>
+                                  On: {c.on || "Project Board"}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
                   </div>
 
                   <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
                     <button
                       type="button"
-                      onClick={() => showAlert("Comments", "Seluruh diskusi komentar papan proyek terhubung di tab Message Board.", "info")}
+                      onClick={() => showAlert("Comments", `Terdapat total ${recentComments.length} diskusi komentar tercatat.`, "info")}
                       style={{
                         background: "none",
                         border: "none",
@@ -1476,57 +1681,57 @@ export default function DashboardClient({
                     </h3>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {[
-                        { name: "Emma Johnson", role: "Project Manager", workload: "85%", tagColor: "#fee2e2", textColor: "#dc2626" },
-                        { name: "Liam Carter", role: "UI/UX Designer", workload: "70%", tagColor: "#fef3c7", textColor: "#d97706" },
-                        { name: "Sophie Bennett", role: "Frontend Developer", workload: "65%", tagColor: "#ecfdf5", textColor: "#059669" },
-                        { name: "Noah Williams", role: "Backend Developer", workload: "90%", tagColor: "#fee2e2", textColor: "#dc2626" },
-                        { name: "Olivia Davis", role: "QA Engineer", workload: "60%", tagColor: "#ecfdf5", textColor: "#059669" },
-                      ].map((member, idx) => (
-                        <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{
-                              width: 34,
-                              height: 34,
-                              borderRadius: "50%",
-                              background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
-                              color: "#4338ca",
+                      {actualTeamMembers.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "28px 12px", color: "#94a3b8", fontSize: 13 }}>
+                          Belum ada anggota tim yang terdaftar.
+                        </div>
+                      ) : (
+                        actualTeamMembers.map((member, idx) => (
+                          <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <div style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: "50%",
+                                background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
+                                color: "#4338ca",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                              }}>
+                                {member.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                                  {member.name}
+                                </div>
+                                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                                  {member.role}
+                                </div>
+                              </div>
+                            </div>
+                            <span style={{
                               fontSize: 11,
                               fontWeight: 700,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center"
+                              padding: "3px 8px",
+                              borderRadius: 8,
+                              background: member.tagColor,
+                              color: member.textColor
                             }}>
-                              {member.name.split(" ").map(n => n[0]).join("")}
-                            </div>
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                                {member.name}
-                              </div>
-                              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                                {member.role}
-                              </div>
-                            </div>
+                              {member.workload}
+                            </span>
                           </div>
-                          <span style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            padding: "3px 8px",
-                            borderRadius: 8,
-                            background: member.tagColor,
-                            color: member.textColor
-                          }}>
-                            {member.workload}
-                          </span>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
 
                   <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
                     <button
                       type="button"
-                      onClick={() => showAlert("Team Members", "Tim kerja Anda beranggotakan 5 spesialis aktif.", "info")}
+                      onClick={() => showAlert("Team Members", `Tim kerja Anda memiliki ${actualTeamMembers.length} anggota aktif.`, "info")}
                       style={{
                         background: "none",
                         border: "none",
@@ -1581,40 +1786,46 @@ export default function DashboardClient({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      {(sortedBoards.length > 0 ? sortedBoards.slice(0, 4) : [
-                        { id: "1", name: "Website Redesign", due: "Due May 25", progress: 68, icon: "🌐", color: "#4f46e5" },
-                        { id: "2", name: "Mobile App Development", due: "Due Jun 5", progress: 55, icon: "📱", color: "#3b82f6" },
-                        { id: "3", name: "CRM Integration", due: "Due Jun 2", progress: 45, icon: "🧩", color: "#06b6d4" },
-                        { id: "4", name: "Marketing Campaign", due: "Due May 30", progress: 75, icon: "📢", color: "#8b5cf6" },
-                      ]).map((item: any, idx: number) => {
-                        const progress = item.progress || [68, 55, 45, 75][idx % 4];
-                        const due = item.due || "Due in 2 weeks";
-                        const icon = item.icon || "📂";
-                        const color = item.color || "#4f46e5";
-
-                        return (
+                      {activeBoardsProgress.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "28px 12px", color: "#94a3b8", fontSize: 13 }}>
+                          Belum ada proyek dibuat. Klik tombol di bawah untuk membuat proyek baru.
+                        </div>
+                      ) : (
+                        activeBoardsProgress.map((item, idx) => (
                           <div 
                             key={item.id || idx} 
                             onClick={() => handleOpenBoard(item.id, item.name)}
                             style={{ cursor: "pointer" }}
                             className="hover:opacity-90 transition-opacity"
                           >
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <span style={{ fontSize: 16 }}>{icon}</span>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <div style={{
+                                  width: 34,
+                                  height: 34,
+                                  borderRadius: 10,
+                                  background: `${item.color}15`,
+                                  color: item.color,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0
+                                }}>
+                                  <FolderKanban style={{ width: 16, height: 16 }} />
+                                </div>
                                 <div>
                                   <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{item.name}</div>
-                                  <div style={{ fontSize: 11, color: "#94a3b8" }}>{due}</div>
+                                  <div style={{ fontSize: 11, color: "#94a3b8" }}>{item.due}</div>
                                 </div>
                               </div>
-                              <span style={{ fontSize: 12, fontWeight: 800, color: "#0f172a" }}>{progress}%</span>
+                              <span style={{ fontSize: 12, fontWeight: 800, color: "#0f172a" }}>{item.progress}%</span>
                             </div>
                             <div style={{ width: "100%", height: 6, background: "#f1f5f9", borderRadius: 99, overflow: "hidden" }}>
-                              <div style={{ width: `${progress}%`, height: "100%", background: color, borderRadius: 99 }} />
+                              <div style={{ width: `${item.progress}%`, height: "100%", background: item.color, borderRadius: 99 }} />
                             </div>
                           </div>
-                        );
-                      })}
+                        ))
+                      )}
                     </div>
                   </div>
 
@@ -1937,6 +2148,102 @@ export default function DashboardClient({
           </div>
           )}
         </main>
+
+        {/* Mobile Bottom Navigation Bar (Android & iOS) */}
+        <nav className="mobile-bottom-nav" style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: "rgba(255, 255, 255, 0.96)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderTop: "1px solid #e2e8f0",
+          padding: "8px 12px calc(8px + env(safe-area-inset-bottom, 0px))",
+          display: "none",
+          justifyContent: "space-around",
+          alignItems: "center",
+          zIndex: 50,
+          boxShadow: "0 -4px 20px rgba(0,0,0,0.06)"
+        }}>
+          {/* Dashboard Tab */}
+          <Link href="/dashboard" style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 3,
+            textDecoration: "none",
+            color: activeView === "dashboard" ? "var(--v)" : "#64748b",
+            fontSize: 11,
+            fontWeight: activeView === "dashboard" ? 700 : 500,
+            flex: 1,
+            padding: "4px 0",
+            transition: "all 0.15s ease"
+          }}>
+            <LayoutDashboard style={{ width: 20, height: 20 }} />
+            <span>Dashboard</span>
+          </Link>
+
+          {/* Projects Tab */}
+          <Link href="/projects" style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 3,
+            textDecoration: "none",
+            color: activeView === "projects" ? "var(--v)" : "#64748b",
+            fontSize: 11,
+            fontWeight: activeView === "projects" ? 700 : 500,
+            flex: 1,
+            padding: "4px 0",
+            transition: "all 0.15s ease"
+          }}>
+            <FolderKanban style={{ width: 20, height: 20 }} />
+            <span>Projects</span>
+          </Link>
+
+          {/* Templates Tab */}
+          <Link href="/Galeri-Template" style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 3,
+            textDecoration: "none",
+            color: activeView === "templates" ? "var(--v)" : "#64748b",
+            fontSize: 11,
+            fontWeight: activeView === "templates" ? 700 : 500,
+            flex: 1,
+            padding: "4px 0",
+            transition: "all 0.15s ease"
+          }}>
+            <LayoutTemplate style={{ width: 20, height: 20 }} />
+            <span>Template</span>
+          </Link>
+
+          {/* Menu Drawer Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen(true)}
+            style={{
+              background: "none",
+              border: "none",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 3,
+              cursor: "pointer",
+              color: isMobileOpen ? "var(--v)" : "#64748b",
+              fontSize: 11,
+              fontWeight: 500,
+              flex: 1,
+              padding: "4px 0",
+              transition: "all 0.15s ease"
+            }}
+          >
+            <Menu style={{ width: 20, height: 20 }} />
+            <span>Menu</span>
+          </button>
+        </nav>
       </div>
       {/* Template Preview & Customization Modal */}
       {previewTemplate && (
@@ -2315,12 +2622,105 @@ export default function DashboardClient({
           box-shadow: 0 10px 25px -5px rgba(109, 40, 217, 0.1), 0 8px 10px -6px rgba(109, 40, 217, 0.05) !important;
           transform: translateY(-2px);
         }
-        @media (max-width: 767px) {
-          .mobile-sidebar-toggle {
-            display: flex !important;
+        /* Tablet responsive grid styling placeholder */
+        @media (max-width: 1024px) {
+          .timeline-card-wrapper {
+            grid-column: span 1 !important;
+          }
+        }
+        @media (min-width: 768px) and (max-width: 1024px) {
+          .dashboard-top-header {
+            padding: 14px 24px !important;
           }
           .dashboard-main-content {
-            padding: 24px 16px 80px !important;
+            padding: 24px 20px 60px !important;
+          }
+          .dashboard-kpi-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 16px !important;
+          }
+          .dashboard-widgets-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 16px !important;
+          }
+          .dashboard-time-tracking-widget {
+            grid-column: span 2 !important;
+          }
+          .time-tracking-content-wrapper {
+            flex-direction: row !important;
+            align-items: flex-end !important;
+            justify-content: space-between !important;
+            gap: 24px !important;
+          }
+          .time-tracking-metric-block {
+            flex-shrink: 0 !important;
+          }
+          .time-tracking-chart-wrapper {
+            flex: 1 !important;
+            max-width: 480px !important;
+            height: 95px !important;
+          }
+          .time-tracking-bar {
+            max-width: 26px !important;
+          }
+          .timeline-table-scroll {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+        }
+        @media (max-width: 767px) {
+          .mobile-bottom-nav {
+            display: flex !important;
+          }
+          .dashboard-top-header {
+            padding: 12px 16px !important;
+          }
+          .dashboard-main-content {
+            padding: 16px 14px calc(84px + env(safe-area-inset-bottom, 16px)) !important;
+          }
+          .dashboard-kpi-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+          .dashboard-widgets-grid {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+          }
+          .dashboard-time-tracking-widget {
+            grid-column: span 1 !important;
+          }
+          .time-tracking-content-wrapper {
+            flex-direction: column !important;
+            gap: 14px !important;
+          }
+          .time-tracking-chart-wrapper {
+            width: 100% !important;
+            height: 80px !important;
+          }
+          .dashboard-kpi-card {
+            padding: 14px 12px !important;
+            border-radius: 16px !important;
+            gap: 10px !important;
+          }
+          .dashboard-kpi-icon {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 12px !important;
+          }
+          .dashboard-kpi-val {
+            font-size: 22px !important;
+          }
+          .dashboard-folder-card {
+            flex: 0 0 250px !important;
+            width: 250px !important;
+          }
+          .timeline-table-scroll {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          .template-search-container {
+            width: 100% !important;
+            min-width: 100% !important;
           }
         }
       `}</style>
