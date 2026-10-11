@@ -13,6 +13,12 @@ export interface AlertCardProps {
   isVisible: boolean;
 }
 
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 400, damping: 25, staggerChildren: 0.08 } },
+  exit: { opacity: 0, y: 20, scale: 0.95, transition: { duration: 0.2 } }
+};
+
 export const AlertCard: React.FC<AlertCardProps> = ({
   title,
   description,
