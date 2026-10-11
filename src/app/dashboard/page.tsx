@@ -20,6 +20,21 @@ export default async function DashboardPage() {
     return false;
   });
 
+  // Also check if user is an accepted invited member on other boards
+  if (user && userEmailLower) {
+    const { data: memberInvites } = await supabase
+      .from("board_invitations")
+      .select("board_id")
+      .eq("status", "accepted")
+      .ilike("invited_email", userEmailLower);
+
+    if (memberInvites && memberInvites.length > 0) {
+      const invitedBoardIds = new Set(memberInvites.map(m => m.board_id));
+      const additionalBoards = (rawBoards ?? []).filter(b => invitedBoardIds.has(b.id) && !userBoards.some(ub => ub.id === b.id));
+      userBoards = [...userBoards, ...additionalBoards];
+    }
+  }
+
   // Fetch cards, posts, and comments to calculate accurate dashboard metrics
   const { data: cards } = await supabase
     .from("cards")
