@@ -55,6 +55,17 @@ export default async function DashboardPage() {
     columns = colData ?? [];
   }
 
+  // Fetch accepted members for user's boards
+  let teamMembers: any[] = [];
+  if (boardIds.length > 0) {
+    const { data: acceptedInv } = await supabase
+      .from("board_invitations")
+      .select("id, board_id, invited_email, role")
+      .in("board_id", boardIds)
+      .eq("status", "accepted");
+    teamMembers = acceptedInv ?? [];
+  }
+
   const { data: recentComments } = await supabase
     .from("board_post_comments")
     .select("id, content, created_at, author_email, post_id")
