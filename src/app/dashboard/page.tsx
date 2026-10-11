@@ -55,6 +55,12 @@ export default async function DashboardPage() {
     columns = colData ?? [];
   }
 
+  const { data: recentComments } = await supabase
+    .from("board_post_comments")
+    .select("id, content, created_at, author_email, post_id")
+    .order("created_at", { ascending: false })
+    .limit(6);
+
   // Fetch accepted members for user's boards
   let teamMembers: any[] = [];
   if (boardIds.length > 0) {
@@ -66,11 +72,27 @@ export default async function DashboardPage() {
     teamMembers = acceptedInv ?? [];
   }
 
-  const { data: recentComments } = await supabase
-    .from("board_post_comments")
-    .select("id, content, created_at, author_email, post_id")
-    .order("created_at", { ascending: false })
-    .limit(6);
+  // Fetch post titles to associate with recentComments
+  let postTitlesMap: Record<string, string> = {};
+  if (recentComments && recentComments.length > 0) {
+    const postIds = Array.from(new Set(recentComments.map(c => c.post_id).filter(Boolean)));
+    if (postIds.length > 0) {
+      const { data: posts } = await supabase
+        .from("board_posts")
+        .select("id, title")
+        .in("id", postIds);
+      if (posts) {
+        posts.forEach(p => {
+          postTitlesMap[p.id] = p.title;
+        });
+      }
+    }
+  }
+
+  const enrichedRecentComments = (recentComments ?? []).map(c => ({
+    ...c,
+    on: postTitlesMap[c.post_id] || "Papan Diskusi",
+  }));
 
   // Fetch pending invitations for the currently logged-in user
   let initialInvitations: any[] = [];
@@ -99,7 +121,8 @@ export default async function DashboardPage() {
       createBoardAction={createBoard}
       cards={cards ?? []}
       columns={columns ?? []}
-      recentComments={recentComments ?? []}
+      recentComments={enrichedRecentComments}
+      teamMembers={teamMembers}
     />
   );
 }
