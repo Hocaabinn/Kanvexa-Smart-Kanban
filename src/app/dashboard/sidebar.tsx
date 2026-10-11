@@ -679,32 +679,7 @@ export default function Sidebar({
               )}
             </div>
 
-            {/* Settings */}
-            <div 
-              onClick={() => {
-                showAlert("Settings", `• Akun: ${userEmail}\n• Tipe Langganan: Pro Plan\n• Integrasi AI: Aktif`, "info");
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "10px 12px",
-                borderRadius: "10px",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                background: "transparent",
-                justifyContent: isSidebarCollapsed ? "center" : "flex-start"
-              }}
-              className="sidebar-nav-item"
-              title="Settings"
-            >
-              <Settings style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
-              {!isSidebarCollapsed && (
-                <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
-                  Settings
-                </span>
-              )}
-            </div>
+{/* Settings consolidated to single item */}
 
             {/* Settings */}
             <div 
