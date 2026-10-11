@@ -1003,8 +1003,10 @@ export default function Sidebar({
               isVisible={true}
               title="Upgrade ke Pro"
               description="Dapatkan akses tak terbatas: AI Task Breakdown, cloud storage tanpa batas, & kolaborasi real-time."
-              buttonText="Upgrade Sekarang"
-              onButtonClick={() => {}}
+              buttonText="Upgrade Sekarang 🚀"
+              onButtonClick={() => {
+                window.open("https://kanvexa.web.id/#pricing", "_blank");
+              }}
               icon={<Rocket className="h-5 w-5 text-white" />}
             />
           </div>
