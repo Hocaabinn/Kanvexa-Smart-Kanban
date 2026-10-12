@@ -1224,23 +1224,28 @@ export function HistoryModal({
               Aktivitas direkam secara otomatis dari semua tindakan Anda.
             </span>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "7px 18px",
-              borderRadius: "8px",
-              border: "1px solid #e2e8f0",
-              background: "#fff",
-              color: "#334155",
-              fontSize: "12px",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-            className="hover:bg-slate-50"
-          >
-            Tutup
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+              Tekan <kbd style={{ padding: "2px 6px", background: "#f1f5f9", borderRadius: "4px", border: "1px solid #e2e8f0", fontSize: "10px", fontWeight: "600", color: "#64748b" }}>Esc</kbd>
+            </span>
+            <button
+              onClick={onClose}
+              style={{
+                padding: "7px 18px",
+                borderRadius: "8px",
+                border: "1px solid #e2e8f0",
+                background: "#fff",
+                color: "#334155",
+                fontSize: "12px",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              className="hover:bg-slate-50"
+            >
+              Tutup
+            </button>
+          </div>
         </div>
       </div>
 
