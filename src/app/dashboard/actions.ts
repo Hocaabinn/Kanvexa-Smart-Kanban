@@ -5,6 +5,29 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 
+// ── Activity Logging Helper ─────────────────────────────────────────────────
+// Silently logs user activity — never blocks the main action if it fails.
+async function logActivity(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  eventType: string,
+  boardId: string | null,
+  boardName: string | null,
+  metadata: Record<string, unknown> = {}
+) {
+  try {
+    await supabase.from("activity_logs").insert({
+      user_id: userId,
+      board_id: boardId,
+      board_name: boardName,
+      event_type: eventType,
+      metadata,
+    });
+  } catch {
+    // Non-blocking: silently fail if table doesn't exist yet
+  }
+}
+
 export async function createBoard(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
   const templatePrompt = (formData.get("templatePrompt") as string)?.trim();
@@ -23,6 +46,9 @@ export async function createBoard(formData: FormData) {
     // In a real app, surface this to the UI instead of throwing.
     throw new Error(error.message);
   }
+
+  // Log activity
+  await logActivity(supabase, userData.user.id, "board_created", boardId, name);
 
   // Seed columns and cards depending on selected templates
   let columnsToInsert: { name: string; position: number; cards?: string[] }[] = [];
@@ -177,18 +203,53 @@ export async function signOut() {
 
 export async function deleteBoard(boardId: string) {
   const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+
+  // Fetch board name before deletion for logging
+  const { data: board } = await supabase
+    .from("boards")
+    .select("name")
+    .eq("id", boardId)
+    .single();
+
   const { error } = await supabase.from("boards").delete().eq("id", boardId);
   if (error) throw new Error(error.message);
+
+  // Log the deletion after successful delete
+  if (userData.user && board) {
+    await logActivity(supabase, userData.user.id, "board_deleted", null, board.name, {
+      old_board_name: board.name,
+    });
+  }
+
   revalidatePath("/dashboard");
 }
 
 export async function renameBoard(boardId: string, newName: string) {
   const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+
+  // Fetch old name for logging
+  const { data: board } = await supabase
+    .from("boards")
+    .select("name")
+    .eq("id", boardId)
+    .single();
+
   const { error } = await supabase
     .from("boards")
     .update({ name: newName.trim() })
     .eq("id", boardId);
   if (error) throw new Error(error.message);
+
+  // Log rename
+  if (userData.user) {
+    await logActivity(supabase, userData.user.id, "board_renamed", boardId, newName.trim(), {
+      old_name: board?.name || "",
+      new_name: newName.trim(),
+    });
+  }
+
   revalidatePath("/dashboard");
 }
 
@@ -231,6 +292,9 @@ export async function acceptBoardInvitation(invitationId: string) {
     throw new Error(memberErr.message);
   }
 
+  // Log invitation accepted
+  await logActivity(supabase, user.id, "invitation_accepted", inv.board_id, inv.board_name || null);
+
   revalidatePath("/dashboard");
   return inv.board_id;
 }
@@ -261,7 +325,25 @@ export async function rejectBoardInvitation(invitationId: string) {
 
   if (updateErr) throw new Error(updateErr.message);
 
+  // Log invitation rejected
+  await logActivity(supabase, user.id, "invitation_rejected", inv.board_id, inv.board_name || null);
+
   revalidatePath("/dashboard");
 }
 
+// ── Fetch Activity Logs ─────────────────────────────────────────────────────
+export async function getActivityLogs(limit = 100) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
 
+  const { data, error } = await supabase
+    .from("activity_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return [];
+  return data || [];
+}
