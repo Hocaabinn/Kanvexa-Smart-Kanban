@@ -3,10 +3,48 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+// ── Activity Logging Helper ─────────────────────────────────────────────────
+// Silently logs user activity — never blocks the main action if it fails.
+async function logActivity(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  eventType: string,
+  boardId: string | null,
+  boardName: string | null,
+  metadata: Record<string, unknown> = {}
+) {
+  try {
+    await supabase.from("activity_logs").insert({
+      user_id: userId,
+      board_id: boardId,
+      board_name: boardName,
+      event_type: eventType,
+      metadata,
+    });
+  } catch {
+    // Non-blocking: silently fail if table doesn't exist yet
+  }
+}
+
 // ── Cards ──────────────────────────────────────────────────────────────────
 
 export async function createCard(boardId: string, columnId: string, title: string) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch column name for logging
+  const { data: colData } = await supabase
+    .from("board_columns")
+    .select("name")
+    .eq("id", columnId)
+    .single();
+
+  // Fetch board name for logging
+  const { data: boardData } = await supabase
+    .from("boards")
+    .select("name")
+    .eq("id", boardId)
+    .single();
 
   // Put new card at the bottom of its column
   const { data: existing } = await supabase
@@ -26,6 +64,15 @@ export async function createCard(boardId: string, columnId: string, title: strin
   });
 
   if (error) throw new Error(error.message);
+
+  // Log activity
+  if (user) {
+    await logActivity(supabase, user.id, "task_created", boardId, boardData?.name || null, {
+      task_title: title.trim(),
+      column_name: colData?.name || "",
+    });
+  }
+
   revalidatePath(`/board/${boardId}`);
 }
 
@@ -51,8 +98,30 @@ export async function updateCardDescription(boardId: string, cardId: string, des
 
 export async function deleteCard(boardId: string, cardId: string) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch card title and board name before deletion for logging
+  const { data: cardData } = await supabase
+    .from("cards")
+    .select("title")
+    .eq("id", cardId)
+    .single();
+  const { data: boardData } = await supabase
+    .from("boards")
+    .select("name")
+    .eq("id", boardId)
+    .single();
+
   const { error } = await supabase.from("cards").delete().eq("id", cardId);
   if (error) throw new Error(error.message);
+
+  // Log activity
+  if (user) {
+    await logActivity(supabase, user.id, "task_deleted", boardId, boardData?.name || null, {
+      task_title: cardData?.title || "Tugas",
+    });
+  }
+
   revalidatePath(`/board/${boardId}`);
 }
 
@@ -102,6 +171,14 @@ export async function moveCard(
 
 export async function createColumn(boardId: string, name: string) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch board name for logging
+  const { data: boardData } = await supabase
+    .from("boards")
+    .select("name")
+    .eq("id", boardId)
+    .single();
 
   const { data: existing } = await supabase
     .from("board_columns")
@@ -119,6 +196,14 @@ export async function createColumn(boardId: string, name: string) {
   });
 
   if (error) throw new Error(error.message);
+
+  // Log activity
+  if (user) {
+    await logActivity(supabase, user.id, "column_created", boardId, boardData?.name || null, {
+      column_name: name.trim(),
+    });
+  }
+
   revalidatePath(`/board/${boardId}`);
 }
 
@@ -468,6 +553,12 @@ export async function inviteBoardMember(
   if (inviteErr) {
     throw new Error(inviteErr.message);
   }
+
+  // Log invitation sent
+  await logActivity(supabase, user.id, "invitation_sent", boardId, board.name, {
+    invited_email: email.trim(),
+    role,
+  });
 
   revalidatePath(`/board/${boardId}`);
 }
