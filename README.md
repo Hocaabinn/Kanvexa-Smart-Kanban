@@ -40,6 +40,10 @@
   - Live KPI metrics (Active Projects, Tasks Completed, Pending Tasks, Team Workload).
   - Responsive Time Tracking widget with daily bar chart visualizations.
   - Interactive Upgrade to Pro showcase with animated Framer Motion AlertCard.
+- ⏱️ **Unified Riwayat & Time Tracking Modal**:
+  - Audit trail komprehensif merekam otomatis aktivitas pembuatan kartu, penghapusan tugas, penambahan kolom, hingga mutasi board.
+  - Tampilan terpadu riwayat kerja dan pelacakan waktu per papan proyek tanpa navigasi dropdown berlapis.
+  - Filter pencarian instan, filter rentang tanggal, ringkasan metrik statistik real-time, dan akses cepat ke papan.
 - 🎨 **Modern Minimalist UI/UX**:
   - Animasi responsif berbasis Framer Motion, shader visual kontemporer, dan umpan balik interaktif (SweetAlert2 & Canvas Confetti).
 
