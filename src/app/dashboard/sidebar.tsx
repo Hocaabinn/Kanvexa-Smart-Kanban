@@ -39,6 +39,7 @@ import {
 import { showAlert } from "@/lib/swal";
 import { KanvexaIcon, KanvexaLogo } from "@/components/ui/KanvexaLogo";
 import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
+import { HistoryModal } from "@/components/ui/HistoryModal";
 import { AlertCard } from "@/components/ui/alert-card";
 
 interface Board {
@@ -65,6 +66,9 @@ interface SidebarProps {
   setIsMobileOpen?: (open: boolean) => void;
   onInboxClick?: () => void;
   onOpenBoard?: (boardName: string) => void;
+  onHistoryClick?: () => void;
+  boardTimeTrackingMap?: Record<string, { formatted: string; taskCount: number; doneCount: number }>;
+  totalTrackedTime?: string;
 }
 
 function initials(email: string) {
@@ -88,15 +92,18 @@ export default function Sidebar({
   setIsMobileOpen,
   onInboxClick,
   onOpenBoard,
+  onHistoryClick,
+  boardTimeTrackingMap,
+  totalTrackedTime = "0h 0m",
 }: SidebarProps) {
   const [showInboxModal, setShowInboxModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const pathname = usePathname();
   const isDashboardActive = pathname === "/dashboard";
   const isTemplatesActive = pathname === "/Galeri-Template";
 
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
   const [isFavoritesExpanded, setIsFavoritesExpanded] = useState(true);
-  const [isRecentsExpanded, setIsRecentsExpanded] = useState(false);
   const [activeMenuBoardId, setActiveMenuBoardId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isProBannerVisible, setIsProBannerVisible] = useState(true);
@@ -172,11 +179,6 @@ export default function Sidebar({
 
   // Filter starred boards
   const starredBoards = boards.filter(b => starredBoardIds.includes(b.id));
-
-  // Sort recent boards by created_at
-  const recentBoards = [...boards]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
 
   // Render a board item with its 3-dots actions menu
   const renderBoardItem = (b: Board) => {
@@ -876,73 +878,11 @@ export default function Sidebar({
               )}
             </div>
 
-            {/* 3. Riwayat */}
-            <div>
-              <div 
-                onClick={() => {
-                  if (!isSidebarCollapsed) {
-                    setIsRecentsExpanded(!isRecentsExpanded);
-                  } else {
-                    setIsSidebarCollapsed(false);
-                    setIsRecentsExpanded(true);
-                  }
-                }}
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  justifyContent: isSidebarCollapsed ? "center" : "space-between",
-                  cursor: "pointer", 
-                  padding: "6px 12px",
-                  borderRadius: "8px",
-                  userSelect: "none"
-                }}
-                className="sidebar-group-header"
-                title={isSidebarCollapsed ? "Tampilkan Riwayat" : "Tutup/Buka Riwayat"}
-              >
-                {isSidebarCollapsed ? (
-                  <History style={{ width: "18px", height: "18px", color: "#64748b" }} />
-                ) : (
-                  <>
-                    <div style={{ 
-                      fontSize: "13px", 
-                      fontWeight: "700", 
-                      color: "#334155", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      gap: "8px" 
-                    }}>
-                      <History style={{ width: "16px", height: "16px", color: "#64748b" }} />
-                      <span>Riwayat</span>
-                    </div>
-                    <ChevronDown style={{ 
-                      width: "14px", 
-                      height: "14px", 
-                      color: "#94a3b8",
-                      transform: isRecentsExpanded ? "none" : "rotate(-90deg)",
-                      transition: "transform 0.2s"
-                    }} />
-                  </>
-                )}
-              </div>
-              
-              {(!isSidebarCollapsed && isRecentsExpanded) && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: "4px", paddingLeft: "8px" }}>
-                  {!recentBoards.length ? (
-                    <div style={{ padding: "10px 12px", fontSize: "12px", color: "#94a3b8" }}>
-                      Belum ada riwayat
-                    </div>
-                  ) : (
-                    recentBoards.map(renderBoardItem)
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Time Tracking (Di Bawah Riwayat) */}
+            {/* 3. Riwayat (Hanya Tulisan Riwayat, Klik untuk Buka Modal) */}
             <div 
               onClick={() => {
-                const el = document.getElementById("time-tracking-section");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
+                if (onHistoryClick) onHistoryClick();
+                else setShowHistoryModal(true);
               }}
               style={{
                 display: "flex",
@@ -956,12 +896,12 @@ export default function Sidebar({
                 justifyContent: isSidebarCollapsed ? "center" : "flex-start"
               }}
               className="sidebar-nav-item"
-              title="Time Tracking"
+              title="Riwayat"
             >
-              <Clock style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
+              <History style={{ width: "16px", height: "16px", color: "#64748b", flexShrink: 0 }} />
               {!isSidebarCollapsed && (
                 <span style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
-                  Time Tracking
+                  Riwayat
                 </span>
               )}
             </div>
@@ -1129,6 +1069,15 @@ export default function Sidebar({
         .sidebar-board-item:hover {
           background-color: #f8fafc;
         }
+        .sidebar-history-item:hover {
+          background-color: #f8fafc !important;
+          border-color: #cbd5e1 !important;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.06) !important;
+          transform: translateY(-1px);
+        }
+        .sidebar-history-item:hover .btn-item-more {
+          opacity: 1;
+        }
         .sidebar-item-container:hover .btn-item-more {
           opacity: 1;
         }
@@ -1199,6 +1148,18 @@ export default function Sidebar({
         userEmail={userEmail}
         boards={boards.map((b) => ({ id: b.id, name: b.name }))}
         onClose={() => setShowInboxModal(false)}
+      />
+    )}
+
+    {/* Riwayat & Time Tracking Modal triggered from sidebar */}
+    {showHistoryModal && (
+      <HistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        boards={boards}
+        boardTimeTrackingMap={boardTimeTrackingMap}
+        totalTrackedTime={totalTrackedTime}
+        onOpenBoard={onOpenBoard}
       />
     )}
     </>
