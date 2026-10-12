@@ -304,3 +304,31 @@ create policy "board_members_insert" on board_members for insert
     auth.uid() = user_id
   );
 
+-- ============================================================
+-- Activity Logs (Audit Trail & History)
+-- ============================================================
+
+create table if not exists activity_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  board_id uuid,
+  board_name text,
+  event_type text not null,
+  metadata jsonb default '{}',
+  created_at timestamptz default now()
+);
+
+alter table activity_logs enable row level security;
+
+drop policy if exists "Users can view own activity" on activity_logs;
+create policy "Users can view own activity" on activity_logs
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert own activity" on activity_logs;
+create policy "Users can insert own activity" on activity_logs
+  for insert with check (auth.uid() = user_id);
+
+create index if not exists idx_activity_logs_user_created
+  on activity_logs (user_id, created_at desc);
+
+
