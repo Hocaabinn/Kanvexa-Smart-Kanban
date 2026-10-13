@@ -236,3 +236,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- docs(kanban): outline board permission hierarchy across admin, member, and viewer roles -->
 <!-- style(buttons): refine padding and tap targets for attachment controls -->
 <!-- docs(ai): annotate token estimation and error handling guidelines for LLM handlers -->
+<!-- refactor(types): strengthen invitation status and role union constraints -->
