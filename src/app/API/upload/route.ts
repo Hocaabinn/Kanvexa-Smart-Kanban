@@ -17,12 +17,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "File tidak ditemukan" }, { status: 400 });
     }
 
-    // Limit 50 MB
-    if (file.size > 50 * 1024 * 1024) {
-      return NextResponse.json({ error: "Ukuran file melebihi batas 50 MB" }, { status: 400 });
+    // Batasi ekstensi file berbahaya (HTML, SVG, EXE, JS, SH, PHP, dsb)
+    const rawExt = file.name.split(".").pop()?.toLowerCase() || "bin";
+    const allowedExtensions = new Set([
+      "png", "jpg", "jpeg", "webp", "gif",
+      "pdf", "txt", "md", "csv",
+      "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+      "zip", "rar", "7z", "tar", "gz",
+      "mp4", "mp3", "wav", "webm"
+    ]);
+
+    if (!allowedExtensions.has(rawExt)) {
+      return NextResponse.json(
+        { error: `Tipe file .${rawExt} tidak diizinkan demi alasan keamanan.` },
+        { status: 400 }
+      );
     }
 
-    const fileExt = file.name.split(".").pop() || "bin";
+    const fileExt = rawExt;
     const cleanFileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${boardId}/${cleanFileName}`;
 
