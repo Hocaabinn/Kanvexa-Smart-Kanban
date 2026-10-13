@@ -227,3 +227,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- docs(api): document rate limiting policies on AI generation endpoints -->
 <!-- style(message-board): standardize icon button focus and active states -->
 <!-- docs(upload): add documentation for allowed file formats and size constraints -->
+<!-- refactor(security): enforce explicit typing on storage RLS policies -->
