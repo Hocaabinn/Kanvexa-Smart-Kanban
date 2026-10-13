@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 export async function POST(req: Request) {
   // 1. Verify user is authenticated
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Rate Limiting: Maksimal 15 request per menit per user
+  const rl = checkRateLimit(`ai-process:${user.id}`, { limit: 15, windowMs: 60 * 1000 });
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: `Terlalu banyak permintaan AI. Silakan tunggu ${rl.resetInSec} detik lagi.` },
+      { status: 429 }
+    );
+  }
 
   // 2. Parse request payload
   const { cardTitle, currentDescription, agentType, customPrompt, model: userModel, userApiKey } = await req.json();
