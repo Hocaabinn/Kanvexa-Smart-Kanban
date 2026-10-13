@@ -222,3 +222,4 @@ Kontribusi selalu terbuka dan disambut hangat!
 ## 📄 Lisensi
 
 Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih lanjut.
+<!-- docs(security): document RLS authorization model and invitation access controls -->
