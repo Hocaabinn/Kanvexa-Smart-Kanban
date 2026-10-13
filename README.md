@@ -223,3 +223,4 @@ Kontribusi selalu terbuka dan disambut hangat!
 
 Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih lanjut.
 <!-- docs(security): document RLS authorization model and invitation access controls -->
+<!-- refactor(rate-limit): improve cleanup interval and memory safety in sliding window store -->
