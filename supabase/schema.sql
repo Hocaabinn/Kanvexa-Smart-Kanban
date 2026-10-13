@@ -277,23 +277,26 @@ create table if not exists board_invitations (
 -- Aktifkan RLS pada board_invitations
 alter table board_invitations enable row level security;
 
--- RLS: Siapapun yang sudah login bisa SELECT undangan
--- (filtering by invited_email/invited_by_email dilakukan di query app level)
+-- RLS: Hanya penerima undangan atau anggota board yang bisa melihat undangan
 drop policy if exists "board_invitations_select" on board_invitations;
 create policy "board_invitations_select" on board_invitations for select
-  using (auth.uid() is not null);
+  using (
+    invited_email = (auth.jwt() ->> 'email')
+    or public.is_board_member(board_id)
+  );
 
--- RLS: Siapapun yang sudah login bisa INSERT undangan
--- (validasi bahwa pengirim adalah board member/admin dilakukan di server action)
+-- RLS: Hanya admin atau editor board yang bisa mengirim undangan
 drop policy if exists "board_invitations_insert" on board_invitations;
 create policy "board_invitations_insert" on board_invitations for insert
-  with check (auth.uid() is not null);
+  with check (public.is_board_editor(board_id));
 
--- RLS: Siapapun yang sudah login bisa UPDATE undangan
--- (validasi bahwa penerima adalah user yang tepat dilakukan di server action)
+-- RLS: Hanya penerima undangan atau admin board yang bisa mengubah status undangan
 drop policy if exists "board_invitations_update" on board_invitations;
 create policy "board_invitations_update" on board_invitations for update
-  using (auth.uid() is not null);
+  using (
+    invited_email = (auth.jwt() ->> 'email')
+    or public.is_board_admin(board_id)
+  );
 
 -- Perbarui kebijakan insert pada board_members agar penerima undangan bisa mendaftar sendiri
 drop policy if exists "board_members_insert" on board_members;
@@ -330,5 +333,22 @@ create policy "Users can insert own activity" on activity_logs
 
 create index if not exists idx_activity_logs_user_created
   on activity_logs (user_id, created_at desc);
+
+-- ============================================================
+-- Supabase Storage Security (board-attachments)
+-- ============================================================
+
+-- Siapapun yang terautentikasi dapat membaca file attachment board
+drop policy if exists "Authenticated users can read board attachments" on storage.objects;
+create policy "Authenticated users can read board attachments"
+  on storage.objects for select
+  using (bucket_id = 'board-attachments' and auth.role() = 'authenticated');
+
+-- Hanya user terautentikasi yang dapat mengunggah file attachment
+drop policy if exists "Authenticated users can upload board attachments" on storage.objects;
+create policy "Authenticated users can upload board attachments"
+  on storage.objects for insert
+  with check (bucket_id = 'board-attachments' and auth.role() = 'authenticated');
+
 
 
