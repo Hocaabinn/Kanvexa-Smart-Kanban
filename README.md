@@ -230,3 +230,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- refactor(security): enforce explicit typing on storage RLS policies -->
 <!-- docs(architecture): clarify proxy session verification in App Router lifecycle -->
 <!-- perf(headers): optimize referrer policy for cross-origin compliance -->
+<!-- style(ui): ensure consistent tooltip titles on attachment action triggers -->
