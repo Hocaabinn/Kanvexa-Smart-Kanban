@@ -234,3 +234,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- docs(audit): summarize resolution of initial security audit findings -->
 <!-- refactor(upload): add sanitized filename fallback for non-ascii attachment names -->
 <!-- docs(kanban): outline board permission hierarchy across admin, member, and viewer roles -->
+<!-- style(buttons): refine padding and tap targets for attachment controls -->
