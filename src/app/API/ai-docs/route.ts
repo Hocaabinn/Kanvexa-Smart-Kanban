@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 const SYSTEM_PROMPT = `You are Kanvexa AI, an intelligent document generator and assistant within Kanvexa's Docs & Files module. Your primary job is to generate structured project documentation, create technical briefs, summarize complex file content, and draft project notes based on user inputs.
 
@@ -59,6 +60,14 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = checkRateLimit(`ai-docs:${user.id}`, { limit: 15, windowMs: 60 * 1000 });
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: `Terlalu banyak permintaan AI. Silakan tunggu ${rl.resetInSec} detik lagi.` },
+        { status: 429 }
+      );
     }
 
     const { action, prompt, currentContent, category } = await req.json();
