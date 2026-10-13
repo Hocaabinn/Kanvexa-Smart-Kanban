@@ -237,3 +237,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- style(buttons): refine padding and tap targets for attachment controls -->
 <!-- docs(ai): annotate token estimation and error handling guidelines for LLM handlers -->
 <!-- refactor(types): strengthen invitation status and role union constraints -->
+<!-- docs(storage): update bucket provisioning guidelines in schema documentation -->
