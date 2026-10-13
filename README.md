@@ -225,3 +225,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- docs(security): document RLS authorization model and invitation access controls -->
 <!-- refactor(rate-limit): improve cleanup interval and memory safety in sliding window store -->
 <!-- docs(api): document rate limiting policies on AI generation endpoints -->
+<!-- style(message-board): standardize icon button focus and active states -->
