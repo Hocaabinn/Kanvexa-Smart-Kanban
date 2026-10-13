@@ -539,6 +539,18 @@ export async function inviteBoardMember(
     throw new Error("Papan tidak ditemukan.");
   }
 
+  // Verifikasi otorisasi: pemanggil harus berupa admin atau member board
+  const { data: membership, error: memErr } = await supabase
+    .from("board_members")
+    .select("role")
+    .eq("board_id", boardId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (memErr || !membership || membership.role === "viewer") {
+    throw new Error("Anda tidak memiliki izin untuk mengundang anggota ke board ini.");
+  }
+
   const { error: inviteErr } = await supabase
     .from("board_invitations")
     .insert({
