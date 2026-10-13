@@ -240,3 +240,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- docs(storage): update bucket provisioning guidelines in schema documentation -->
 <!-- style(theme): enhance visual contrast of icon buttons in light mode -->
 <!-- docs(contributing): document commit conventions and security verification workflow -->
+<!-- perf(build): verify Turbopack production bundle optimization -->
