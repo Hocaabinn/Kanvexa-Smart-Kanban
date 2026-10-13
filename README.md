@@ -228,3 +228,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- style(message-board): standardize icon button focus and active states -->
 <!-- docs(upload): add documentation for allowed file formats and size constraints -->
 <!-- refactor(security): enforce explicit typing on storage RLS policies -->
+<!-- docs(architecture): clarify proxy session verification in App Router lifecycle -->
