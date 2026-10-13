@@ -232,3 +232,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- perf(headers): optimize referrer policy for cross-origin compliance -->
 <!-- style(ui): ensure consistent tooltip titles on attachment action triggers -->
 <!-- docs(audit): summarize resolution of initial security audit findings -->
+<!-- refactor(upload): add sanitized filename fallback for non-ascii attachment names -->
