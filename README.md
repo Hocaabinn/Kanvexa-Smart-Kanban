@@ -241,3 +241,4 @@ Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk informasi lebih
 <!-- style(theme): enhance visual contrast of icon buttons in light mode -->
 <!-- docs(contributing): document commit conventions and security verification workflow -->
 <!-- perf(build): verify Turbopack production bundle optimization -->
+<!-- chore(release): finalize Kanvexa security hardening and UI polish milestone -->
