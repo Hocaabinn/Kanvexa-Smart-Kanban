@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pin, Trash2, ChevronDown, ChevronUp, Paperclip, Download } from "lucide-react";
+import { Pin, Trash2, ChevronDown, ChevronUp, Paperclip, Download, Eye } from "lucide-react";
 import { BoardPost, BoardPostComment, getCategoryBadge, formatTimeAgo, getAuthorInitials, formatFileSize } from "./messageboard-utils";
 import { deletePost, togglePinPost } from "@/app/board/[id]/actions";
 import { showConfirm, showAlert } from "@/lib/swal";
@@ -251,38 +251,87 @@ export default function MessagePostCard({
             </div>
           </div>
 
-          <a
-            href={post.file_url || "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            download={post.file_name || "lampiran"}
-            onClick={(e) => {
-              if (!post.file_url) {
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            {/* Tombol Lihat File (Eye Icon Saja) */}
+            <a
+              href={post.file_url || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Lihat File"
+              onClick={(e) => {
+                if (!post.file_url) {
+                  e.preventDefault();
+                  alert("Postingan lama ini dibuat sebelum fitur URL lampiran diaktifkan. Silakan buat postingan baru dengan lampiran file.");
+                }
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "#f1f5f9",
+                color: "#475569",
+                border: "1px solid #cbd5e1",
+                textDecoration: "none",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Eye width={15} height={15} />
+            </a>
+
+            {/* Tombol Unduh File (Download Icon Saja) */}
+            <button
+              type="button"
+              title="Unduh File"
+              onClick={async (e) => {
                 e.preventDefault();
-                alert("Postingan lama ini dibuat sebelum fitur URL unduhan diaktifkan. Silakan buat postingan baru dengan lampiran file.");
-              }
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 14px",
-              borderRadius: 8,
-              fontSize: 12,
-              fontWeight: 700,
-              background: "var(--v)",
-              color: "#ffffff",
-              border: "none",
-              textDecoration: "none",
-              boxShadow: "0 2px 6px rgba(109, 40, 217, 0.25)",
-              cursor: "pointer",
-              flexShrink: 0,
-              transition: "all 0.15s ease",
-            }}
-          >
-            <Download width={14} height={14} />
-            <span>Unduh File</span>
-          </a>
+                if (!post.file_url) {
+                  alert("Postingan lama ini dibuat sebelum fitur URL lampiran diaktifkan. Silakan buat postingan baru dengan lampiran file.");
+                  return;
+                }
+                try {
+                  const res = await fetch(post.file_url);
+                  const blob = await res.blob();
+                  const blobUrl = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = blobUrl;
+                  a.download = post.file_name || "lampiran";
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  window.URL.revokeObjectURL(blobUrl);
+                } catch {
+                  // Fallback jika fetch blob terhambat CORS
+                  const a = document.createElement("a");
+                  a.href = post.file_url;
+                  a.download = post.file_name || "lampiran";
+                  a.target = "_blank";
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                }
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "var(--v)",
+                color: "#ffffff",
+                border: "none",
+                cursor: "pointer",
+                boxShadow: "0 2px 6px rgba(109, 40, 217, 0.25)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Download width={15} height={15} />
+            </button>
+          </div>
         </div>
       )}
 
