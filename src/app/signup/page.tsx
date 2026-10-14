@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Sparkles, Copy, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
+import { Turnstile } from "@/components/ui/Turnstile";
 
 const images = [
   "/img/starry_night.png",
@@ -65,6 +66,7 @@ export default function SignupPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   function handleGeneratePassword() {
     const generated = generateSecurePassword(16);
@@ -104,6 +106,11 @@ export default function SignupPage() {
       return;
     }
 
+    if (process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && !captchaToken) {
+      setError("Silakan selesaikan verifikasi keamanan (CAPTCHA) terlebih dahulu.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -115,6 +122,7 @@ export default function SignupPage() {
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: { full_name: fullName },
+          captchaToken: captchaToken || undefined,
         },
       });
       setLoading(false);
@@ -411,10 +419,18 @@ export default function SignupPage() {
                 </label>
               </div>
 
+              <div className="pt-2">
+                <Turnstile
+                  onVerify={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                />
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-violet-600 text-base font-bold text-white shadow-lg shadow-violet-500/30 transition-all hover:bg-violet-700 active:scale-[0.99] disabled:opacity-50"
+                className="mt-4 flex h-12 w-full items-center justify-center rounded-xl bg-violet-600 text-base font-bold text-white shadow-lg shadow-violet-500/30 transition-all hover:bg-violet-700 active:scale-[0.99] disabled:opacity-50"
               >
                 {loading ? "Membuat Akun..." : "Daftar Sekarang"}
               </button>
