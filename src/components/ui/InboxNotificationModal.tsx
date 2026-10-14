@@ -140,23 +140,7 @@ export function InboxNotificationModal({ userEmail, boards = [], databaseInvitat
       },
     ];
 
-    const hasRealInvites = dbNotifications.length > 0;
-    const shouldAddDemoInvite = !hasRealInvites && userEmail.toLowerCase() === "binnkoseiji@gmail.com";
-
-    const demoInvite = shouldAddDemoInvite ? [{
-      id: "demo-invite-1",
-      type: "invite" as const,
-      title: "Undangan Kolaborasi Tim",
-      message: `mengundang Anda sebagai Editor ke papan "Manajemen Rapat Organisasi / OSIS".`,
-      sender: "bintangwcproger@gmail.com",
-      boardName: "Manajemen Rapat Organisasi / OSIS",
-      boardId: boards[0]?.id || "",
-      role: "member",
-      timestamp: "10 menit yang lalu",
-      isRead: false,
-    }] : [];
-
-    let allNotifs = [...dbNotifications, ...demoInvite, ...systemNotifications];
+    let allNotifs = [...dbNotifications, ...systemNotifications];
 
     if (typeof window !== "undefined") {
       try {
