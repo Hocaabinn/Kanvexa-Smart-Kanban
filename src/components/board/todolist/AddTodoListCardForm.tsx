@@ -23,8 +23,7 @@ export default function AddTodoListCardForm({ boardId, columnId, userEmail = "",
 
     // List of registered members / users
     const registeredUsers = Array.from(new Set([
-        ...(userEmail ? [userEmail] : []),
-        "bintangwcproger@gmail.com"
+        ...(userEmail ? [userEmail] : [])
     ]));
 
     async function handleAddCard() {

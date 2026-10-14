@@ -190,8 +190,7 @@ export default function TodoListPresetModal({ boardId, userEmail = "", presetTyp
     };
 
     const registeredUsers = Array.from(new Set([
-        ...(userEmail ? [userEmail] : []),
-        "bintangwcproger@gmail.com"
+        ...(userEmail ? [userEmail] : [])
     ]));
 
     const handleSubmit = async (e: React.FormEvent) => {
