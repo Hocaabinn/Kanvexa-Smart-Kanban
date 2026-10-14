@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, Sparkles, Copy, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
 
@@ -20,6 +20,37 @@ const prompts = [
   "Otomatiskan pemecahan tugas administratif dan susun prioritas secara presisi",
 ];
 
+function generateSecurePassword(length = 16): string {
+  const lowercase = "abcdefghijkmnopqrstuvwxyz";
+  const uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const numbers = "23456789";
+  const symbols = "!@#$%^&*-_=+";
+  const all = lowercase + uppercase + numbers + symbols;
+
+  let pwd = "";
+  // Ensure at least one of each character category
+  pwd += uppercase[Math.floor(Math.random() * uppercase.length)];
+  pwd += lowercase[Math.floor(Math.random() * lowercase.length)];
+  pwd += numbers[Math.floor(Math.random() * numbers.length)];
+  pwd += symbols[Math.floor(Math.random() * symbols.length)];
+
+  // Fill the rest randomly using crypto if available
+  const randomValues = new Uint32Array(length - 4);
+  if (typeof window !== "undefined" && window.crypto) {
+    window.crypto.getRandomValues(randomValues);
+    for (let i = 0; i < randomValues.length; i++) {
+      pwd += all[randomValues[i] % all.length];
+    }
+  } else {
+    for (let i = 0; i < length - 4; i++) {
+      pwd += all[Math.floor(Math.random() * all.length)];
+    }
+  }
+
+  // Shuffle the result
+  return pwd.split("").sort(() => 0.5 - Math.random()).join("");
+}
+
 export default function SignupPage() {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -33,6 +64,24 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function handleGeneratePassword() {
+    const generated = generateSecurePassword(16);
+    setPassword(generated);
+    setShowPassword(true);
+  }
+
+  async function handleCopyPassword() {
+    if (!password) return;
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  }
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -255,15 +304,53 @@ export default function SignupPage() {
                 required
               />
 
-              <FieldInput
-                label="Kata Sandi"
-                placeholder="Minimal 6 karakter"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type={showPassword ? "text" : "password"}
-                required
-                minLength={6}
-                rightElement={
+              <div className="space-y-1.5 text-left">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Kata Sandi
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {password && (
+                      <button
+                        type="button"
+                        onClick={handleCopyPassword}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-violet-600 transition-colors"
+                        title="Salin kata sandi"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="h-3 w-3 text-emerald-600" />
+                            <span className="text-emerald-600">Disalin!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            <span>Salin</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleGeneratePassword}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-600 hover:text-violet-700 hover:underline transition-all"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      Acak Sandi Aman
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative flex h-11 items-center rounded-xl border border-violet-100 bg-violet-50/40 px-3.5 transition-all focus-within:border-violet-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-violet-500/20">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Minimal 8 karakter atau klik Acak Sandi"
+                    required
+                    minLength={8}
+                    className="w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 pr-2"
+                  />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -276,8 +363,8 @@ export default function SignupPage() {
                       <Eye className="h-4 w-4" />
                     )}
                   </button>
-                }
-              />
+                </div>
+              </div>
 
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-600">
