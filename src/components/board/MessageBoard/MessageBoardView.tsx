@@ -54,9 +54,6 @@ export default function MessageBoardView({
   const knownEmails = new Set<string>();
   // The currently-logged-in user
   if (userEmail) knownEmails.add(userEmail.toLowerCase().trim());
-  // Hardcoded collaborators for this board (both board participants)
-  knownEmails.add("bintangwcproger@gmail.com");
-  knownEmails.add("binnkoseiji@gmail.com");
   // Also pull unique authors from posts and comments
   posts.forEach(p => { if (p.author_email) knownEmails.add(p.author_email.toLowerCase().trim()); });
   comments.forEach(c => { if (c.author_email) knownEmails.add(c.author_email.toLowerCase().trim()); });
