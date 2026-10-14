@@ -298,14 +298,57 @@ create policy "board_invitations_update" on board_invitations for update
     or public.is_board_admin(board_id)
   );
 
--- Perbarui kebijakan insert pada board_members agar penerima undangan bisa mendaftar sendiri
+-- Perbarui kebijakan insert pada board_members agar hanya admin atau undangan sah yang bisa bergabung
 drop policy if exists "board_members_insert" on board_members;
 create policy "board_members_insert" on board_members for insert
   with check (
     public.is_board_admin(board_id)
     or
-    auth.uid() = user_id
+    (
+      auth.uid() = user_id 
+      and exists (
+        select 1 from public.board_invitations bi
+        where bi.board_id = board_members.board_id
+          and bi.invited_email = (auth.jwt() ->> 'email')
+          and bi.status = 'pending'
+      )
+    )
   );
+
+-- ============================================================
+-- Strict User Registration Validation Trigger
+-- ============================================================
+
+create or replace function public.validate_strict_user()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  v_full_name text;
+begin
+  v_full_name := trim(coalesce(new.raw_user_meta_data->>'full_name', ''));
+  
+  if length(v_full_name) < 3 or length(v_full_name) > 50 then
+    raise exception 'Nama lengkap tidak valid (wajib 3-50 karakter).';
+  end if;
+
+  if length(new.email) > 50 then
+    raise exception 'Alamat email terlalu panjang (maksimal 50 karakter).';
+  end if;
+
+  if new.email !~* '^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|kanvexa\.web\.id|bintang\.my\.id)$' then
+    raise exception 'Pendaftaran hanya diizinkan menggunakan email resmi yang valid.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_strict on auth.users;
+create trigger on_auth_user_created_strict
+  before insert on auth.users
+  for each row execute function public.validate_strict_user();
 
 -- ============================================================
 -- Activity Logs (Audit Trail & History)
