@@ -966,7 +966,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/signup" className="hidden md:block">
-              <LiquidMetalButton label="Get Started" />
+              <LiquidMetalButton label="Sign up" colorTheme="purple" />
             </Link>
             {/* Mobile hamburger */}
             <button
@@ -1013,7 +1013,7 @@ export default function LandingPage() {
             ))}
             <div className="mt-2 pt-3 border-t border-border/50">
               <Link href="/signup" className="block" onClick={() => setMobileMenuOpen(false)}>
-                <LiquidMetalButton label="Get Started" />
+                <LiquidMetalButton label="Sign up" colorTheme="purple" />
               </Link>
             </div>
           </motion.div>

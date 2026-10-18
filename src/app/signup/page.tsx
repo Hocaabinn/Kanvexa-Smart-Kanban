@@ -148,6 +148,9 @@ export default function SignupPage() {
         return;
       }
 
+      // Set persistent cookie to remember user has an account on this browser
+      document.cookie = "kanvexa_has_account=true; path=/; max-age=31536000; SameSite=Lax";
+
       setSubmitted(true);
     } catch (err: any) {
       setLoading(false);
