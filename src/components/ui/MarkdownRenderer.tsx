@@ -8,6 +8,16 @@ interface MarkdownRendererProps {
   style?: React.CSSProperties;
 }
 
+// Sanitize URLs to prevent XSS via javascript:, data:, or other malicious schemes
+function sanitizeUrl(rawUrl: string): string {
+  if (!rawUrl) return "#";
+  const trimmed = rawUrl.trim();
+  if (/^(https?:\/\/|\/|mailto:|tel:)/i.test(trimmed)) {
+    return trimmed;
+  }
+  return "#";
+}
+
 export default function MarkdownRenderer({ content, style }: MarkdownRendererProps) {
   if (!content) return null;
 
@@ -99,10 +109,11 @@ export default function MarkdownRenderer({ content, style }: MarkdownRendererPro
       // Link: [text](url)
       const linkMatch = remaining.match(/^\[(.*?)\]\((.*?)\)/);
       if (linkMatch) {
+        const safeHref = sanitizeUrl(linkMatch[2]);
         elements.push(
           <a
             key={`${keyPrefix}-link-${index}`}
-            href={linkMatch[2]}
+            href={safeHref}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "#6d28d9", fontWeight: 600, textDecoration: "underline" }}
