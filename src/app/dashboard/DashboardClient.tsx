@@ -440,10 +440,16 @@ export default function DashboardClient({
   };
 
   const handleApplyTemplate = (formData: FormData) => {
-    const tplTitle = formData.get("name") as string;
+    const rawTitle = (formData.get("name") as string) || "Ruang Kerja";
+    const safeTitle = rawTitle
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
     Swal.fire({
       title: "Menerapkan Template",
-      html: `Sedang menyiapkan ruang kerja untuk <strong>${tplTitle}</strong>...`,
+      html: `Sedang menyiapkan ruang kerja untuk <strong>${safeTitle}</strong>...`,
       icon: "info",
       showConfirmButton: false,
       allowOutsideClick: false,
