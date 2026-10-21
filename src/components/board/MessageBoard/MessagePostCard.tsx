@@ -28,6 +28,11 @@ export default function MessagePostCard({
 
   const badge = getCategoryBadge(post.category);
   const isMyPost = post.author_email === userEmail;
+  const isSafeUrl = (url?: string | null): boolean => {
+    if (!url) return false;
+    return /^(https?:\/\/|\/)/i.test(url.trim());
+  };
+  const safeFileUrl = isSafeUrl(post.file_url) ? post.file_url! : null;
 
   async function handleDelete() {
     showConfirm(
@@ -254,14 +259,14 @@ export default function MessagePostCard({
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             {/* Tombol Lihat File (Eye Icon Saja) */}
             <a
-              href={post.file_url || "#"}
+              href={safeFileUrl || "#"}
               target="_blank"
               rel="noopener noreferrer"
               title="Lihat File"
               onClick={(e) => {
-                if (!post.file_url) {
+                if (!safeFileUrl) {
                   e.preventDefault();
-                  alert("Postingan lama ini dibuat sebelum fitur URL lampiran diaktifkan. Silakan buat postingan baru dengan lampiran file.");
+                  alert("File tidak tersedia atau URL tidak valid.");
                 }
               }}
               style={{
@@ -288,12 +293,12 @@ export default function MessagePostCard({
               title="Unduh File"
               onClick={async (e) => {
                 e.preventDefault();
-                if (!post.file_url) {
-                  alert("Postingan lama ini dibuat sebelum fitur URL lampiran diaktifkan. Silakan buat postingan baru dengan lampiran file.");
+                if (!safeFileUrl) {
+                  alert("File tidak tersedia atau URL tidak valid.");
                   return;
                 }
                 try {
-                  const res = await fetch(post.file_url);
+                  const res = await fetch(safeFileUrl);
                   const blob = await res.blob();
                   const blobUrl = window.URL.createObjectURL(blob);
                   const a = document.createElement("a");
@@ -306,7 +311,7 @@ export default function MessagePostCard({
                 } catch {
                   // Fallback jika fetch blob terhambat CORS
                   const a = document.createElement("a");
-                  a.href = post.file_url;
+                  a.href = safeFileUrl;
                   a.download = post.file_name || "lampiran";
                   a.target = "_blank";
                   document.body.appendChild(a);
