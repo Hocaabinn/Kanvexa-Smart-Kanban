@@ -58,7 +58,7 @@
 | **Styling & UI** | [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/), [Radix UI](https://www.radix-ui.com/) |
 | **Motion & Interactivity** | [Framer Motion](https://www.framer.com/motion/), [@dnd-kit](https://dndkit.com/), [Canvas Confetti](https://www.npmjs.com/package/canvas-confetti) |
 | **Backend & Database** | [Supabase](https://supabase.com/) (PostgreSQL, Realtime, SSR Client) |
-| **Security & Auth** | Supabase Auth, Row-Level Security (RLS) Policies |
+| **Security & Auth** | Supabase Auth, Row-Level Security (RLS) Policies, Cloudflare Turnstile, Content-Security-Policy |
 
 ---
 
