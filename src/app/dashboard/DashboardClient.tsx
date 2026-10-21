@@ -44,6 +44,7 @@ import { InboxNotificationModal } from "@/components/ui/InboxNotificationModal";
 import BoardLoaderModal from "@/components/ui/BoardLoaderModal";
 import { showAlert, showConfirm } from "@/lib/swal";
 import Swal from "sweetalert2";
+import { escapeHtml } from "@/lib/utils";
 import { allCategories, type Template } from "@/lib/templates-config";
 
 interface Board {
@@ -441,12 +442,7 @@ export default function DashboardClient({
 
   const handleApplyTemplate = (formData: FormData) => {
     const rawTitle = (formData.get("name") as string) || "Ruang Kerja";
-    const safeTitle = rawTitle
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    const safeTitle = escapeHtml(rawTitle);
     Swal.fire({
       title: "Menerapkan Template",
       html: `Sedang menyiapkan ruang kerja untuk <strong>${safeTitle}</strong>...`,
