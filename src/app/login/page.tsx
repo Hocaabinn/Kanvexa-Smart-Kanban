@@ -191,18 +191,31 @@ export default function LoginPage() {
                 required
               />
 
-              <FieldInput
-                label="Kata Sandi"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type={showPassword ? "text" : "password"}
-                required
-                rightElement={
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Kata Sandi
+                  </label>
+                  <Link
+                    href="/auth/forgot-password"
+                    className="text-xs font-semibold text-violet-600 hover:text-violet-700 hover:underline"
+                  >
+                    Lupa kata sandi?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10 transition-all"
+                  />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="flex items-center justify-center text-slate-400 hover:text-violet-600 transition-colors p-1"
+                    className="absolute right-3 top-2.5 flex items-center justify-center text-slate-400 hover:text-violet-600 transition-colors p-1"
                     aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
                   >
                     {showPassword ? (
@@ -211,8 +224,8 @@ export default function LoginPage() {
                       <Eye className="h-4 w-4" />
                     )}
                   </button>
-                }
-              />
+                </div>
+              </div>
 
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-600">
