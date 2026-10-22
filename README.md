@@ -1,6 +1,9 @@
 <div align="center">
 
-# ⚡ Kanvexa
+<img src="./public/img/logo2-transparent.png" alt="Kanvexa Logo" width="230" />
+
+<br />
+<br />
 
 **Satu kalimat, langsung jadi rencana kerja.**  
 *Smart AI-Powered Collaborative Kanban Board for Modern Workflows & Productivity.*
