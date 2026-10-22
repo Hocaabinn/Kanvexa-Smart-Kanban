@@ -45,8 +45,8 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (password.length < 6) {
-      setError("Kata sandi baru minimal harus 6 karakter.");
+    if (password.length < 10) {
+      setError("Kata sandi baru minimal harus 10 karakter.");
       return;
     }
 
@@ -141,7 +141,7 @@ export default function ResetPasswordPage() {
                       <input
                         type={showPassword ? "text" : "password"}
                         required
-                        placeholder="Minimal 6 karakter"
+                        placeholder="Minimal 10 karakter"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10 transition-all"
