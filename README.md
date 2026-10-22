@@ -35,6 +35,7 @@
   - **Life (Produktivitas & Gaya Hidup)**: *Daily Habit Tracker*, *Monthly Finance Tracker*, *Travel Planner*, *Pelacak Buku & Film*.
 - 🔐 **Autentikasi & RBAC Multi-Tenant**:
   - Otentikasi aman melalui Supabase Auth & SSR middleware.
+  - Alur pemulihan akun terintegrasi: *Forgot Password* & *Reset Password* via email OTP / secure link.
   - Granular Per-Board Role Access Control (*Admin*, *Member*, *Viewer*) yang dilindungi Supabase Row-Level Security (RLS).
 - 📊 **Smart Dashboard & Accurate Analytics**:
   - Live KPI metrics (Active Projects, Tasks Completed, Pending Tasks, Team Workload).
