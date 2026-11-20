@@ -869,6 +869,15 @@ export default function LandingPage() {
     }
   };
 
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (heroVideoRef.current) {
+      heroVideoRef.current.defaultMuted = true;
+      heroVideoRef.current.muted = true;
+      heroVideoRef.current.play().catch(() => {});
+    }
+  }, []);
+
   useEffect(() => {
     const t1 = setTimeout(() => setPhase("typing"), 700);
     return () => clearTimeout(t1);
@@ -894,6 +903,18 @@ export default function LandingPage() {
     return () => clearTimeout(t);
   }, [phase, visibleCards]);
 
+  useEffect(() => {
+    if (phase !== "done") return;
+    const t = setTimeout(() => {
+      setPhase("idle");
+      setTyped("");
+      setVisible(0);
+      const tRestart = setTimeout(() => setPhase("typing"), 600);
+      return () => clearTimeout(tRestart);
+    }, 4500);
+    return () => clearTimeout(t);
+  }, [phase]);
+
   const cardsByCol = COLS.reduce<Record<string, typeof DEMO_CARDS>>((acc, col) => {
     acc[col] = DEMO_CARDS.filter((c) => c.col === col && DEMO_CARDS.indexOf(c) < visibleCards);
     return acc;
@@ -904,6 +925,7 @@ export default function LandingPage() {
       {/* ===================== NAVBAR ===================== */}
       <motion.div
         className="fixed top-0 left-0 right-0 z-50 flex justify-center"
+        initial={false}
         animate={{
           paddingTop: isScrolled ? 12 : 0,
           paddingLeft: isScrolled ? 16 : 0,
@@ -912,7 +934,8 @@ export default function LandingPage() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
         <motion.nav
-          className="flex items-center justify-between font-body w-full"
+          initial={false}
+          className="flex items-center justify-between font-body w-full max-w-[1920px]"
           animate={{
             maxWidth: isScrolled ? 760 : 1920,
             paddingLeft: isScrolled ? 24 : (isMobileNav ? 20 : 80),
@@ -1023,12 +1046,17 @@ export default function LandingPage() {
       {/* ===================== HERO ===================== */}
       <div ref={heroRef} className="min-h-screen w-full flex flex-col relative overflow-hidden pb-12">
         <video
+          ref={heroVideoRef}
           autoPlay
           muted
           loop
           playsInline
           className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-90"
         >
+          <source
+            src="/img/hero_background.mp4"
+            type="video/mp4"
+          />
           <source
             src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4"
             type="video/mp4"

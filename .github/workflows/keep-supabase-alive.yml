@@ -1,0 +1,38 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Berjalan setiap 3 hari sekali pada pukul 00:00 UTC
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Memungkinkan trigger manual lewat tab Actions di GitHub
+
+jobs:
+  ping:
+    name: Ping Supabase REST API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send keep-alive request
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Secrets NEXT_PUBLIC_SUPABASE_URL atau NEXT_PUBLIC_SUPABASE_ANON_KEY belum diset di GitHub Repository Secrets!"
+            exit 1
+          fi
+
+          echo "Mengirim ping ke Supabase REST API..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "$SUPABASE_URL/rest/v1/" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+
+          echo "HTTP Response Status: $HTTP_STATUS"
+
+          # Endpoint REST Supabase mengembalikan 200 OK jika aktif
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "Supabase aktif dan berhasil di-ping!"
+          else
+            echo "::warning::Menerima response status $HTTP_STATUS dari Supabase."
+          fi
+
