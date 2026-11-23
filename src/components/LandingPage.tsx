@@ -878,42 +878,46 @@ export default function LandingPage() {
     }
   }, []);
 
+  // Demo interactive Kanban AI breakdown loop
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("typing"), 700);
-    return () => clearTimeout(t1);
-  }, []);
-
-  useEffect(() => {
-    if (phase !== "typing") return;
-    if (typed.length < DEMO_TEXT.length) {
-      const t = setTimeout(() => setTyped(DEMO_TEXT.slice(0, typed.length + 1)), 38);
+    if (phase === "idle") {
+      const t = setTimeout(() => {
+        setTyped("");
+        setVisible(0);
+        setPhase("typing");
+      }, 600);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => setPhase("generating"), 450);
-    return () => clearTimeout(t);
-  }, [phase, typed]);
 
-  useEffect(() => {
-    if (phase !== "generating") return;
-    if (visibleCards < DEMO_CARDS.length) {
-      const t = setTimeout(() => setVisible((n) => n + 1), 260);
+    if (phase === "typing") {
+      if (typed.length < DEMO_TEXT.length) {
+        const t = setTimeout(() => {
+          setTyped(DEMO_TEXT.slice(0, typed.length + 1));
+        }, 36);
+        return () => clearTimeout(t);
+      }
+      const t = setTimeout(() => setPhase("generating"), 400);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => setPhase("done"), 400);
-    return () => clearTimeout(t);
-  }, [phase, visibleCards]);
 
-  useEffect(() => {
-    if (phase !== "done") return;
-    const t = setTimeout(() => {
-      setPhase("idle");
-      setTyped("");
-      setVisible(0);
-      const tRestart = setTimeout(() => setPhase("typing"), 600);
-      return () => clearTimeout(tRestart);
-    }, 4500);
-    return () => clearTimeout(t);
-  }, [phase]);
+    if (phase === "generating") {
+      if (visibleCards < DEMO_CARDS.length) {
+        const t = setTimeout(() => {
+          setVisible((prev: number) => prev + 1);
+        }, 240);
+        return () => clearTimeout(t);
+      }
+      const t = setTimeout(() => setPhase("done"), 400);
+      return () => clearTimeout(t);
+    }
+
+    if (phase === "done") {
+      const t = setTimeout(() => {
+        setPhase("idle");
+      }, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [phase, typed, visibleCards]);
 
   const cardsByCol = COLS.reduce<Record<string, typeof DEMO_CARDS>>((acc, col) => {
     acc[col] = DEMO_CARDS.filter((c) => c.col === col && DEMO_CARDS.indexOf(c) < visibleCards);
