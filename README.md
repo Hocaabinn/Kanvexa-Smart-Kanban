@@ -165,6 +165,21 @@ Hak akses dikelola secara independen **per-board** pada tabel `board_members` (s
 
 ---
 
+## ⚡ Supabase Keep-Alive & Health Monitoring
+
+Untuk mencegah database Supabase Free Tier otomatis ter-pause (*idle pause*) akibat ketiadaan aktivitas selama 7 hari berturut-turut, Kanvexa menyediakan dua mekanisme keep-alive otomatis:
+
+1. **GitHub Actions Workflow** ([.github/workflows/keep-supabase-alive.yml](.github/workflows/keep-supabase-alive.yml)):
+   - Terjadwal berjalan setiap 2 hari sekali (`0 0 */2 * *`).
+   - Melakukan query aktif langsung ke tabel database Supabase via REST API untuk menjamin engine Postgres tetap aktif.
+   - Konfigurasi: Tambahkan `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` pada **Settings > Secrets and variables > Actions**.
+
+2. **Health Check Endpoint** (`/api/health`):
+   - Endpoint HTTP mandiri (`GET /api/health`) yang menguji konektivitas real-time ke Supabase.
+   - Dapat diintegrasikan dengan pemantau eksternal gratis seperti [cron-job.org](https://cron-job.org) atau [UptimeRobot](https://uptimerobot.com) untuk ping otomatis tanpa batas waktu.
+
+---
+
 ## 🎨 Panduan Ekstensi Template (School & Life)
 
 Kanvexa memiliki sistem seeding cerdas yang memungkinkan pembuatan board lengkap dengan kolom dan kartu contoh dalam satu klik.
