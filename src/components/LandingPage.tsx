@@ -1078,20 +1078,11 @@ export default function LandingPage() {
               Ubah Ide Menjadi <span className="font-display italic text-violet-600 dark:text-violet-400">Alur Kerja</span> Instan
             </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mt-6 text-center text-base sm:text-lg md:text-xl text-muted-foreground max-w-[650px] leading-relaxed font-body"
-            >
-              Otomatiskan pekerjaan administratif dengan AI yang mampu memahami, memecah, dan menyusun tugas secara presisi | sehingga tim Anda bisa fokus pada hal yang paling berdampak.
-            </motion.p>
-
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="mt-7 flex flex-wrap items-center justify-center gap-3.5 z-20"
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-3.5 z-20"
             >
               <Link href="/signup">
                 <LiquidMetalButton label="Uji Coba Gratis" colorTheme="purple" />
