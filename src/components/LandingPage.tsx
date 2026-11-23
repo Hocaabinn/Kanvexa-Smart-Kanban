@@ -958,7 +958,7 @@ export default function LandingPage() {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
           <span
-            onClick={(e) => handleScroll(e as any, "home")}
+            onClick={(e: React.MouseEvent) => handleScroll(e, "home")}
             className="cursor-pointer hover:opacity-90 transition-opacity"
           >
             <KanvexaLogo src="/img/logo2-purple.png" imgClassName="h-7 w-auto object-contain" />
