@@ -2,37 +2,45 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    # Berjalan setiap 3 hari sekali pada pukul 00:00 UTC
-    - cron: '0 0 */3 * *'
+    # Berjalan setiap 2 hari sekali pada pukul 00:00 UTC
+    - cron: '0 0 */2 * *'
   workflow_dispatch: # Memungkinkan trigger manual lewat tab Actions di GitHub
 
 jobs:
   ping:
-    name: Ping Supabase REST API
+    name: Ping Supabase & Prevent Pause
     runs-on: ubuntu-latest
     steps:
-      - name: Send keep-alive request
+      - name: Send keep-alive requests
         env:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "::error::Secrets NEXT_PUBLIC_SUPABASE_URL atau NEXT_PUBLIC_SUPABASE_ANON_KEY belum diset di GitHub Repository Secrets!"
+            echo "Buka: GitHub Repo -> Settings -> Secrets and variables -> Actions -> New repository secret"
             exit 1
           fi
 
-          echo "Mengirim ping ke Supabase REST API..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          echo "Mengirim ping aktif ke database Supabase (REST API)..."
+          # Ping query ke tabel boards dengan limit 1 agar Postgres benar-benar mengeksekusi query SQL
+          HTTP_STATUS_DB=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "$SUPABASE_URL/rest/v1/boards?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+
+          echo "Database query HTTP Status: $HTTP_STATUS_DB"
+
+          # Ping OpenAPI root
+          HTTP_STATUS_ROOT=$(curl -s -o /dev/null -w "%{http_code}" \
             -X GET "$SUPABASE_URL/rest/v1/" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
 
-          echo "HTTP Response Status: $HTTP_STATUS"
+          echo "Root REST HTTP Status: $HTTP_STATUS_ROOT"
 
-          # Endpoint REST Supabase mengembalikan 200 OK jika aktif
-          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
-            echo "Supabase aktif dan berhasil di-ping!"
+          if [ "$HTTP_STATUS_DB" -ge 200 ] && [ "$HTTP_STATUS_DB" -lt 500 ]; then
+            echo "✅ Supabase aktif dan berhasil menerima query Postgres!"
           else
-            echo "::warning::Menerima response status $HTTP_STATUS dari Supabase."
+            echo "::warning::Menerima response status $HTTP_STATUS_DB dari Supabase."
           fi
-
