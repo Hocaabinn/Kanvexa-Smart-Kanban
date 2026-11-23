@@ -54,6 +54,9 @@
   --mint: #0F9E86;
   --rose: #DB4C74;
   --line: #E6E1D6;
+  --white: #FFFFFF;
+  --bg-soft: #F8FAF9;
+  --ink: #0F0E0D;
 }
 
 @theme {
