@@ -1051,6 +1051,8 @@ export default function LandingPage() {
           muted
           loop
           playsInline
+          poster="/img/hero_poster.png"
+          preload="auto"
           className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-90"
         >
           <source
