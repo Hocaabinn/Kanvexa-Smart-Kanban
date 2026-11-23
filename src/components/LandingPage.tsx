@@ -5,29 +5,21 @@ import Link from "next/link";
 import { KanvexaLogo } from "@/components/ui/KanvexaLogo";
 import { motion, useMotionValue, useSpring, useScroll, useTransform } from "framer-motion";
 import {
-  Play,
   Sparkles,
   LayoutGrid,
   CheckCircle2,
   ArrowRight,
-  Quote,
   Check,
   Brain,
   Zap,
   ListTodo,
   CalendarDays,
-  Users,
-  MessageSquare,
   Target,
   Lightbulb,
   Rocket,
-  Workflow,
   ClipboardCheck,
   Timer,
-  TrendingUp,
-  FolderKanban,
   Bot,
-  Wand2,
   HelpCircle,
   MessageCircle,
   ChevronDown,
@@ -635,7 +627,7 @@ export function PricingSection({
             </span>
             <Label className="flex items-center">
               <Switch
-                ref={switchRef as any}
+                ref={switchRef}
                 checked={!isMonthly}
                 onCheckedChange={handleToggle}
                 className="relative"
@@ -769,14 +761,7 @@ export default function LandingPage() {
   const [activeSection, setActiveSection] = useState("home");
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isMobileNav, setIsMobileNav] = useState(false);
-
-  useEffect(() => {
-    setIsMobileNav(window.innerWidth < 768);
-    const handleResize = () => setIsMobileNav(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const isMobileNav = useMediaQuery("(max-width: 767px)");
 
   /* Locomotive Scroll Parallax Effects */
   const heroRef = useRef<HTMLDivElement>(null);
@@ -836,7 +821,7 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScrollEvent);
   }, []);
 
-  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+  const handleScroll = (e: React.SyntheticEvent, id: string) => {
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
@@ -854,7 +839,7 @@ export default function LandingPage() {
     }
   };
 
-  const handleSparklesClick = (e?: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSparklesClick = (e?: React.SyntheticEvent) => {
     if (e) e.preventDefault();
     const demoElement = document.getElementById("ai-demo");
     if (demoElement) {
@@ -1078,7 +1063,8 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 backdrop-blur-sm px-4 py-1.5 text-sm text-muted-foreground font-body mb-6 shadow-sm"
+              onClick={handleSparklesClick}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 backdrop-blur-sm px-4 py-1.5 text-sm text-muted-foreground font-body mb-6 shadow-sm cursor-pointer hover:border-violet-400/60 transition-colors"
             >
               Generative Kanban AI v1.0 ✨
             </motion.div>
@@ -1250,7 +1236,7 @@ export default function LandingPage() {
                       <div className="w-5 h-5 rounded-full bg-violet-100/90 dark:bg-violet-950 flex items-center justify-center text-[10px] font-bold text-violet-600">✦</div>
                       <span className="text-xs font-semibold text-foreground">AI Breakdown</span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-1 font-body">"Buat acara seminar kampus..."</p>
+                    <p className="text-[11px] text-muted-foreground mt-1 font-body">&quot;Buat acara seminar kampus...&quot;</p>
                   </div>
                   <div className="bg-white/75 dark:bg-card/60 p-3 rounded-xl shadow-lg border border-white/90 text-left mt-2 translate-x-4 transition-transform hover:translate-x-2 duration-300 backdrop-blur-xl">
                     <div className="flex items-center justify-between text-xs font-medium text-foreground">
